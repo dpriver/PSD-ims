@@ -1,0 +1,7 @@
+mysql -u root -p
+show databases;
+use (db);
+show tables;
+describe (table);
+drop database (db);
+
