@@ -16,6 +16,8 @@ SERVER_DIR=$(SRC_DIR)/server
 
 all: client server
 
+rpc: rpc_client rpc_server
+
 rpc_client:
 	soapcpp2 -c -C -d$(CLIENT_DIR)/ $(RPC_INTERFACE)
 
