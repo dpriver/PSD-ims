@@ -1,0 +1,24 @@
+# gitignore for the project PSD-IMS
+
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trash*
+Icon?
+ethumbs.db
+Thumbs.db
+*.tmp
+
+# Temporary files
+*~
+temp/
+
+# Binaries
+bin/
+
+
+# Vim
+*.swp
