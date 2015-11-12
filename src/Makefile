@@ -1,26 +1,42 @@
-CLIENT=client
-SERVER=server
-
-CLIENT_SRC=client.c soapC.c soapClient.c
-SERVER_SRC=server.c soapC.c soapServer.c
 
 RPC_INTERFACE=ims.h
 
-SSL_LIBS=-lssl -lcrypto
-SSL_FLAGS=-DWITH_OPENSSL
+#-------------------------------------------------------------
+# Directories
+#-------------------------------------------------------------
+PROJECT_DIR=..
+SRC_DIR=$(PROJECT_DIR)/src
+CLIENT_DIR=$(SRC_DIR)/client
+SERVER_DIR=$(SRC_DIR)/server
 
-all:	rpc client server
 
-rpc:
-	soapcpp2 -c $(RPC_INTERFACE) 
+#-------------------------------------------------------------
+# Configuration
+#-------------------------------------------------------------
 
-client:	
-	gcc $(SSL_FLAGS) -o $(CLIENT) $(CLIENT_SRC) -I$(GSOAP_INCLUDE) -lgsoap $(SSL_LIBS) -L$(GSOAP_LIB)
+all: client server
 
-server:	
-	gcc $(SSL_FLAGS) -o $(SERVER) $(SERVER_SRC) -I$(GSOAP_INCLUDE) -lgsoap $(SSL_LIBS) -L$(GSOAP_LIB)
+rpc_client:
+	soapcpp2 -c -C -d$(CLIENT_DIR)/ $(RPC_INTERFACE)
 
-clean:	
-	@rm -f client server
-	@rm -f soapStub.h soapServerLib.c soapH.h soapServer.c soapClientLib.c soapClient.c soapC.c
-	@rm -f *.xml *.nsmap *.wsdl *.xsd
+rpc_server:
+	soapcpp2 -c -S -d$(SERVER_DIR)/ $(RPC_INTERFACE)	
+
+client: rpc_client	
+	@$(MAKE) -C $(CLIENT_DIR) all
+
+server: rpc_server
+	@$(MAKE) -C $(SERVER_DIR) all
+
+
+#-------------------------------------------------------------
+# Clean
+#-------------------------------------------------------------
+
+clean_all: clean_client clean_server
+
+clean_client:
+	@$(MAKE) -C $(CLIENT_DIR) clean
+
+clean_server:
+	@$(MAKE) -C $(SERVER_DIR) clean
