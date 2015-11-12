@@ -11,6 +11,9 @@ help:
 all: client server
 
 
+rpc:
+	@$(MAKE) -C src rpc
+
 client:
 	@$(MAKE) -C src client
 
