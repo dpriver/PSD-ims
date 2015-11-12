@@ -1,0 +1,53 @@
+SERVICIOS
+===========================================================================
+1. Dar de alta y baja usuarios
+2. Abrir y cerrar sesiones de usuario (las sesiones deben caducar)
+3. Enviar solicitud de amistad a otro usuario
+4. Enviar mensaje de texto a otro usuario
+5. Aceptar o rechazar la solicitud de amistad de otro usuario
+6. recibir mensajes de texto de otros usuario
+7. Recibir solicitudes de amistad de otros usuarios
+8. Recibir la confirmación de la entrega de mensajes enviados previamente (double check)
+
+OPCIONAL
+----------------------
+9. Definir y usar grupos de usuarios
+10. Adjuntar ficheros a los mensajes
+11. Usar SSL
+
+SERVICIO DE GRUPO (EJEMPLO)
+-----------------------
+*1. Crear grupo
+*2. Añadir amigo a un grupo del que soy admin
+*3. Borrar un amigo de un grupo del que soy admin
+*4. Recibir un aviso de mi adición (o borrado) a un grupo
+*5. pedir la membresía de un grupo del que soy miembro
+*6. Enviar mensaje a un grupo del que soy miembro
+*7. Pasar a otro usuario el rol de admin que desempeño en un grupo
+
+
+CLIENTE
+================================================================================
+La interfaz será en modo texto, y podrá mostrar un menú de opciones o ejecutarse
+mediante comandos.
+
+La dirección del server podrá indicarse mediante una constante o enviarse al programa
+mediante un parámetro.
+
+Capturar la señal CTRL-C y las necesarias para asegurar la coherencia de los datos en caso
+de cierre.
+
+
+RECOMENDACIONES
+==================================================================================
+1. Interfaz en el cliente
+2. Altas y bajas de usuario
+3. Solicitudes y aceptaciones de amistad sin persistencia
+4. Envío de mensajes sin persistencia
+5. Double check sin persistencia
+6. Persistencia (mensajes, amistades y solicitudes, entregas pendientes)
+7. captura de las señales de control necesaria (CTRL-C)
+8. Concurrencia en el servidor
+9. Envío de mensajes a grupo
+10. Envío de ficheros
+11. Uso de SSL
