@@ -1,0 +1,38 @@
+DE MOMENTO: Todos los servicios requieren el proceso de login, es decir, junto a los datos necesarios,
+se envían el usuario y la contraseña y el servidor comprueba que son correctos
+
+TODO: Que el usuario haga login y logout y gestionar las sesiones con un TOKEN o algo
+
+
+Registro de un usuario
+-----------------------------------------
+- Info. de usuario
+El servidor lo agrega a la base de datos
+
+
+Borrado de usuario
+-----------------------------------------
+El servidor lo borra de la base de datos
+
+
+Enviar solicitud de amistad
+-----------------------------------------
+- Nombre del usuario a agregar
+El servidor comprueba que el usuario existe
+El servidor comprueba que no se haya hecho ya la petición
+El servidor agrega la solicitud como pendiente
+
+
+Recibir solicitudes de amistad pendientes
+-----------------------------------------
+El servidor devuelve las solicitudes de amistad pendientes
+
+
+Aceptar solicitud de amistad
+-----------------------------------------
+El servidor marca la solicitud como aceptada
+
+
+Rechazar la solicitud de amistad
+-----------------------------------------
+El servidor marca la solicitud como denegada
