@@ -30,10 +30,10 @@
 //gsoap psdims service namespace: urn:psdims
 
 
-typedef struct request_list{
+typedef struct psdims__request_list{
 	int __sizenelems;	
 	char **name;
-}request_list;
+} psdims__request_list;
 
 
 /********************************************************************
@@ -49,13 +49,13 @@ int psdims__user_unregister(char *name, char *passwd, int *ERRCODE);
 int psdims__friend_request(char *name, char *passwd, char* request_name, int *ERRCODE);
 
 // recibir solicitudes de amistad pendientes
-int psdims__get_requests(char *name, char *passwd, request_list *requests);
+int psdims__get_requests(char *name, char *passwd, psdims__request_list *requests);
 
 // aceptar solicitud de amistad
-int psdims__accept_request(char *name, char *passwd, char **request_name);
+int psdims__accept_request(char *name, char *passwd, char *request_name, int *ERRCODE);
 
 // rechazar solicitud de amistad
-int psdims__decline_request(char *name, char *passwd, char **request_name);
+int psdims__decline_request(char *name, char *passwd, char *request_name, int *ERRCODE);
 
 
 /********************************************************************
