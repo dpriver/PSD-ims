@@ -22,3 +22,89 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ********************************************************************************/
+
+
+#include "soapH.h"
+#include "psdims.nsmap"
+
+
+int main( int argc, char **argv) {
+
+	int m, s;
+	struct soap soap;
+
+
+	if (argc < 2) {
+		printf("Usage: %s <port>\n", argv[0]);
+		exit(-1);
+	}	
+
+	// Init environment
+	soap_init(&soap);
+
+	// Bind to the specified port	
+	m = soap_bind(&soap, NULL, atoi(argv[1]), 100);
+
+	// Check result of binding		
+	if (m < 0) {
+		soap_print_fault(&soap, stderr); exit(-1); 
+	}
+
+	// Listen to next connection
+	while (1) { 
+
+		// accept
+		s = soap_accept(&soap);    
+
+		if (s < 0) {
+			soap_print_fault(&soap, stderr); exit(-1);
+		}
+
+		// Execute invoked operation
+		soap_serve(&soap);
+
+		// Clean up!
+		soap_end(&soap);
+	}
+
+  return 0;
+}
+
+//(struct soap *soap, int a, int b, int *res)
+int psdims__user_register(struct soap *soap, char *name, char *passwd, int *ERRCODE){
+	*ERRCODE = 10;
+	
+	return SOAP_OK; 
+}
+
+// borrar user
+int psdims__user_unregister(struct soap *soap, char *name, char *passwd, int *ERRCODE){
+	*ERRCODE = 11;
+
+	return SOAP_OK; 
+}
+
+// enviar solicitud de amistad a usuario
+int psdims__friend_request(struct soap *soap, char *name, char *passwd, char* request_name, int *ERRCODE){
+	*ERRCODE = 12;
+
+	return SOAP_OK; 
+}
+
+// recibir solicitudes de amistad pendientes
+int psdims__get_requests(struct soap *soap, char *name, char *passwd, psdims__request_list *requests){
+
+	return SOAP_OK; 
+}
+
+// aceptar solicitud de amistad
+int psdims__accept_request(struct soap *soap, char *name, char *passwd, char *request_name, int *ERRCODE){
+	*ERRCODE = 14;
+	return SOAP_OK; 
+}
+
+// rechazar solicitud de amistad
+int psdims__decline_request(struct soap *soap, char *name, char *passwd, char *request_name, int *ERRCODE){
+	*ERRCODE = 15;
+	return SOAP_OK; 
+}
