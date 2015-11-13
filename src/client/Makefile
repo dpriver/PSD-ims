@@ -12,14 +12,14 @@ CHEADS=$(HEADERS)
 PROJECT_DIR=../..
 SRC_DIR=$(PROJECT_DIR)/src/client
 BIN_DIR=$(PROJECT_DIR)/bin
-
+HEAD_DIR=$(PROJECT_DIR)/src/common_include
 
 
 
 #-------------------------------------------------------------
 # Configuration
 #-------------------------------------------------------------
-CFLAGS=-I$(GSOAP_INCLUDE) 
+CFLAGS=-I$(GSOAP_INCLUDE) -I$(HEAD_DIR)
 LDFLAGS=-L$(GSOAP_LIB)
 LDLIBS=-lgsoap $(SSL_LIBS)
 
