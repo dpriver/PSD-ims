@@ -33,7 +33,7 @@ all: $(COBJS)
 
 $(OBJ_DIR)/%.o : %.c
 	@echo $(ECHO_FLAGS) "\tCC" $@
-	@gcc -c -o $@ $< $(CFLAGS)
+	@gcc -c -o $@ $< $(CFLAGS) $(EXTRA_CFLAGS)
 
 
 $(COBJS): | $(OBJ_DIR)
@@ -47,6 +47,6 @@ clean:
 #------------------------------------------------------------------------------------
 
 $(OBJ_DIR):
-	@echo -e "\tCreating dir $(OBJ_DIR)"
+	@echo $(ECHO_FLAGS) "\tCreating dir $(OBJ_DIR)"
 	@mkdir -p $(OBJ_DIR)
 

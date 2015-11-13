@@ -22,8 +22,6 @@ all: rpc common client server
 
 rpc_generate: clean_rpc
 	@$(MAKE) -C $(RPC_DIR) generate
-	# @echo $(ECHO_FLAGS) "\tSOAP" client server
-	# @soapcpp2 -c -d$(GSOAP_DIR)/ $(RPC_INTERFACE)
 
 rpc: rpc_message
 	@$(MAKE) -C $(RPC_DIR) all
@@ -45,6 +43,18 @@ tests: test_message
 	@$(MAKE) -C $(TEST_DIR) all
 	@echo $(ECHO_FLAGS) "\t====== TESTS built succesfully ======\n"
 
+common_debug: common_message
+	@$(MAKE) -C $(COMMON_DIR) EXTRA_CFLAGS=-DDEBUG  all
+	@echo $(ECHO_FLAGS) "\t====== COMMON (DEBUG) built succesfully ======\n"
+
+client_debug: client_message
+	@$(MAKE) -C $(CLIENT_DIR) EXTRA_CFLAGS=-DDEBUG all
+	@echo $(ECHO_FLAGS) "\t====== CLIENT (DEBUG) built succesfully ======\n"
+
+server_debug: server_message
+	@$(MAKE) -C $(SERVER_DIR) EXTRA_CFLAGS=-DDEBUG  all
+	@echo $(ECHO_FLAGS) "\t====== SERVER (DEBUG) built succesfully ======\n"
+
 
 #-------------------------------------------------------------
 # Messages
@@ -63,7 +73,7 @@ server_message:
 	@echo $(ECHO_FLAGS) "\n\t====== Building SERVER ======"
 
 test_message:
-		@echo $(ECHO_FLAGS) "\n\t====== Building TESTS ======"
+	@echo $(ECHO_FLAGS) "\n\t====== Building TESTS ======"
 
 
 #-------------------------------------------------------------

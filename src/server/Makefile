@@ -42,18 +42,17 @@ SSL_FLAGS=-DWITH_OPENSSL
 
 #gcc $(SSL_FLAGS) -o $(CLIENT) $(CLIENT_SRC) -I$(GSOAP_INCLUDE) -lgsoap $(SSL_LIBS) -L$(GSOAP_LIB)
 
-all: $(TARGET) $(TEST_LIB)
+all: $(TARGET)
 
 $(TARGET): $(BIN_DIR) $(OBJ_DIR) $(COMMON_OBJS) $(COBJS) $(MAIN_OBJ)
+	@ar rcs $(TEST_LIB) $(COBJS)
 	@echo $(ECHO_FLAGS) "\tLD " $(TARGET)	
 	@gcc -o $@ $(MAIN_OBJ) $(COBJS) $(COMMON_OBJS) $(RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
-
-$(TEST_LIB): $(COBJS)
-	@ar rcs $@ $(COBJS)
+	
 
 $(OBJ_DIR)/%.o : %.c
 	@echo $(ECHO_FLAGS) "\tCC" $@
-	gcc -c -o $@ $< $(CFLAGS)
+	@gcc -c -o $@ $< $(CFLAGS) $(EXTRA_CFLAGS)
 
 $(COBJS): | $(OBJ_DIR)
 

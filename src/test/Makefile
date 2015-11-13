@@ -48,17 +48,17 @@ $(TEST_OBJ_DIR)/%.o: %.c
 
 $(TEST_BIN_DIR)/%:
 	@echo $(ECHO_FLAGS) "\tLD " $(TARGET)	
-	gcc -o $@ $(COBJS) $(COMMON_OBJ_DIR)/*.o $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	@gcc -o $@ $(COBJS) $(COMMON_OBJ_DIR)/*.o $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 
 #------------------------------------------------------------------------------------
 #		Directories 
 #------------------------------------------------------------------------------------
 $(TEST_BIN_DIR):
-	@echo $(ECHO_FLAGS) "creating dir $(TEST_BIN_DIR)"
+	@echo $(ECHO_FLAGS) "\tCreating dir $(TEST_BIN_DIR)"
 	@mkdir -p $(TEST_BIN_DIR)
 
 $(TEST_OBJ_DIR):
-	@echo $(ECHO_FLAGS) "creating dir $(TEST_OBJ_DIR)"
+	@echo $(ECHO_FLAGS) "\tCreating dir $(TEST_OBJ_DIR)"
 	@mkdir -p $(TEST_OBJ_DIR)
 
 clean:
