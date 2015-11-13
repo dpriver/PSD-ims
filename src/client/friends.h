@@ -41,6 +41,9 @@ struct friend_node {
 	friend_node *prev;
 };
 
+
+void print_friend_list(friend_node *list);
+
 /*
  * Returns a pointer to the new created list if success
  * Returns NULL if fail

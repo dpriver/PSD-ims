@@ -26,6 +26,7 @@
 #include "friends.h"
 #include "bool.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 void free_node(friend_node *node) {
 	free(node->info->name);
@@ -50,7 +51,7 @@ void delete_node(friend_node *node) {
 
 friend_node *find_node(friend_node *list, const char *friend_name) {
 	friend_node *aux_node;
-	aux_node = list->next;
+	aux_node = list;
 
 	do {
 		if (strcmp(aux_node->info->name, friend_name) != 0) {
@@ -60,6 +61,16 @@ friend_node *find_node(friend_node *list, const char *friend_name) {
 	} while (aux_node != list);
 
 	return NULL;
+}
+
+void print_friend_list(friend_node *list) {
+	friend_node *aux_node;
+	aux_node = list;
+
+	do {
+		printf("%s %s", aux_node->info->name, aux_node->info->information);
+		aux_node = aux_node->next;
+	} while (aux_node != list);
 }
 
 friend_node* new_friend_list() {
