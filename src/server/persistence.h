@@ -22,3 +22,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ********************************************************************************/
+#include <mysql>
+//#include <list.h>
+
+/*Add new user,return 1 if error or 0 if no*/
+int add_user(int id,char* name,char* information);
+
+/*Del new user,return 1 if error or 0 if no*/
+int del_user(int id);
+
+/*Request of id1 to be friend of id2,return 1 if error or 0 if no*/
+int send_request(int id1,int id2);
+
+/*Return the list of request pendind of id*/
+list<int> get_reguest_pending(int id);
+
+/*Accept id1 the request of friendly id2,return 1 if error or 0 if no*/
+int accept_friend(int id1,int id2);
+
+/*Refuse id1 the request of friendly id2,return 1 if error or 0 if no*/
+int refuse_friend(int id1,int id2);
+
+
+
+
