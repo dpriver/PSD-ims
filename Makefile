@@ -7,9 +7,12 @@ help:
 	@echo " - all			-> compile everything (client and server)"
 	@echo "========================================================================================"
 
+force_all: clean rpc_regenerate all
 
-all: common client_ server_ tests
+all: common rpc client server
 
+rpc_regenerate:
+	@$(MAKE) -C src rpc_generate
 
 rpc:
 	@$(MAKE) -C src rpc
@@ -17,20 +20,20 @@ rpc:
 common:
 	@$(MAKE) -C src common
 
-client: common
+client:
 	@$(MAKE) -C src client
 
-server: common
+server:
 	@$(MAKE) -C src server
+
+tests:
+	@$(MAKE) -C src tests
 
 client_:
 	@$(MAKE) -C src client
 
 server_:
 	@$(MAKE) -C src server
-
-tests:
-	@$(MAKE) -C src tests
 
 clean:
 	@$(MAKE) -C src clean_all

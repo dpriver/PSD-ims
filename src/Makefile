@@ -1,5 +1,4 @@
 
-RPC_INTERFACE=ims.h
 
 ECHO_FLAGS=
 
@@ -11,6 +10,7 @@ SRC_DIR=$(PROJECT_DIR)/src
 CLIENT_DIR=$(SRC_DIR)/client
 SERVER_DIR=$(SRC_DIR)/server
 COMMON_DIR=$(SRC_DIR)/common
+RPC_DIR=$(SRC_DIR)/rpc
 TEST_DIR=$(SRC_DIR)/test
 
 
@@ -18,32 +18,40 @@ TEST_DIR=$(SRC_DIR)/test
 # Configuration
 #-------------------------------------------------------------
 
-all: common client server
+all: rpc common client server
 
-rpc: rpc_client rpc_server
+rpc_generate: clean_rpc
+	@$(MAKE) -C $(RPC_DIR) generate
+	# @echo $(ECHO_FLAGS) "\tSOAP" client server
+	# @soapcpp2 -c -d$(GSOAP_DIR)/ $(RPC_INTERFACE)
 
-rpc_client:
-	@echo $(ECHO_FLAGS) "\tSOAP" client
-	@soapcpp2 -c -C -d$(CLIENT_DIR)/ $(RPC_INTERFACE)
-
-rpc_server:
-	@echo $(ECHO_FLAGS) "\tSOAP" server
-	@soapcpp2 -c -S -d$(SERVER_DIR)/ $(RPC_INTERFACE)
+rpc: rpc_message
+	@$(MAKE) -C $(RPC_DIR) all
+	@echo $(ECHO_FLAGS) "\t====== RPC built succesfully ======\n"
 
 common: common_message
-	@$(MAKE) -C $(COMMON_DIR) all	
+	@$(MAKE) -C $(COMMON_DIR) all
+	@echo $(ECHO_FLAGS) "\t====== COMMON built succesfully ======\n"
 
-client: client_message rpc_client	
+client: client_message
 	@$(MAKE) -C $(CLIENT_DIR) all
 	@echo $(ECHO_FLAGS) "\t====== CLIENT built succesfully ======\n"
 
-server: server_message rpc_server
+server: server_message
 	@$(MAKE) -C $(SERVER_DIR) all
 	@echo $(ECHO_FLAGS) "\t====== SERVER built succesfully ======\n"
 
 tests: test_message
 	@$(MAKE) -C $(TEST_DIR) all
 	@echo $(ECHO_FLAGS) "\t====== TESTS built succesfully ======\n"
+
+
+#-------------------------------------------------------------
+# Messages
+#-------------------------------------------------------------
+
+rpc_message:
+	@echo $(ECHO_FLAGS) "\n\t====== Building rpc files ======"
 
 common_message:
 	@echo $(ECHO_FLAGS) "\n\t====== Building common files ======"
@@ -62,10 +70,19 @@ test_message:
 # Clean
 #-------------------------------------------------------------
 
-clean_all: clean_client clean_server
+clean_all: clean_rpc clean_common clean_client clean_server clean_tests
 
 clean_client:
 	@$(MAKE) -C $(CLIENT_DIR) clean
 
 clean_server:
 	@$(MAKE) -C $(SERVER_DIR) clean
+
+clean_common:
+	@$(MAKE) -C $(COMMON_DIR) clean
+
+clean_tests:
+	@$(MAKE) -C $(TEST_DIR) clean
+
+clean_rpc:
+	@$(MAKE) -C $(RPC_DIR) clean

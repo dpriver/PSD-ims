@@ -4,7 +4,7 @@ HEADERS=
 TARGET=$(SOURCES:%.c=$(TEST_BIN_DIR)/%)
 COBJS=$(SOURCES:%.c=$(TEST_OBJ_DIR)/%.o)
 CHEADS=$(HEADERS)
-LINK_OBJS=$(CLIENT_OBJ_DIR)/* $(SERVER_OBJ_DIR)/* $(COMMON_OBJ_DIR)/*
+# LINK_OBJS=$(CLIENT_OBJ_DIR)/* $(SERVER_OBJ_DIR)/* $(COMMON_OBJ_DIR)/*
 
 ECHO_FLAGS=
 
@@ -28,8 +28,8 @@ TEST_BIN_DIR=$(PROJECT_DIR)/bin/test
 # Configuration
 #-------------------------------------------------------------
 CFLAGS=-I$(GSOAP_INCLUDE) -I$(COMMON_HEAD_DIR) -I$(CLIENT_HEAD_DIR) -I$(SERVER_HEAD_DIR)
-LDFLAGS=-L$(GSOAP_LIB)
-LDLIBS=-lgsoap $(SSL_LIBS)
+LDFLAGS=-L$(GSOAP_LIB) -L$(CLIENT_OBJ_DIR) -L$(SERVER_OBJ_DIR) -L$(COMMON_OBJ_DIR)
+LDLIBS=-lgsoap $(SSL_LIBS) -lclient
 
 SSL_LIBS=-lssl -lcrypto
 SSL_FLAGS=-DWITH_OPENSSL
@@ -48,7 +48,7 @@ $(TEST_OBJ_DIR)/%.o: %.c
 
 $(TEST_BIN_DIR)/%:
 	@echo $(ECHO_FLAGS) "\tLD " $(TARGET)	
-	@gcc -o $@ $(COBJS) $(LINK_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	gcc -o $@ $(COBJS) $(COMMON_OBJ_DIR)/*.o $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 
 #------------------------------------------------------------------------------------
 #		Directories 
@@ -60,4 +60,7 @@ $(TEST_BIN_DIR):
 $(TEST_OBJ_DIR):
 	@echo $(ECHO_FLAGS) "creating dir $(TEST_OBJ_DIR)"
 	@mkdir -p $(TEST_OBJ_DIR)
+
+clean:
+	@rm -rf *.o
 
