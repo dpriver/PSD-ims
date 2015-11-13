@@ -2,10 +2,10 @@
 
 
 help:
-	@echo -e "========= RULES ========================================================================"
-	@echo -e "- help			-> prints this help"
-	@echo -e "- all			-> compile everything (client and server)"
-
+	@echo "================================= RULES ================================================"
+	@echo " - help			-> prints this help"
+	@echo " - all			-> compile everything (client and server)"
+	@echo "========================================================================================"
 
 
 all: client server
@@ -23,3 +23,4 @@ server:
 clean:
 	@$(MAKE) -C src clean_all
 	@rm -rf bin/
+	@rm -rf build/
