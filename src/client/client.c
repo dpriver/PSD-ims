@@ -25,6 +25,8 @@
 
 #include "soapH.h"
 #include "psdims.nsmap"
+#include "friends.h"
+#include "leak_detector_c.h"
 
 int main( int argc, char **argv ) {
 
@@ -32,6 +34,10 @@ int main( int argc, char **argv ) {
 	char *serverURL;
 	int operation = 0;
 	int result = 0;
+
+	atexit(report_mem_leak);
+
+	friend_node *friend_list;
 
 	char name[20] = "pepito";
 	char passwd[20] = "abcd1234";
@@ -42,6 +48,11 @@ int main( int argc, char **argv ) {
 		exit(-1);
 	}
 
+	//friend_list = new_friend_list();
+	//print_friend_list(friend_list);
+	//free_friend_list(friend_list);
+	
+	return 0;
 	soap_init(&soap);
 
 	serverURL = argv[1];
