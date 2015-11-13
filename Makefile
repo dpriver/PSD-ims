@@ -8,7 +8,7 @@ help:
 	@echo "========================================================================================"
 
 
-all: common client server
+all: common client_ server_
 
 
 rpc:
@@ -17,11 +17,18 @@ rpc:
 common:
 	@$(MAKE) -C src common
 
-client:
+client: common
 	@$(MAKE) -C src client
 
-server:
+server: common
 	@$(MAKE) -C src server
+
+client_:
+	@$(MAKE) -C src client
+
+server_:
+	@$(MAKE) -C src server
+
 
 clean:
 	@$(MAKE) -C src clean_all

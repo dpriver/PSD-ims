@@ -2,7 +2,7 @@ EXECUTABLE=client
 SOURCES=soapC.c soapClient.c chats.c client.c friends.c messages.c persistence.c
 HEADERS=soapH.h chats.h friends.h messages.h persistence.h
 
-COMMON_LIBS=
+COMMON_LIBS=leak_detector_c
 
 TARGET=$(EXECUTABLE:%=$(BIN_DIR)/%)
 COBJS=$(SOURCES:%.c=$(OBJ_DIR)/%.o)
@@ -19,7 +19,7 @@ SUBPROJECT=client
 SRC_COMMON_DIR=$(PROJECT_DIR)/src/common
 SRC_DIR=$(PROJECT_DIR)/src/$(SUBPROJECT)
 OBJ_DIR=$(PROJECT_DIR)/build/$(SUBPROJECT)
-OBJ_COMMON_DIR=$(PROJECT)/build/common
+OBJ_COMMON_DIR=$(PROJECT_DIR)/build/common
 BIN_DIR=$(PROJECT_DIR)/bin
 
 
@@ -27,7 +27,7 @@ BIN_DIR=$(PROJECT_DIR)/bin
 #-------------------------------------------------------------
 # Configuration
 #-------------------------------------------------------------
-CFLAGS=-I$(GSOAP_INCLUDE) -I$(SRC_COMMON_DIR)
+CFLAGS=-I$(SRC_COMMON_DIR) -I$(GSOAP_INCLUDE)
 LDFLAGS=-L$(GSOAP_LIB)
 LDLIBS=-lgsoap $(SSL_LIBS)
 
