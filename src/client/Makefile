@@ -2,7 +2,7 @@ EXECUTABLE=client
 SOURCES=soapC.c soapClient.c chats.c client.c friends.c messages.c persistence.c
 HEADERS=soapH.h chats.h friends.h messages.h persistence.h
 
-COMMON_LIBS=leak_detector_c
+COMMON_LIBS=*
 
 TARGET=$(EXECUTABLE:%=$(BIN_DIR)/%)
 COBJS=$(SOURCES:%.c=$(OBJ_DIR)/%.o)

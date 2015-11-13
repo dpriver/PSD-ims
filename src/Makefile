@@ -11,6 +11,7 @@ SRC_DIR=$(PROJECT_DIR)/src
 CLIENT_DIR=$(SRC_DIR)/client
 SERVER_DIR=$(SRC_DIR)/server
 COMMON_DIR=$(SRC_DIR)/common
+TEST_DIR=$(SRC_DIR)/test
 
 
 #-------------------------------------------------------------
@@ -40,6 +41,10 @@ server: server_message rpc_server
 	@$(MAKE) -C $(SERVER_DIR) all
 	@echo $(ECHO_FLAGS) "\t====== SERVER built succesfully ======\n"
 
+tests: test_message
+	@$(MAKE) -C $(TEST_DIR) all
+	@echo $(ECHO_FLAGS) "\t====== TESTS built succesfully ======\n"
+
 common_message:
 	@echo $(ECHO_FLAGS) "\n\t====== Building common files ======"
 
@@ -48,6 +53,10 @@ client_message:
 
 server_message:
 	@echo $(ECHO_FLAGS) "\n\t====== Building SERVER ======"
+
+test_message:
+		@echo $(ECHO_FLAGS) "\n\t====== Building TESTS ======"
+
 
 #-------------------------------------------------------------
 # Clean

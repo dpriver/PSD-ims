@@ -2,7 +2,7 @@ EXECUTABLE=server
 SOURCES=soapC.c soapServer.c server.c persistence.c
 HEADERS=soapH.h persistence.h
 
-COMMON_LIBS=
+COMMON_LIBS=*
 
 TARGET=$(EXECUTABLE:%=$(BIN_DIR)/%)
 COBJS=$(SOURCES:%.c=$(OBJ_DIR)/%.o)
