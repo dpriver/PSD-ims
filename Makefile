@@ -8,11 +8,14 @@ help:
 	@echo "========================================================================================"
 
 
-all: client server
+all: common client server
 
 
 rpc:
 	@$(MAKE) -C src rpc
+
+common:
+	@$(MAKE) -C src common
 
 client:
 	@$(MAKE) -C src client
