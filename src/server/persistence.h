@@ -22,27 +22,33 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ********************************************************************************/
-#include <mysql>
-//#include <list.h>
 
-/*Add new user,return 1 if error or 0 if no*/
-int add_user(int id,char* name,char* information);
+void init_bd(MYSQL* bd,char user[],char pass[],char name_bd[]);
 
-/*Del new user,return 1 if error or 0 if no*/
-int del_user(int id);
+void add_user(MYSQL* bd,int id,char* name, char* information);
 
-/*Request of id1 to be friend of id2,return 1 if error or 0 if no*/
-int send_request(int id1,int id2);
+void del_user(MYSQL* bd,char* name);
+
+int exist_user(MYSQL* bd,char name[]);
+
+int get_id_user(MYSQL* bd,char name[]);
 
 /*Return the list of request pendind of id*/
 list<int> get_reguest_pending(int id);
 
-/*Accept id1 the request of friendly id2,return 1 if error or 0 if no*/
-int accept_friend(int id1,int id2);
+void accept_friend(int id1,int id2);
 
-/*Refuse id1 the request of friendly id2,return 1 if error or 0 if no*/
-int refuse_friend(int id1,int id2);
+void send_request(MYSQL* bd,int id1,int id2);
 
+void refuse_request(MYSQL* bd,int id1,int id2);
 
+void del_friends(MYSQL* bd,int id1,int id2);
 
+void add_chat(MYSQL* bd,int id1,int id_admin, char* description);
+
+void del_chat(MYSQL* bd,int id);
+
+void add_user_chat(MYSQL* bd,int id_user,int id_chat)
+
+void del_user_chat(MYSQL* bd,int id_user,int id_chat);
 
