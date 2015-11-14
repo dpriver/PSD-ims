@@ -31,7 +31,7 @@ MYSQL_CFLAGS := $(shell mysql_config --cflags)
 CFLAGS=-I$(GSOAP_INCLUDE) -I$(COMMON_HEAD_DIR) -I$(CLIENT_HEAD_DIR) -I$(SERVER_HEAD_DIR) $(MYSQL_CFLAGS)
 MYSQL_LDFLAGS := $(shell mysql_config --libs)
 LDFLAGS=-L$(GSOAP_LIB) -L$(CLIENT_OBJ_DIR) -L$(SERVER_OBJ_DIR) -L$(COMMON_OBJ_DIR) $(MYSQL_LDFLAGS)
-LDLIBS=-lgsoap $(SSL_LIBS) -lclient -lserver
+LDLIBS=-lgsoap $(SSL_LIBS)
 
 SSL_LIBS=-lssl -lcrypto
 SSL_FLAGS=-DWITH_OPENSSL
@@ -46,11 +46,11 @@ $(COBJS): | $(TEST_OBJ_DIR)
 
 $(TEST_OBJ_DIR)/%.o: %.c
 	@echo $(ECHO_FLAGS) "\tCC" $@
-	gcc -c -o $@ $< $(CFLAGS)
+	@gcc -c -o $@ $< $(CFLAGS)
 
 $(TEST_BIN_DIR)/%:
 	@echo $(ECHO_FLAGS) "\tLD " $@	
-	gcc -o $@ $(@:$(TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	@gcc -o $@ $(@:$(TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(CLIENT_OBJ_DIR)/*.o $(SERVER_OBJ_DIR)/*.o $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 
 #------------------------------------------------------------------------------------
 #		Directories 
