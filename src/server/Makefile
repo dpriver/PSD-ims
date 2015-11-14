@@ -49,12 +49,12 @@ all: $(TARGET)
 $(TARGET): $(BIN_DIR) $(OBJ_DIR) $(COMMON_OBJS) $(COBJS) $(MAIN_OBJ)
 	@ar rcs $(TEST_LIB) $(COBJS)
 	@echo $(ECHO_FLAGS) "\tLD " $(TARGET)	
-	gcc -o $@ $(MAIN_OBJ) $(COBJS) $(COMMON_OBJS) $(RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	@gcc -o $@ $(MAIN_OBJ) $(COBJS) $(COMMON_OBJS) $(RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 	
 
 $(OBJ_DIR)/%.o : %.c
 	@echo $(ECHO_FLAGS) "\tCC" $@
-	gcc -c -o $@ $< $(CFLAGS) $(EXTRA_CFLAGS)
+	@gcc -c -o $@ $< $(CFLAGS) $(EXTRA_CFLAGS)
 
 $(COBJS): | $(OBJ_DIR)
 
