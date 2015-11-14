@@ -1,7 +1,7 @@
 /*******************************************************************************
  *	friends.h
  *
- *  <ONE LINE DESCRIPTION.>
+ *  Client friend list
  *
  *
  *  This file is part of PSD-IMS
@@ -42,35 +42,54 @@ struct friend_node {
 };
 
 
+/*
+ * Prints all friends line by line
+ */
 void print_friend_list(friend_node *list);
 
-/*
- * Returns a pointer to the new created list if success
- * Returns NULL if fail
- */
-friend_node* new_friend_list();
 
 /*
- * Returns 0 if success 
- * Returns < 0 if error
+ * Allocates a new friend list
+ *
+ * Returns a pointer to the list phantom node or NULL if fails
  */
-int free_friend_list(friend_node *list);
+friend_node *new_friend_list();
+
 
 /*
- * Returns 0 if success 
- * Returns < 0 if error
+ * Frees the friend list
+ */
+void free_friend_list(friend_node *list);
+
+
+/*
+ * Allocates a new friend_info struct with the provided data
+ *
+ * Returns a pointer to the structure or NULL if fails
+ */
+friend_info *new_friend_info(const char *name, const char *information);
+
+
+/*
+ * Creates a new friend_node in the list with the provided info
+ * "*info" is attached, not copied
+ *
+ * Returns 0 or -1 if fails
  */
 int add_friend(friend_node *list, friend_info *info);
 
+
 /*
- * Returns 0 if success 
- * Returns < 0 if error
+ * Removes and frees the first node that matches the provided "name"
+ *
+ * Returns 0 or -1 if "name" does not exist in the list
  */
 int del_friend(friend_node *list, const char *name);
 
+
 /*
- * Returns true of false wheter friend_name is in the list or not
+ * Returns true of false whether "name" is in the list or not
  */
 boolean is_friend(friend_node *list, char *name);
 
-#endif
+#endif /* __FRIENDS */

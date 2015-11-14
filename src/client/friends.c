@@ -1,7 +1,7 @@
 /*******************************************************************************
  *	friends.c
  *
- *  <ONE LINE DESCRIPTION.>
+ *  Client friend list
  *
  *
  *  This file is part of PSD-IMS
@@ -27,6 +27,7 @@
 #include "bool.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef DEBUG
 #include "leak_detector_c.h"
@@ -54,30 +55,39 @@ void delete_node(friend_node *node) {
 
 friend_node *find_node(friend_node *list, const char *friend_name) {
 	friend_node *aux_node;
-	aux_node = list;
 
-	do {
-		if (strcmp(aux_node->info->name, friend_name) != 0) {
+	aux_node = list->next;
+	while ( aux_node != list ) {
+		if (strcmp(aux_node->info->name, friend_name) == 0)
 			return aux_node;
-		}
 		aux_node = aux_node->next;
-	} while (aux_node != list);
+	}
 
 	return NULL;
 }
 
+
+/*
+ * Prints all friends line by line
+ */
 void print_friend_list(friend_node *list) {
 	friend_node *aux_node;
-	aux_node = list;
 
-	do {
-		printf("%s %s", aux_node->info->name, aux_node->info->information);
+	aux_node = list->next;
+	while ( aux_node != list ) {
+		printf("%s :%s\n", aux_node->info->name, aux_node->info->information);
 		aux_node = aux_node->next;
-	} while (aux_node != list);
+	}
 }
 
+
+/*
+ * Allocates a new friend list
+ *
+ * Returns a pointer to the list phantom node or NULL if fails
+ */
 friend_node* new_friend_list() {
-	friend_node *new_list;
+	friend_node *new_list = NULL;
 
 	if ( new_list = malloc( sizeof(friend_node) ) ) {
 		new_list->info = NULL;
@@ -88,11 +98,11 @@ friend_node* new_friend_list() {
 	return new_list;
 }
 
+
 /*
- * Returns 0 if success 
- * Returns < 0 if error
+ * Frees the friend list
  */
-int free_friend_list(friend_node *list) {
+void free_friend_list(friend_node *list) {
 
 	while ( list->next != list ) {
 		printf("Deleting node: %s\n", list->next->info->name);
@@ -100,46 +110,71 @@ int free_friend_list(friend_node *list) {
 	}
 
 	free(list);
-	return 0;
 }
 
+
 /*
- * Returns 0 if success 
- * Returns < 0 if error
+ * Allocates a new friend_info struct with the provided data
+ *
+ * Returns a pointer to the structure or NULL if fails
+ */
+friend_info *new_friend_info(const char *name, const char *information){
+	friend_info *info;
+
+	if (info = malloc(sizeof(friend_info))) {
+		info->name = malloc(strlen(name) + sizeof(char));
+		info->information = malloc(strlen(information) + sizeof(char));
+
+		strcpy(info->name, name);
+		strcpy(info->information, information);
+
+		return info;
+	}
+
+	return NULL;
+}
+
+
+/*
+ * Creates a new friend_node in the list with the provided info
+ * "*info" is attached, not copied
+ *
+ * Returns 0 or -1 if fails
  */
 int add_friend(friend_node *list, friend_info *info) {
 	friend_node *node;
 
 	if (node = malloc(sizeof(friend_node))) {
 		node->info = info;
-		node->next = list->next;
-		node->prev = list;
-		list->next = node;
-		if (list->prev = list) {
-			list->prev = node;
-		}
+		node->next = list;
+		node->prev = list->prev;
+		list->prev->next = node;
+		list->prev = node;
 		return 0;
 	}
 
 	return -1;
 }
 
+
 /*
- * Returns 0 if success 
- * Returns < 0 if error
+ * Removes and frees the first node that matches the provided "name"
+ *
+ * Returns 0 or -1 if "name" does not exist in the list
  */
 int del_friend(friend_node *list, const char *name) {
 	friend_node *aux_node;	
-	if (aux_node = find_node(list, name)) {
-		delete_node(list->next);
+	if ( aux_node = find_node(list, name) ) {
+		delete_node(aux_node);
 		return 0;	
 	}
 
 	return -1;
 }
 
+
 /*
- * Returns true of false wheter friend_name is in the list or not
+ * Returns true of false whether "name" is in the list or not
  */
 boolean is_friend(friend_node *list, char *name) {
 	return (find_node(list, name) != NULL);

@@ -87,20 +87,40 @@ int main (int argc, char **argv) {
 	printf("Creating new friend list\n");
 	friend_list = new_friend_list();
 
+	printf("Lista de amigos:\n");
+	printf("---------------------------\n");
+	print_friend_list(friend_list);
+	printf("---------------------------\n");
+
 	printf("Adding friends to list\n");
-	info = malloc(sizeof(friend_info));
-	info->name = malloc(sizeof(char)*20);
-	info->information = malloc(sizeof(char)*50);
-
-	strcpy(info->name, "Juanito");
-	strcpy(info->information, "Mi amigo de toda la vida, juanito...");
-
-	//friend_list->info = info;
+	info = new_friend_info("Juanito", "Es mi amigo de toda la vida...");
 	add_friend(friend_list, info);
+	info = new_friend_info("pepito", "Es mi Enemigoo de toda la vida...");
+	add_friend(friend_list, info);
+	info = new_friend_info("Manolito", "Es Culero de toda la vida...");
+	add_friend(friend_list, info);
+	info = new_friend_info("Qewdqew", "Es ...");
+	add_friend(friend_list, info);
+	printf("---------------------------\n");
+	print_friend_list(friend_list);
+	printf("---------------------------\n");
+	
 
 	printf("Removing friend list\n");
+	if(del_friend(friend_list, "Manolito") != 0) {
+		printf("Fallo al borrar Manolito\n");
+	}
+	if(del_friend(friend_list, "Qewdqew") != 0) {
+		printf("Fallo al borrar Qewdqew\n");
+	}
+	if(del_friend(friend_list, "Juanito") != 0) {
+		printf("Fallo al borrar Juanito\n");
+	}
+	printf("---------------------------\n");
+	print_friend_list(friend_list);
+	printf("---------------------------\n");
+
 	free_friend_list(friend_list);
 
-	//_free_node(friend_list);
 	return 0;
 }
