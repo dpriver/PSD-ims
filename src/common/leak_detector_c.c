@@ -95,6 +95,7 @@ void * xmalloc (unsigned int size, const char * file, unsigned int line)
 	if (ptr != NULL) 
 	{
 		add_mem_info(ptr, size, file, line);
+		printf("Created memory -> %p: size=%d\n",ptr, size);
 	}
 	return ptr;
 }
@@ -110,6 +111,7 @@ void * xcalloc (unsigned int elements, unsigned int size, const char * file, uns
 	{
 		total_size = elements * size;
 		add_mem_info (ptr, total_size, file, line);
+		printf("Created memory -> %p: size=%d\n",ptr, total_size);
 	}
 	return ptr;
 }
@@ -120,6 +122,7 @@ void * xcalloc (unsigned int elements, unsigned int size, const char * file, uns
  */
 void xfree(void * mem_ref)
 {
+	printf("Free memory -> %p\n", mem_ref);
 	remove_mem_info(mem_ref);
 	free(mem_ref);
 }
@@ -183,7 +186,7 @@ void report_mem_leak(void)
 		
 		for(leak_info = ptr_start; leak_info != NULL; leak_info = leak_info->next)
 		{
-			sprintf(info, "address : %d\n", leak_info->mem_info.address);
+			sprintf(info, "address : %p\n", leak_info->mem_info.address);
 			fwrite(info, (strlen(info) + 1) , 1, fp_write);
 			sprintf(info, "size    : %d bytes\n", leak_info->mem_info.size);			
 			fwrite(info, (strlen(info) + 1) , 1, fp_write);
