@@ -46,11 +46,11 @@ $(COBJS): | $(TEST_OBJ_DIR)
 
 $(TEST_OBJ_DIR)/%.o: %.c
 	@echo $(ECHO_FLAGS) "\tCC" $@
-	@gcc -c -o $@ $< $(CFLAGS)
+	gcc -c -o $@ $< $(CFLAGS)
 
 $(TEST_BIN_DIR)/%:
-	@echo $(ECHO_FLAGS) "\tLD " $(TARGET)	
-	@gcc -o $@ $(@:$(TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	@echo $(ECHO_FLAGS) "\tLD " $@	
+	gcc -o $@ $(@:$(TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 
 #------------------------------------------------------------------------------------
 #		Directories 

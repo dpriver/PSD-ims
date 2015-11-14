@@ -36,7 +36,7 @@ BIN_DIR=$(PROJECT_DIR)/bin
 MYSQL_CFLAGS := $(shell mysql_config --cflags)
 CFLAGS=-I$(SRC_COMMON_DIR) -I$(SRC_RPC_DIR) -I$(GSOAP_INCLUDE) $(MYSQL_CFLAGS)
 MYSQL_LDFLAGS := $(shell mysql_config --libs)
-LDFLAGS=-L$(GSOAP_LIB)  $(MYSQL_LDFLAGS)
+LDFLAGS=-L$(GSOAP_LIB) $(MYSQL_LDFLAGS)
 LDLIBS=-lgsoap $(SSL_LIBS)
 
 SSL_LIBS=-lssl -lcrypto
