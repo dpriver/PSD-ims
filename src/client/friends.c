@@ -79,10 +79,6 @@ void print_friend_list(friend_node *list) {
 friend_node* new_friend_list() {
 	friend_node *new_list;
 
-#ifdef DEBUG
-	printf("Debug mode...\n");
-#endif
-
 	if ( new_list = malloc( sizeof(friend_node) ) ) {
 		new_list->info = NULL;
 		new_list->next = new_list;

@@ -95,7 +95,7 @@ void * xmalloc (unsigned int size, const char * file, unsigned int line)
 	if (ptr != NULL) 
 	{
 		add_mem_info(ptr, size, file, line);
-		printf("Created memory -> %p: size=%d\n",ptr, size);
+		//printf("Created memory -> %p: size=%d\n",ptr, size);
 	}
 	return ptr;
 }
@@ -111,7 +111,7 @@ void * xcalloc (unsigned int elements, unsigned int size, const char * file, uns
 	{
 		total_size = elements * size;
 		add_mem_info (ptr, total_size, file, line);
-		printf("Created memory -> %p: size=%d\n",ptr, total_size);
+		//printf("Created memory -> %p: size=%d\n",ptr, total_size);
 	}
 	return ptr;
 }
@@ -122,7 +122,7 @@ void * xcalloc (unsigned int elements, unsigned int size, const char * file, uns
  */
 void xfree(void * mem_ref)
 {
-	printf("Free memory -> %p\n", mem_ref);
+	//printf("Free memory -> %p\n", mem_ref);
 	remove_mem_info(mem_ref);
 	free(mem_ref);
 }
