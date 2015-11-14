@@ -1,5 +1,5 @@
 MAIN_SRC=server.c
-SOURCES=
+SOURCES=persistence.c
 HEADERS=persistence.h
 
 COMMON_LIBS=*
