@@ -27,6 +27,8 @@
 #include "psdims.nsmap"
 #include "friends.h"
 #include "leak_detector_c.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 int main( int argc, char **argv ) {
 
@@ -34,7 +36,6 @@ int main( int argc, char **argv ) {
 	char *serverURL;
 	int operation = 0;
 	int result = 0;
-
 	atexit(report_mem_leak);
 
 	friend_node *friend_list;
@@ -42,6 +43,7 @@ int main( int argc, char **argv ) {
 	char name[20] = "pepito";
 	char passwd[20] = "abcd1234";
 	char dummyname[20] = "juanito";
+	char description[100];
 
 	if (argc < 3) {
 		printf("Usage: %s http://server:port <operation>\n", argv[0]);
@@ -60,12 +62,16 @@ int main( int argc, char **argv ) {
 
 	switch (operation) {
 		case 0:
+            scanf("%s", name);
+			scanf("%s", passwd);
+			scanf("%s", description);
 			soap_call_psdims__user_register(&soap, serverURL, "", name, passwd, &result);
 			break;
 		case 1:
 			soap_call_psdims__user_unregister(&soap, serverURL, "", name, passwd, &result);
 			break;
 		case 2:
+
 			soap_call_psdims__friend_request(&soap, serverURL, "", name, passwd, dummyname, &result);
 			break;
 		case 3:

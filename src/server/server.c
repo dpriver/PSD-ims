@@ -26,7 +26,12 @@
 
 #include "soapH.h"
 #include "psdims.nsmap"
+#include <mysql.h>
+#include "persistence.h"
+#include <stdio.h>
+#include <stdlib.h>
 
+MYSQL* bd;
 
 int main( int argc, char **argv) {
 
@@ -41,7 +46,7 @@ int main( int argc, char **argv) {
 
 	// Init environment
 	soap_init(&soap);
-
+    bd=init_bd("root","calasancio3","PSD");
 	// Bind to the specified port	
 	m = soap_bind(&soap, NULL, atoi(argv[1]), 100);
 
@@ -73,7 +78,7 @@ int main( int argc, char **argv) {
 //(struct soap *soap, int a, int b, int *res)
 int psdims__user_register(struct soap *soap, char *name, char *passwd, int *ERRCODE){
 	*ERRCODE = 10;
-	
+	add_user(bd,12,name,passwd,"xxx");
 	return SOAP_OK; 
 }
 

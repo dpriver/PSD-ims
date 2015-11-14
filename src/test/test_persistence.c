@@ -4,10 +4,9 @@
 
 int main(){
   MYSQL* bd;
-  bd = mysql_init(NULL);
-  init_bd(bd,"root","calasancio3","PSD");
+  bd= init_bd("root","calasancio3","PSD");
   
-  add_user(bd,10,"pepe","information asdasdd asdasdaa sdaaasdas");
+  add_user(bd,10,"pepe","contrasena","information asdasdd asdasdaa sdaaasdas");
   //add_user(bd,2,"antonio","information");
   //del_user(bd,"pepe");
  //printf("%d\n",exist_user(bd,"pe12312pe2"));

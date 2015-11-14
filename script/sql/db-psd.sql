@@ -5,11 +5,11 @@ USE PSD;
 /*--------------------------CREATE TABLE---------------------------------------*/
 
 CREATE TABLE users(
- ID INT NOT NULL,
- NAME VARCHAR(25) NOT NULL ,
+ ID INT NOT NULL ,
+ NAME VARCHAR(25) NOT NULL UNIQUE ,
+ PASS VARCHAR(25) NOT NULL ,
  INFORMATION VARCHAR(100),
- PRIMARY KEY (ID),
- SECOND KEY (NAME)
+ PRIMARY KEY (ID)
 );
 
 CREATE TABLE chats(
@@ -57,11 +57,11 @@ CREATE TABLE request(
 
 /*TABLE USERS*/
 
-INSERT INTO users(ID,NAME,INFORMATION) VALUES(1,'Pepe','Guapo');
-INSERT INTO users(ID,NAME,INFORMATION) VALUES(2,'Antonio','Feo');
-INSERT INTO users(ID,NAME,INFORMATION) VALUES(3,'Maria','Gorda');
-INSERT INTO users(ID,NAME,INFORMATION) VALUES(4,'Carmen','Delgada');
-INSERT INTO users(ID,NAME,INFORMATION) VALUES(6,'Carlos','Indiferente');
+INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(1,'Pepe','contrasena1','Guapo');
+INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(2,'Antonio','contrasena2','Feo');
+INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(3,'Maria','contrasena3','Gorda');
+INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(4,'Carmen','contrasena4','Delgada');
+INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(6,'Carlos','contrasena5','Indiferente');
 
 /*TABLE CHATS*/
 
