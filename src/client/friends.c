@@ -28,25 +28,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef DEBUG
+#include "leak_detector_c.h"
+#endif
+
+
 void free_node(friend_node *node) {
-	free(node->info->name);
-	free(node->info->information);
-	free(node->info);
+	if (node->info != NULL) {
+		free(node->info->name);
+		free(node->info->information);
+		free(node->info);
+	}
 	free(node);
 }
 
-void delete_node(friend_node *node) {
-
-		friend_node *aux_node;		
-
-		aux_node = node;		
+void delete_node(friend_node *node) {	
 
 		// link list
 		node->prev->next = node->next;
 		node->next->prev = node->prev;
 
 		// free node
-		free_node(aux_node);
+		free_node(node);
 }
 
 friend_node *find_node(friend_node *list, const char *friend_name) {
@@ -76,9 +79,12 @@ void print_friend_list(friend_node *list) {
 friend_node* new_friend_list() {
 	friend_node *new_list;
 
+#ifdef DEBUG
+	printf("Debug mode...\n");
+#endif
+
 	if ( new_list = malloc( sizeof(friend_node) ) ) {
-		new_list->info->name = NULL;
-		new_list->info->information = NULL;
+		new_list->info = NULL;
 		new_list->next = new_list;
 		new_list->prev = new_list;
 	}
@@ -92,14 +98,12 @@ friend_node* new_friend_list() {
  */
 int free_friend_list(friend_node *list) {
 
-	friend_node *aux_node;
-	aux_node = list->next;
-	while ( list->next != list->prev ) {
-		aux_node = list->next;
-		delete_node(aux_node);
+	while ( list->next != list ) {
+		printf("Deleting node: %s\n", list->next->info->name);
+		delete_node(list->next);
 	}
 
-	free_node(list);
+	free(list);
 	return 0;
 }
 
@@ -115,6 +119,9 @@ int add_friend(friend_node *list, friend_info *info) {
 		node->next = list->next;
 		node->prev = list;
 		list->next = node;
+		if (list->prev = list) {
+			list->prev = node;
+		}
 		return 0;
 	}
 

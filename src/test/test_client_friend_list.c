@@ -24,10 +24,58 @@
  ********************************************************************************/
 
 #include <string.h>
+#include <stdio.h>
 
 #include "friends.h"
 #include "leak_detector_c.h"
 
+
+void _free_node(friend_node *node) {
+	if (node->info != NULL) {
+		free(node->info->name);
+		free(node->info->information);
+		free(node->info);
+	}
+	free(node);
+}
+
+void _delete_node(friend_node *node) {	
+
+		// link list
+		node->prev->next = node->next;
+		node->next->prev = node->prev;
+
+		// free node
+		_free_node(node);
+}
+
+int _add_friend(friend_node *list, friend_info *info) {
+	friend_node *node;
+
+	if (node = malloc(sizeof(friend_node))) {
+		node->info = info;
+		node->next = list->next;
+		node->prev = list;
+		list->next = node;
+		if (list->prev = list) {
+			list->prev = node;
+		}
+		return 0;
+	}
+
+	return -1;
+}
+
+int _free_friend_list(friend_node *list) {
+
+	while ( list->next != list ) {
+		printf("Deleting node: %s\n", list->next->info->name);
+		_delete_node(list->next);
+	}
+
+	free(list);
+	return 0;
+}
 
 int main (int argc, char **argv) {
 	
@@ -47,9 +95,12 @@ int main (int argc, char **argv) {
 	strcpy(info->name, "Juanito");
 	strcpy(info->information, "Mi amigo de toda la vida, juanito...");
 
+	//friend_list->info = info;
 	add_friend(friend_list, info);
 
 	printf("Removing friend list\n");
+	free_friend_list(friend_list);
 
+	//_free_node(friend_list);
 	return 0;
 }
