@@ -33,8 +33,8 @@ BIN_DIR=$(PROJECT_DIR)/bin
 #-------------------------------------------------------------
 # Configuration
 #-------------------------------------------------------------
-CFLAGS=-I$(SRC_COMMON_DIR) -I$(SRC_RPC_DIR) -I$(GSOAP_INCLUDE) $(mysql_config --cflags) $(mysql_config --libs)
-LDFLAGS=-L$(GSOAP_LIB)
+CFLAGS=-I$(SRC_COMMON_DIR) -I$(SRC_RPC_DIR) -I$(GSOAP_INCLUDE) $(mysql_config --cflags)
+LDFLAGS=-L$(GSOAP_LIB) $(mysql_config --libs)
 LDLIBS=-lgsoap $(SSL_LIBS)
 
 SSL_LIBS=-lssl -lcrypto
