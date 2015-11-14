@@ -33,8 +33,10 @@ BIN_DIR=$(PROJECT_DIR)/bin
 #-------------------------------------------------------------
 # Configuration
 #-------------------------------------------------------------
-CFLAGS=-I$(SRC_COMMON_DIR) -I$(SRC_RPC_DIR) -I$(GSOAP_INCLUDE) $(mysql_config --cflags)
-LDFLAGS=-L$(GSOAP_LIB) $(mysql_config --libs)
+MYSQL_CFLAGS := $(shell mysql_config --cflags)
+CFLAGS=-I$(SRC_COMMON_DIR) -I$(SRC_RPC_DIR) -I$(GSOAP_INCLUDE) $(MYSQL_CFLAGS)
+MYSQL_LDFLAGS := $(shell mysql_config --libs)
+LDFLAGS=-L$(GSOAP_LIB)  $(MYSQL_LDFLAGS)
 LDLIBS=-lgsoap $(SSL_LIBS)
 
 SSL_LIBS=-lssl -lcrypto
@@ -47,12 +49,12 @@ all: $(TARGET)
 $(TARGET): $(BIN_DIR) $(OBJ_DIR) $(COMMON_OBJS) $(COBJS) $(MAIN_OBJ)
 	@ar rcs $(TEST_LIB) $(COBJS)
 	@echo $(ECHO_FLAGS) "\tLD " $(TARGET)	
-	@gcc -o $@ $(MAIN_OBJ) $(COBJS) $(COMMON_OBJS) $(RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	gcc -o $@ $(MAIN_OBJ) $(COBJS) $(COMMON_OBJS) $(RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 	
 
 $(OBJ_DIR)/%.o : %.c
 	@echo $(ECHO_FLAGS) "\tCC" $@
-	@gcc -c -o $@ $< $(CFLAGS) $(EXTRA_CFLAGS)
+	gcc -c -o $@ $< $(CFLAGS) $(EXTRA_CFLAGS)
 
 $(COBJS): | $(OBJ_DIR)
 

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <mysql.h>
 #include "persistence.h"
 
 int main(){
