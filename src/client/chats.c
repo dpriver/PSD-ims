@@ -1,7 +1,7 @@
 /*******************************************************************************
  *	chats.c
  *
- *  <ONE LINE DESCRIPTION.>
+ *  Client chat list
  *
  *
  *  This file is part of PSD-IMS
