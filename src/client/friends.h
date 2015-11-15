@@ -26,7 +26,6 @@
 #ifndef __FRIENDS
 #define __FRIENDS
 
-#include "bool.h"
 
 typedef struct friend_info friend_info;
 struct friend_info{
@@ -45,7 +44,7 @@ struct friend_node {
 /*
  * Prints all friends line by line
  */
-void print_friend_list(friend_node *list);
+void friends_print_list(friend_node *list);
 
 
 /*
@@ -53,13 +52,13 @@ void print_friend_list(friend_node *list);
  *
  * Returns a pointer to the list phantom node or NULL if fails
  */
-friend_node *new_friend_list();
+friend_node *friends_new_list();
 
 
 /*
  * Frees the friend list
  */
-void free_friend_list(friend_node *list);
+void friends_free_list(friend_node *list);
 
 
 /*
@@ -67,7 +66,7 @@ void free_friend_list(friend_node *list);
  *
  * Returns a pointer to the structure or NULL if fails
  */
-friend_info *new_friend_info(const char *name, const char *information);
+friend_info *friends_new_info(const char *name, const char *information);
 
 
 /*
@@ -76,7 +75,7 @@ friend_info *new_friend_info(const char *name, const char *information);
  *
  * Returns 0 or -1 if fails
  */
-int add_friend(friend_node *list, friend_info *info);
+int friends_add(friend_node *list, friend_info *info);
 
 
 /*
@@ -84,12 +83,7 @@ int add_friend(friend_node *list, friend_info *info);
  *
  * Returns 0 or -1 if "name" does not exist in the list
  */
-int del_friend(friend_node *list, const char *name);
+int friends_del(friend_node *list, const char *name);
 
-
-/*
- * Returns true of false whether "name" is in the list or not
- */
-boolean is_friend(friend_node *list, char *name);
 
 #endif /* __FRIENDS */

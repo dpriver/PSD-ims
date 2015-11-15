@@ -23,25 +23,25 @@
  *
  ********************************************************************************/
 
-#define __CHATS
-
 #ifndef __CHATS
 #define __CHATS
 
-#include "bool.h"
-#include "friend_list.h"
 
-typedef struct chat_member;
+#include "friends.h"
+
+typedef struct chat_member chat_member;
 struct chat_member {
-	char *name;
-	
-}
+	friend_info *friend_info;
+};
+
+typedef chat_member* chat_member_list;
 
 typedef struct chat_info chat_info;
 struct chat_info {
+	int id;
 	char *description;
-	friend_info *admin;
-	friend_info **members;
+	chat_member *admin;
+	chat_member_list *members;
 	int n_members;
 };
 
@@ -56,7 +56,7 @@ struct chat_node {
 /*
  * Prints all chats line by line
  */
-void print_chat_list(chat_node *list);
+void chats_print_list(chat_node *list);
 
 
 /*
@@ -64,13 +64,13 @@ void print_chat_list(chat_node *list);
  *
  * Returns a pointer to the list phantom node or NULL if fails
  */
-chat_node *new_chat_list();
+chat_node *chats_new_list();
 
 
 /*
  * Frees the chat list
  */
-void free_chat_list(chat_node *list);
+void chats_free_list(chat_node *list);
 
 
 /*
@@ -78,12 +78,24 @@ void free_chat_list(chat_node *list);
  *
  * Returns a pointer to the structure or NULL if fails
  */
-chat_info *new_chat_info(const char *description, friend_info *admin, friend_info **members
-		int n_members);
+chat_info *chats_new_info(const char *description, chat_member *admin, chat_member_list *members);
 
 
-chat_member_list *new_chat_member();
+chat_member_list *chats_new_member_list();
 
+chat_member *chats_new_member(friend_info *friend_info);
+
+int chats_add_member(chat_member_list *list, chat_member *member);
+
+int chats_del_member(chat_member_list *list, const char *name);
+
+int chats_change_admin(chat_info *chat_info, const char *name);
+
+int chats_promote_to_admin(chat_info *chat_info, const char *name);
+
+chat_member *chats_find_member(chat_member_list *list, const char *user_name);
+
+void chats_free_member_list(chat_member_list *list);
 
 /*
  * Creates a new chat_node in the list with the provided info
@@ -91,7 +103,7 @@ chat_member_list *new_chat_member();
  *
  * Returns 0 or -1 if fails
  */
-int add_chat(chat_node *list, chat_info *info);
+int chats_add(chat_node *list, chat_info *info);
 
 
 /*
@@ -99,12 +111,7 @@ int add_chat(chat_node *list, chat_info *info);
  *
  * Returns 0 or -1 if "name" does not exist in the list
  */
-int del_chat(friend_node *list, const char *name);
+int chats_del(friend_node *list, const char *name);
 
-
-/*
- * Returns true of false whether "name" is in the list or not
- */
-boolean is_chat_in_list(friend_node *list, char *name);
 
 #endif /* __CHATS */

@@ -30,53 +30,6 @@
 #include "leak_detector_c.h"
 
 
-void _free_node(friend_node *node) {
-	if (node->info != NULL) {
-		free(node->info->name);
-		free(node->info->information);
-		free(node->info);
-	}
-	free(node);
-}
-
-void _delete_node(friend_node *node) {	
-
-		// link list
-		node->prev->next = node->next;
-		node->next->prev = node->prev;
-
-		// free node
-		_free_node(node);
-}
-
-int _add_friend(friend_node *list, friend_info *info) {
-	friend_node *node;
-
-	if (node = malloc(sizeof(friend_node))) {
-		node->info = info;
-		node->next = list->next;
-		node->prev = list;
-		list->next = node;
-		if (list->prev = list) {
-			list->prev = node;
-		}
-		return 0;
-	}
-
-	return -1;
-}
-
-int _free_friend_list(friend_node *list) {
-
-	while ( list->next != list ) {
-		printf("Deleting node: %s\n", list->next->info->name);
-		_delete_node(list->next);
-	}
-
-	free(list);
-	return 0;
-}
-
 int main (int argc, char **argv) {
 	
 	friend_node *friend_list;
@@ -85,42 +38,42 @@ int main (int argc, char **argv) {
 	atexit(report_mem_leak);
 
 	printf("Creating new friend list\n");
-	friend_list = new_friend_list();
+	friend_list = friends_new_list();
 
 	printf("Lista de amigos:\n");
 	printf("---------------------------\n");
-	print_friend_list(friend_list);
+	friends_print_list(friend_list);
 	printf("---------------------------\n");
 
 	printf("Adding friends to list\n");
-	info = new_friend_info("Juanito", "Es mi amigo de toda la vida...");
-	add_friend(friend_list, info);
-	info = new_friend_info("pepito", "Es mi Enemigoo de toda la vida...");
-	add_friend(friend_list, info);
-	info = new_friend_info("Manolito", "Es Culero de toda la vida...");
-	add_friend(friend_list, info);
-	info = new_friend_info("Qewdqew", "Es ...");
-	add_friend(friend_list, info);
+	info = friends_new_info("Juanito", "Es mi amigo de toda la vida...");
+	friends_add(friend_list, info);
+	info = friends_new_info("pepito", "Es mi Enemigoo de toda la vida...");
+	friends_add(friend_list, info);
+	info = friends_new_info("Manolito", "Es Culero de toda la vida...");
+	friends_add(friend_list, info);
+	info = friends_new_info("Qewdqew", "Es ...");
+	friends_add(friend_list, info);
 	printf("---------------------------\n");
-	print_friend_list(friend_list);
+	friends_print_list(friend_list);
 	printf("---------------------------\n");
 	
 
 	printf("Removing friend list\n");
-	if(del_friend(friend_list, "Manolito") != 0) {
+	if(friends_del(friend_list, "Manolito") != 0) {
 		printf("Fallo al borrar Manolito\n");
 	}
-	if(del_friend(friend_list, "Qewdqew") != 0) {
+	if(friends_del(friend_list, "Qewdqew") != 0) {
 		printf("Fallo al borrar Qewdqew\n");
 	}
-	if(del_friend(friend_list, "Juanito") != 0) {
+	if(friends_del(friend_list, "Juanito") != 0) {
 		printf("Fallo al borrar Juanito\n");
 	}
 	printf("---------------------------\n");
-	print_friend_list(friend_list);
+	friends_print_list(friend_list);
 	printf("---------------------------\n");
 
-	free_friend_list(friend_list);
+	friends_free_list(friend_list);
 
 	return 0;
 }
