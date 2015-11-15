@@ -76,16 +76,17 @@ int main( int argc, char **argv) {
 }
 
 //(struct soap *soap, int a, int b, int *res)
-int psdims__user_register(struct soap *soap, char *name, char *passwd, int *ERRCODE){
+int psdims__user_register(struct soap *soap, char *name, char *passwd,char *description, int *ERRCODE){
 	*ERRCODE = 10;
-	add_user(bd,12,name,passwd,"xxx");
+	add_user(bd,get_cont(bd),name,passwd,description);
+    sum_cont(bd);
 	return SOAP_OK; 
 }
 
 // borrar user
-int psdims__user_unregister(struct soap *soap, char *name, char *passwd, int *ERRCODE){
+int psdims__user_unregister(struct soap *soap, char *name, int *ERRCODE){
 	*ERRCODE = 11;
-
+	del_user(bd,name);
 	return SOAP_OK; 
 }
 

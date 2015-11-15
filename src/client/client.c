@@ -54,7 +54,7 @@ int main( int argc, char **argv ) {
 	//print_friend_list(friend_list);
 	//free_friend_list(friend_list);
 	
-	return 0;
+	//return 0;
 	soap_init(&soap);
 
 	serverURL = argv[1];
@@ -62,16 +62,20 @@ int main( int argc, char **argv ) {
 
 	switch (operation) {
 		case 0:
+ 			printf("Introduce tu nick =>");
             scanf("%s", name);
+            printf("Introduce tu contraseña =>");
 			scanf("%s", passwd);
+            printf("Introduce una breve descripcion tuya =>");
 			scanf("%s", description);
-			soap_call_psdims__user_register(&soap, serverURL, "", name, passwd, &result);
+			soap_call_psdims__user_register(&soap, serverURL, "", name, passwd,description, &result);
 			break;
 		case 1:
-			soap_call_psdims__user_unregister(&soap, serverURL, "", name, passwd, &result);
+            printf("Introduce tu nick =>");
+            scanf("%s", name);
+			soap_call_psdims__user_unregister(&soap, serverURL, "", name, &result);
 			break;
 		case 2:
-
 			soap_call_psdims__friend_request(&soap, serverURL, "", name, passwd, dummyname, &result);
 			break;
 		case 3:
@@ -90,7 +94,7 @@ int main( int argc, char **argv ) {
 		exit(-1);
 	}
 
-	printf("Result is = %d\n", result);
+	//printf("Result is = %d\n", result);
 
 	soap_end(&soap);
 	soap_done(&soap);

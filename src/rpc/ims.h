@@ -40,10 +40,10 @@ typedef struct psdims__request_list{
  * Basicas
  ********************************************************************/
 // register user
-int psdims__user_register(char *name, char *passwd, int *ERRCODE);
+int psdims__user_register(char *name, char *passwd,	char *description, int *ERRCODE);
 
 // borrar user
-int psdims__user_unregister(char *name, char *passwd, int *ERRCODE);
+int psdims__user_unregister(char *name, int *ERRCODE);
 
 // enviar solicitud de amistad a usuario
 int psdims__friend_request(char *name, char *passwd, char* request_name, int *ERRCODE);
