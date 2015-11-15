@@ -17,21 +17,21 @@ CREATE TABLE chats(
  ID_ADMIN INT(10) NOT NULL,
  DECRIPTION VARCHAR(100),
  PRIMARY KEY(ID),
- FOREIGN KEY (ID_ADMIN) REFERENCES users(ID)
+ FOREIGN KEY (ID_ADMIN) REFERENCES users(ID) on delete cascade on update cascade
 );
 
 CREATE TABLE friends(
  ID1 INT(10) NOT NULL, 
  ID2 INT(10) NOT NULL,
- FOREIGN KEY (ID1) REFERENCES users(ID),
- FOREIGN KEY (ID2) REFERENCES users(ID) 
+ FOREIGN KEY (ID1) REFERENCES users(ID) on delete cascade on update cascade,
+ FOREIGN KEY (ID2) REFERENCES users(ID) on delete cascade on update cascade 
 );
 
 CREATE TABLE users_chats(
  ID_USERS INT(10) NOT NULL, 
  ID_CHAT INT(10) NOT NULL,
- FOREIGN KEY (ID_USERS) REFERENCES users(ID),
- FOREIGN KEY (ID_CHAT) REFERENCES chats(ID) 
+ FOREIGN KEY (ID_USERS) REFERENCES users(ID) on delete cascade on update cascade,
+ FOREIGN KEY (ID_CHAT) REFERENCES chats(ID) on delete cascade on update cascade
 );
 
 CREATE TABLE messages(
@@ -41,17 +41,20 @@ CREATE TABLE messages(
  TEXT VARCHAR(500) ,
  SEND_TIMESTAMP TIME,
  RECEIVE_TIMESTAMP TIME,
- FOREIGN KEY (ID_SENDER) REFERENCES users(ID),
- FOREIGN KEY (ID_CHAT) REFERENCES chats(ID) 
+ FOREIGN KEY (ID_SENDER) REFERENCES users(ID) on delete cascade on update cascade,
+ FOREIGN KEY (ID_CHAT) REFERENCES chats(ID) on delete cascade on update cascade
 );
 
 CREATE TABLE request(
  ID1 INT(10) NOT NULL, 
  ID2_request INT(10) NOT NULL,
- FOREIGN KEY (ID1) REFERENCES users(ID),
- FOREIGN KEY (ID2_request) REFERENCES users(ID) 
+ FOREIGN KEY (ID1) REFERENCES users(ID) on delete cascade on update cascade,
+ FOREIGN KEY (ID2_request) REFERENCES users(ID) on delete cascade on update cascade 
 );
 
+CREATE TABLE contador(
+ CONT INT(10) NOT NULL
+);
 
 /*--------------------------INSERT DATA---------------------------------------*/
 
@@ -89,5 +92,9 @@ INSERT INTO friends(ID1,ID2) VALUES(2,4);
 INSERT INTO request(ID1,ID2_request) VALUES(1,3);
 INSERT INTO request(ID1,ID2_request) VALUES(4,6);
 INSERT INTO request(ID1,ID2_request) VALUES(6,2);
+
+/*INSERT CONT*/
+
+INSERT INTO contador(CONT) VALUES(7);
 
 
