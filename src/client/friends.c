@@ -33,7 +33,7 @@
 #endif
 
 
-void free_node(friend_node *node) {
+void _friends_free_node(friend_node *node) {
 	if (node->info != NULL) {
 		free(node->info->name);
 		free(node->info->information);
@@ -42,17 +42,17 @@ void free_node(friend_node *node) {
 	free(node);
 }
 
-void delete_node(friend_node *node) {	
+void _friends_delete_node(friend_node *node) {	
 
 		// link list
 		node->prev->next = node->next;
 		node->next->prev = node->prev;
 
 		// free node
-		free_node(node);
+		_friends_free_node(node);
 }
 
-friend_node *find_node(friend_node *list, const char *friend_name) {
+friend_node *_friends_find_node(friend_list *list, const char *friend_name) {
 	friend_node *aux_node;
 
 	aux_node = list->next;
@@ -66,10 +66,14 @@ friend_node *find_node(friend_node *list, const char *friend_name) {
 }
 
 
+/* =========================================================================
+ *  Friend list
+ * =========================================================================*/
+
 /*
  * Prints all friends line by line
  */
-void friends_print_list(friend_node *list) {
+void friends_print_list(friend_list *list) {
 	friend_node *aux_node;
 
 	aux_node = list->next;
@@ -85,7 +89,7 @@ void friends_print_list(friend_node *list) {
  *
  * Returns a pointer to the list phantom node or NULL if fails
  */
-friend_node* friends_new_list() {
+friend_list* friends_new_list() {
 	friend_node *new_list = NULL;
 
 	if ( new_list = malloc( sizeof(friend_node) ) ) {
@@ -99,18 +103,71 @@ friend_node* friends_new_list() {
 
 
 /*
+ * Creates a new friend_node in the list with the provided info
+ * "*info" is attached, not copied
+ *
+ * Returns 0 or -1 if fails
+ */
+int friends_add(friend_list *list, friend_info *info) {
+	friend_node *node;
+
+	if (node = malloc(sizeof(friend_node))) {
+		node->info = info;
+		node->next = list;
+		node->prev = list->prev;
+		list->prev->next = node;
+		list->prev = node;
+		return 0;
+	}
+
+	return -1;
+}
+
+
+/*
+ * Removes and frees the first node that matches the provided "name"
+ *
+ * Returns 0 or -1 if "name" does not exist in the list
+ */
+int friends_del(friend_list *list, const char *name) {
+	friend_node *aux_node;	
+	if ( aux_node = _friends_find_node(list, name) ) {
+		_friends_delete_node(aux_node);
+		return 0;	
+	}
+
+	return -1;
+}
+
+
+/*
+ * Finds the chat whos id is chat_id
+ *
+ * Returns a pointer to the chat_info of NULL if fails
+ */
+friend_info *friends_find(friend_list *list, const char *name) {
+	friend_node *friend_node;
+	friend_node = _friends_find_node(list, name);	
+	return friend_node->info;
+}
+
+/*
  * Frees the friend list
  */
-void friends_free_list(friend_node *list) {
+void friends_free_list(friend_list *list) {
 
 	while ( list->next != list ) {
 		printf("Deleting node: %s\n", list->next->info->name);
-		delete_node(list->next);
+		_friends_delete_node(list->next);
 	}
 
 	free(list);
 }
 
+
+/* =========================================================================
+ *  Friends
+ * =========================================================================*/
 
 /*
  * Allocates a new friend_info struct with the provided data
@@ -134,40 +191,5 @@ friend_info *friends_new_info(const char *name, const char *information){
 }
 
 
-/*
- * Creates a new friend_node in the list with the provided info
- * "*info" is attached, not copied
- *
- * Returns 0 or -1 if fails
- */
-int friends_add(friend_node *list, friend_info *info) {
-	friend_node *node;
 
-	if (node = malloc(sizeof(friend_node))) {
-		node->info = info;
-		node->next = list;
-		node->prev = list->prev;
-		list->prev->next = node;
-		list->prev = node;
-		return 0;
-	}
-
-	return -1;
-}
-
-
-/*
- * Removes and frees the first node that matches the provided "name"
- *
- * Returns 0 or -1 if "name" does not exist in the list
- */
-int friends_del(friend_node *list, const char *name) {
-	friend_node *aux_node;	
-	if ( aux_node = find_node(list, name) ) {
-		delete_node(aux_node);
-		return 0;	
-	}
-
-	return -1;
-}
 

@@ -40,26 +40,56 @@ struct friend_node {
 	friend_node *prev;
 };
 
+typedef friend_node friend_list;
+
+
+/* =========================================================================
+ *  Friend list
+ * =========================================================================*/
 
 /*
  * Prints all friends line by line
  */
-void friends_print_list(friend_node *list);
-
+void friends_print_list(friend_list *list);
 
 /*
  * Allocates a new friend list
  *
  * Returns a pointer to the list phantom node or NULL if fails
  */
-friend_node *friends_new_list();
+friend_list *friends_new_list();
 
+/*
+ * Creates a new friend_node in the list with the provided info
+ * "*info" is attached, not copied
+ *
+ * Returns 0 or -1 if fails
+ */
+int friends_add(friend_list *list, friend_info *info);
+
+/*
+ * Removes and frees the first node that matches the provided "name"
+ *
+ * Returns 0 or -1 if "name" does not exist in the list
+ */
+int friends_del(friend_list *list, const char *name);
+
+/*
+ * Finds the chat whos id is chat_id
+ *
+ * Returns a pointer to the chat_info of NULL if fails
+ */
+friend_info *friends_find(friend_list *list, const char *name);
 
 /*
  * Frees the friend list
  */
-void friends_free_list(friend_node *list);
+void friends_free_list(friend_list *list);
 
+
+/* =========================================================================
+ *  Friends
+ * =========================================================================*/
 
 /*
  * Allocates a new friend_info struct with the provided data
@@ -68,22 +98,6 @@ void friends_free_list(friend_node *list);
  */
 friend_info *friends_new_info(const char *name, const char *information);
 
-
-/*
- * Creates a new friend_node in the list with the provided info
- * "*info" is attached, not copied
- *
- * Returns 0 or -1 if fails
- */
-int friends_add(friend_node *list, friend_info *info);
-
-
-/*
- * Removes and frees the first node that matches the provided "name"
- *
- * Returns 0 or -1 if "name" does not exist in the list
- */
-int friends_del(friend_node *list, const char *name);
 
 
 #endif /* __FRIENDS */
