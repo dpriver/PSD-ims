@@ -27,34 +27,61 @@
 #include <stdio.h>
 
 #include "friends.h"
+#include "chats.h"
 #include "leak_detector_c.h"
 
 
 void print_chats(chat_list *list);
 
 int main (int argc, char **argv) {
-	
-	chat_list *chats;
-	chat_info *aux_chat_info;
 
+	friends *friends;	
+	chats *chats;
+
+	chat_info *aux_chat;
+	friend_info *aux_friend;
+	friend_info *aux_friend_list[5];
 
 	atexit(report_mem_leak);
 
-	chats = cha_lst_new();
+	// init lists
+	friends = fri_new();
+	chats = cha_new();
+
+	// adding friends to friend list
+	fri_add_friend(friends, "Juanito", "Es mi amigo de toda la vida...");
+	fri_add_friend(friends, "pepito", "Es mi Enemigoo de toda la vida...");
+	fri_add_friend(friends, "Manolito", "Es Culero de toda la vida...");
+	fri_add_friend(friends, "Qewdqew", "Es ...");
 
 	printf("= Printing empty list =====\n");
-	print_chats(chats)
+	print_chats(chats);
 	
 
-	
+	aux_friend_list[0] = fri_find_friend(friends, "Juanito");
+	aux_friend_list[1] = fri_find_friend(friends, "Manolito");
+	aux_friend_list[2] = fri_find_friend(friends, "pepito");
+	aux_friend_list[3] = fri_find_friend(friends, "Qewdqew");
 
+	printf("= Adding chats =====\n");
+
+	if( cha_add_chat(chats, 0, "Chat con mi colega Manolito", NULL, &aux_friend_list[1], 1) == -1 ) {
+		printf("Could not add chat\n");
+	}
+	if( cha_add_chat(chats, 1, "Chat con mi colega pepito", NULL, &aux_friend_list[2], 1) == -1 ) {
+		printf("Could not add chat\n");
+	}
+	if( cha_add_chat(chats, 2, "Chat con mis colegas Juanito y Manolito", aux_friend_list[0], &aux_friend_list[1], 1) == -1 ) {
+		printf("Could not add chat\n");
+	}
 
 	cha_lst_free(chats);
+	fri_free(friends);
 	
 }
 
 void print_chats(chat_list *list) {
-	printf("-------------------------------"\n);
-	cha_lst_print(list);
-	printf("-------------------------------"\n),
+	printf("-------------------------------\n");
+	cha_print_chat_list(list);
+	printf("-------------------------------\n");
 }

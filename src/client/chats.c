@@ -37,11 +37,12 @@
 void _chats_free_member(chat_member *member) {
 	// As chat_member is just a wrapper for a friend_info pointer,
 	// this function have nothing more to do
+	free(member);
 }
 
 void _chats_free_member_list(chat_member_list *list) {
 	int i;
-	for (i = 0 ; i < list->n_members ; i++) {
+	for (i = 0 ; i < list->n_members-1 ; i++) {
 		_chats_free_member(&list->members[i]);
 	}
 	free(list->members);
@@ -92,7 +93,7 @@ void _chats_free_info(chat_info *info) {
 
 int _chats_find_member(chat_member_list *list, const char *name) {
 	int i;
-	for(i = 0 ; i < list->n_members ; i++) {
+	for(i = 0 ; i < list->n_members-1 ; i++) {
 		if( strcmp(name, fri_GET_FRIEND_NAME(list->members[i].info)) == 0 ) {
 			return i;
 		}
@@ -153,6 +154,9 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
 	chat_member *aux_admin;
 	chat_member_list *aux_member_list;
 
+#ifdef DEBUG
+	printf("[DEBUG]: Creating admin and member list\n");
+#endif
 	if( (aux_admin = cha_memberinfo_new(admin)) == NULL ) {
 		return -1; // can not create admin info
 	}
@@ -160,20 +164,30 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
 		return -1; // can not create member list
 	}
 
-	for( i = 0; i < n_members ; i++ ) {
+#ifdef DEBUG
+	printf("[DEBUG]: Adding members to list\n");
+#endif
+	for( i = 0; i < n_members-1 ; i++ ) {
 		if( (aux_member = cha_memberinfo_new(members[i])) == NULL ) {
 			return -1; // can not create member
 		}
 		if( cha_memberlst_add(aux_member_list, aux_member) == -1 ) {
 			return -1; // can not add member to chat
 		}
+		cha_memberinfo_free(aux_member);
 	}
 
+#ifdef DEBUG
+	printf("[DEBUG]: Creating chat info\n");
+#endif
 	// create chat info
 	if( (info = cha_info_new(chat_id, description, aux_admin, aux_member_list)) == NULL ) {
 		return -1; // can not create chat info
 	}
 
+#ifdef DEBUG
+	printf("[DEBUG]: adding chat to list\n");
+#endif
 	// add chat_info
 	if( cha_lst_add(chats, info) == -1 ) {
 		return -1; // can not add chat
@@ -201,6 +215,7 @@ int cha_add_member(chats *chats, int chat_id, friend_info *member) {
 	if( cha_memberlst_add(node->info->members, aux_member) == -1 ) {
 		return -1; // can not add member to chat
 	}
+	cha_memberinfo_free(aux_member);
 
 	return 0;
 }
@@ -493,7 +508,7 @@ void cha_memberlst_free(chat_member_list *list) {
  */
 void cha_memberlst_print(chat_member_list *list) {
 	int i;
-	for(i = 0; i < list->n_members ; i++ ) {
+	for(i = 0; i < list->n_members-1 ; i++ ) {
 		if( list->members[i].info != NULL ) {
 		printf("%s: %s\n", fri_GET_FRIEND_NAME(list->members[i].info), 
 					fri_GET_FRIEND_INFORMATION(list->members[i].info));
@@ -538,7 +553,7 @@ int cha_memberlst_del(chat_member_list *list, const char *name) {
 		return -1;
 	}
 
-	for(i = member_index ; member_index < list->n_members-1 ; i++) {
+	for(i = member_index ; member_index < list->n_members-2 ; i++) {
 		list->members[i] = list->members[i+1];
 	}
 	list->n_members--;
