@@ -48,30 +48,26 @@ struct psd_ims_client {
 
 /*
  * Allocates a new psd_ims_client struct
- *
  * Returns a pointer to the structure or NULL if fails
  */
 psd_ims_client *psd_new_client();
-
-/*
- * Sets to client name
- *
- * Returns o or -1 if fails
- */
-int psd_set_name(psd_ims_client *client, const char *name);
-
-/*
- * Sets to client password
- *
- * Returns o or -1 if fails
- */
-int psd_set_pass(psd_ims_client *client, const char *pass);
 
 /*
  * Removes and frees the client struct
  */
 void psd_free_client(psd_ims_client *client);
 
+/*
+ * Sets client name
+ * Returns o or -1 if fails
+ */
+int psd_set_name(psd_ims_client *client, const char *name);
+
+/*
+ * Sets client password
+ * Returns o or -1 if fails
+ */
+int psd_set_pass(psd_ims_client *client, const char *pass);
 
 
 /* =========================================================================
@@ -85,31 +81,43 @@ void psd_print_chats(psd_ims_client *client);
 
 
 /*
- * Creates a new chat in the list with the provided info
- * "*info" is attached, not copied
- *
+ * Adds a new chat to client's chat list
  * Returns 0 or -1 if fails
  */
 int psd_add_chat(psd_ims_client *client, int id, const char *description, const char *admin,
 			char *members[], int n_members);
 
-
-int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user_name);
-
-int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *user_name);
-
-int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_name);
-
-
-int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *user_name);
-
-
 /*
- * Removes and frees the first node that matches the provided "name"
- *
- * Returns 0 or -1 if "name" does not exist in the list
+ * Removes and frees the first chat that matches "chat_ic"
+ * Returns 0 or -1 if "chat_id" does not exist in the list
  */
 int psd_del_chat(psd_ims_client *client, int chat_id);
+
+/*
+ * Adds the member "user_name" to the chat "chat_id"
+ * Returns 0 or -1 if fails
+ */
+int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user_name);
+
+/*
+ * Deletes the first ocurrence of a chat member with the provided "name" from the cha "chat_id"
+ * Returns 0 or -1 if fails
+ */
+int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *user_name);
+
+/*
+ * Switches the current admin with the chat member named "user_name"
+ * that means that the previous admin becomes a normal member
+ * Returns 0 or -1 if fails
+ */
+int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_name);
+
+/*
+ * Promotes the member named "user_name" to chat admin
+ * The previous admin is NOT introduced as a chat member
+ * Returns 0 or -1 if fails
+ */
+int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *user_name);
 
 
 /* =========================================================================
@@ -121,19 +129,14 @@ int psd_del_chat(psd_ims_client *client, int chat_id);
  */
 void psd_print_friends(psd_ims_client *client);
 
-
 /*
- * Creates a new friend in the list with the provided info
- * "*info" is attached, not copied
- *
+ * Adds a new friend to client's friend list
  * Returns 0 or -1 if fails
  */
 int psd_add_friend(psd_ims_client *client, const char *name, const char *information);
 
-
 /*
- * Removes and frees the first node that matches the provided "name"
- *
+ * Removes and frees the first friend that matches "name"
  * Returns 0 or -1 if "name" does not exist in the list
  */
 int psd_del_friend(psd_ims_client *client, const char *name);
