@@ -38,6 +38,7 @@ typedef struct chat_member_list chat_member_list;
 struct chat_member_list {
 	chat_member *members;
 	int n_members;
+	int list_lenght;
 };
 
 typedef struct chat_info chat_info;
@@ -57,6 +58,90 @@ struct chat_node {
 };
 
 typedef chat_node chat_list;
+typedef chat_list chats;
+
+
+/* =========================================================================
+ *  Structs access macros
+ * =========================================================================*/
+#define cha_GET_CHAT_ID(chat_info) \
+		chat_info->id
+
+#define cha_GET_FRIEND_INFORMATION(chat_info) \
+		chat_info->description
+
+#define cha_GET_N_MEMBERS(chat_info) \
+		chat_info->members->n_members
+
+#define cha_GET_MEMBER_NAME(chat_member) \
+		fri_GET_FRIEND_NAME(chat_member->info)
+
+#define cha_GET_MEMBER_INFORMATION(chat_member) \
+		fri_GET_FRIEND_INFORMATION(chat_member->info)
+
+
+/* =========================================================================
+ *  Friend struct API
+ * =========================================================================*/
+
+/*
+ * Allocates a new chat list
+ * Returns a pointer to the list or NULL if fails
+ */
+chats *cha_new();
+
+/*
+ * Frees the chat list
+ */
+void cha_free(chats *chats);
+
+/*
+ * Prints all chats line by line
+ */
+void cha_print_chat_list(chats *chats);
+
+/*
+ * Prints all chat members line by line
+ */
+void cha_print_chat_members(chats *chats, int chat_id);
+
+/*
+ * Creates a new chat in the list with the provided info
+ * Returns 0 or -1 if fails
+ */
+int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], int n_members);
+
+/*
+ * Creates a new chat member in the list with the provided info
+ * Returns 0 or -1 if fails
+ */
+int cha_add_member(chats *chats, int chat_id, friend_info *member);
+
+/*
+ * Deletes chat from the list
+ * Returns 0 or -1 if fails
+ */
+int cha_del_chat(chats *chats, int chat_id);
+
+/*
+ * Deletes chat member from the chat
+ * Returns 0 or -1 if fails
+ */
+int cha_del_member(chats *chats, int chat_id, char *name);
+
+/*
+ * Switches the current admin with the chat member named "name"
+ * that means that the previous admin becomes a normal member
+ * Returns 0 or -1 if fails
+ */
+int cha_change_admin(chats *chats, int chat_id, char *name);
+
+/*
+ * Promotes the member named "name" to chat admin
+ * The previous admin is NOT introduced as a chat member
+ * Returns 0 or -1 if fails
+ */
+int cha_promote_to_admin(chats *chats, int chat_id, char *name);
 
 
 /* =========================================================================
@@ -64,42 +149,40 @@ typedef chat_node chat_list;
  * =========================================================================*/
 
 /*
- * Prints all chats line by line
- */
-void chats_print_list(chat_node *list);
-
-/*
  * Allocates a new chat list
- *
  * Returns a pointer to the list phantom node or NULL if fails
  */
-chat_list *chats_new_list();
+chat_list *cha_lst_new();
+
+/*
+ * Frees the chat list
+ */
+void cha_lst_free(chat_list *list);
+
+/*
+ * Prints all chats line by line
+ */
+void cha_lst_print(chat_node *list);
 
 /*
  * Creates a new chat_node in the list with the provided info
  * "*info" is attached, not copied
- *
  * Returns 0 or -1 if fails
  */
-int chats_add(chat_list *list, chat_info *info);
+int cha_lst_add(chat_list *list, chat_info *info);
 
 /*
  * Removes and frees the chat with id "chat_id"
- *
  * Returns 0 or -1 if "chat_id" does not exist in the list
  */
-int chats_del(chat_list *list, int chat_id);
+int cha_lst_del(chat_list *list, int chat_id);
 
 /*
  * Finds the chat whos id is chat_id
- *
  * Returns a pointer to the chat_info of NULL if fails
  */
-chat_info *chats_find(chat_list *list, int chat_id);
-/*
- * Frees the chat list
- */
-void chats_free_list(chat_list *list);
+chat_info *cha_lst_find(chat_list *list, int chat_id);
+
 
 
 /* =========================================================================
@@ -108,26 +191,29 @@ void chats_free_list(chat_list *list);
 
 /*
  * Allocates a new chat_info struct with the provided data
- *
  * Returns a pointer to the structure or NULL if fails
  */
-chat_info *chats_new_info(const char *description, chat_member *admin, chat_member_list *members);
+chat_info *cha_info_new(int id, const char *description, chat_member *admin, chat_member_list *members);
+
+/*
+ * Frees the chat_info struct
+ * Returns a pointer to the structure or NULL if fails
+ */
+void cha_info_free(chat_info *info);
 
 /*
  * Switches the current admin with the chat member named "name"
  * that means that the previous admin becomes a normal member
- *
  * Returns 0 or -1 if fails
  */
-int chats_change_admin(chat_info *chat_info, const char *name);
+int cha_info_change_admin(chat_info *chat_info, const char *name);
 
 /*
  * Promotes the member named "name" to chat admin
  * The previous admin is NOT introduced as a chat member
- *
  * Returns 0 or -1 if fails
  */
-int chats_promote_to_admin(chat_info *chat_info, const char *name);
+int cha_info_promote_to_admin(chat_info *chat_info, const char *name);
 
 
 /* =========================================================================
@@ -136,38 +222,39 @@ int chats_promote_to_admin(chat_info *chat_info, const char *name);
 
 /*
  * Allocates a new chat member list
- *
  * Returns a pointer to the list phantom node or NULL if fails
  */
-chat_member_list *chats_new_member_list();
-
-/*
- * Adds the member to the chat list
- * "*member" is attached, not copied
- *
- * Returns 0 or -1 if fails
- */
-int chats_add_member(chat_member_list *list, chat_member *member);
-
-/*
- * Deletes the first ocurrence of a chat member with the provided "name"
- *
- * Returns 0 or -1 if fails
- */
-int chats_del_member(chat_member_list *list, const char *name);
-
-/*
- * Finds the first chat member named "user_name"
- *
- * Returns a pointer to the chat_member struct or NULL if fails
- */
-chat_member *chats_find_member(chat_member_list *list, const char *user_name);
+chat_member_list *cha_memberlst_new();
 
 /*
  * Creates a new chat_node in the list with the provided info
  * "*info" is attached, not copied
  */
-void chats_free_member_list(chat_member_list *list);
+void cha_memberlst_free(chat_member_list *list);
+
+/*
+ * Prints all chat members line by line
+ */
+void cha_memberlst_print(chat_member_list *list);
+
+/*
+ * Adds the member to the chat list
+ * "*member" is attached, not copied
+ * Returns 0 or -1 if fails
+ */
+int cha_memberlst_add(chat_member_list *list, chat_member *member);
+
+/*
+ * Deletes the first ocurrence of a chat member with the provided "name"
+ * Returns 0 or -1 if fails
+ */
+int cha_memberlst_del(chat_member_list *list, const char *name);
+
+/*
+ * Finds the first chat member named "user_name"
+ * Returns a pointer to the chat_member struct or NULL if fails
+ */
+chat_member *cha_memberlst_find(chat_member_list *list, const char *user_name);
 
 
 /* =========================================================================
@@ -176,10 +263,15 @@ void chats_free_member_list(chat_member_list *list);
 
 /*
  * Allocates a new chat member struct
- *
  * Returns a pointer to the structure or NULL if fails
  */
-chat_member *chats_new_member(friend_info *friend_info);
+chat_member *cha_memberinfo_new(friend_info *friend_info);
+
+/*
+ * Frees the chat member
+ * Returns a pointer to the structure or NULL if fails
+ */
+chat_member *cha_memberinfo_free(chat_member *info);
 
 
 #endif /* __CHATS */
