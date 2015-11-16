@@ -1,4 +1,4 @@
-SOURCES=test_client_friend_list.c test_persistence.c
+SOURCES=test_client_friend_list.c test_persistence.c test_psd_client_api.c
 HEADERS=
 
 TARGET=$(SOURCES:%.c=$(TEST_BIN_DIR)/%)
