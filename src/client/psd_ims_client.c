@@ -52,7 +52,8 @@ psd_ims_client *psd_new_client() {
 	client->last_connection = 0; //TODO change this
 
 	client->friends = fri_new();
-	client->chats = chats_new_list();
+	//client->chats = chats_new_list();
+	client->chats = NULL;
 
 	return client;
 }
@@ -99,7 +100,7 @@ int psd_set_pass(psd_ims_client *client, const char *pass) {
 void psd_free_client(psd_ims_client *client) {
 
 	fri_free(client->friends);
-	chats_free_list(client->chats);
+	//chats_free_list(client->chats);
 
 	free(client->user_name);
 	free(client->user_pass);
@@ -117,7 +118,9 @@ void psd_free_client(psd_ims_client *client) {
  * Prints all chats line by line
  */
 void psd_print_chats(psd_ims_client *client) {
+/*
 	chats_print_list(client->chats);
+*/
 }
 
 
@@ -127,9 +130,9 @@ void psd_print_chats(psd_ims_client *client) {
  *
  * Returns 0 or -1 if fails
  */
-int psd_add_chat(psd_ims_client *client, const char *description, const char *admin,
-			const char **members, int n_members) {
-	
+int psd_add_chat(psd_ims_client *client, int id, const char *description, const char *admin,
+			char *members[], int n_members) {
+/*
 	int i;
 	chat_member *chat_admin;
 	chat_member_list *chat_members;
@@ -138,14 +141,18 @@ int psd_add_chat(psd_ims_client *client, const char *description, const char *ad
 	friend_info *aux_friend_info;
 
 	// convert string admin into chat_member
+#ifdef DEBUG
+	printf("[DEBUG]: convert string admin into chat member\n");
+#endif
 	if ( strcmp(admin, client->user_name) == 0 ) {
-		aux_friend_info = fri_info_new(client->user_name, "myself"); //TODO change this
+		aux_friend_info = NULL;
 	}
 	else {
 		if ( (aux_friend_info = fri_find_friend(client->friends, admin)) == NULL ) {
 			return -1;  // Chat admin is not a friend
 		}
 	}
+
 	chat_admin = chats_new_member(aux_friend_info);
 
 
@@ -159,7 +166,7 @@ int psd_add_chat(psd_ims_client *client, const char *description, const char *ad
 
 
 	// create and inicialize chat_info struct
-	if ( (chat_info = chats_new_info(description, chat_admin, chat_members)) == NULL ) {
+	if ( (chat_info = chats_new_info(id, description, chat_admin, chat_members)) == NULL ) {
 		return -1;
 	} 
 
@@ -169,11 +176,13 @@ int psd_add_chat(psd_ims_client *client, const char *description, const char *ad
 	}
 
 	return 0;
+*/
+	return -1;
 }
 
 
 int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user_name) {
-	
+/*
 	chat_info *chat_info;
 	friend_info *friend_info;
 	chat_member *chat_member;
@@ -195,11 +204,13 @@ int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user
 	}
 
 	return 0;
+*/
+	return -1;
 }
 
 
 int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *user_name) {
-
+/*
 	chat_info *chat_info;
 	friend_info *friend_info;
 	chat_member *chat_member;
@@ -214,11 +225,13 @@ int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *us
 	}
 
 	return 0;
+*/
+	return -1;
 }
 
 
 int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_name) {
-
+/*
 	chat_info *chat_info;
 
 	// find chat in client->chats
@@ -229,11 +242,14 @@ int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_
 	if ( chats_change_admin(chat_info, user_name) == -1 ) {
 		return -1;
 	}
+*/
+	return -1;
 }
 
 
 int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *user_name) {
 
+/*
 	chat_info *chat_info;
 
 	// find chat in client->chats
@@ -249,7 +265,8 @@ int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *u
 	if ( chats_promote_to_admin(chat_info, user_name) == -1 ) {
 		return -1;
 	}
-
+*/
+	return -1;
 }
 
 
@@ -259,7 +276,10 @@ int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *u
  * Returns 0 or -1 if "name" does not exist in the list
  */
 int psd_del_chat(psd_ims_client *client, int chat_id) {
+	/*
 	return chats_del(client->chats, chat_id);
+	*/
+	return -1;
 }
 
 

@@ -90,8 +90,8 @@ void psd_print_chats(psd_ims_client *client);
  *
  * Returns 0 or -1 if fails
  */
-int psd_add_chat(psd_ims_client *client, const char *description, const char *admin,
-			const char **members, int n_members);
+int psd_add_chat(psd_ims_client *client, int id, const char *description, const char *admin,
+			char *members[], int n_members);
 
 
 int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user_name);

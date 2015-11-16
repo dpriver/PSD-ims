@@ -69,16 +69,16 @@ struct friends {
  *  Structs access macros
  * =========================================================================*/
 #define fri_GET_FRIEND_NAME(friend_info) \
-		friend_info->name;
+		friend_info->name
 
 #define fri_GET_FRIEND_INFORMATION(friend_info) \
-		friend_info->information;
+		friend_info->information
 
 #define fri_GET_REQUEST_NAME(request_info) \
-		request_info->user_name;
+		request_info->user_name
 
 #define fri_SET_REQUEST_SEND_DATE(request_info) \
-		request_info->send_date;
+		request_info->send_date
 
 #define fri_GET_N_REQUEST(friend_struct) \
 		friend_struct->n_received_requests
@@ -90,7 +90,7 @@ struct friends {
 
 /*
  * Allocates a new friend list
- * Returns a pointer to the list phantom node or NULL if fails
+ * Returns a pointer to the list or NULL if fails
  */
 friends *fri_new();
 
@@ -116,7 +116,6 @@ void fri_print_rcv_request_list(friends *friends);
 
 /*
  * Creates a new friend_node in the list with the provided info
- * "*info" is attached, not copied
  * Returns 0 or -1 if fails
  */
 int fri_add_friend(friends *friends, const char *name, const char *information);
