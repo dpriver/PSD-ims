@@ -1,7 +1,7 @@
 /*******************************************************************************
  *	friends.c
  *
- *  <ONE LINE DESCRIPTION.>
+ *  Program to test the client friend list
  *
  *
  *  This file is part of PSD-IMS
