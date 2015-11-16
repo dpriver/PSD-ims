@@ -88,7 +88,7 @@ int main( int argc, char **argv ) {
 
 void print_friends(psd_ims_client *client) {
 	printf(" -------- friends ----------------------\n");
-	friends_print_list(client->friends);
+	fri_print_friend_list(client->friends);
 	printf("----------------------------------------\n");
 }
 

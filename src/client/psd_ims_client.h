@@ -37,7 +37,7 @@ struct psd_ims_client {
 	char *user_name;
 	char *user_pass;
 	int last_connection;
-	friend_list *friends;
+	friends *friends;
 	chat_list *chats;
 };
 

@@ -32,48 +32,43 @@
 
 int main (int argc, char **argv) {
 	
-	friend_node *friend_list;
-	friend_info *info;
+	friends *friends;
 		
 	atexit(report_mem_leak);
 
 	printf("Creating new friend list\n");
-	friend_list = friends_new_list();
+	friends = fri_new();
 
 	printf("Lista de amigos:\n");
 	printf("---------------------------\n");
-	friends_print_list(friend_list);
+	fri_print_friend_list(friends);
 	printf("---------------------------\n");
 
 	printf("Adding friends to list\n");
-	info = friends_new_info("Juanito", "Es mi amigo de toda la vida...");
-	friends_add(friend_list, info);
-	info = friends_new_info("pepito", "Es mi Enemigoo de toda la vida...");
-	friends_add(friend_list, info);
-	info = friends_new_info("Manolito", "Es Culero de toda la vida...");
-	friends_add(friend_list, info);
-	info = friends_new_info("Qewdqew", "Es ...");
-	friends_add(friend_list, info);
+	fri_add_friend(friends, "Juanito", "Es mi amigo de toda la vida...");
+	fri_add_friend(friends, "pepito", "Es mi Enemigoo de toda la vida...");
+	fri_add_friend(friends, "Manolito", "Es Culero de toda la vida...");
+	fri_add_friend(friends, "Qewdqew", "Es ...");
 	printf("---------------------------\n");
-	friends_print_list(friend_list);
+	fri_print_friend_list(friends);
 	printf("---------------------------\n");
 	
 
 	printf("Removing friend list\n");
-	if(friends_del(friend_list, "Manolito") != 0) {
+	if(fri_del_friend(friends, "Manolito") != 0) {
 		printf("Fallo al borrar Manolito\n");
 	}
-	if(friends_del(friend_list, "Qewdqew") != 0) {
+	if(fri_del_friend(friends, "Qewdqew") != 0) {
 		printf("Fallo al borrar Qewdqew\n");
 	}
-	if(friends_del(friend_list, "Juanito") != 0) {
+	if(fri_del_friend(friends, "Juanito") != 0) {
 		printf("Fallo al borrar Juanito\n");
 	}
 	printf("---------------------------\n");
-	friends_print_list(friend_list);
+	fri_print_friend_list(friends);
 	printf("---------------------------\n");
 
-	friends_free_list(friend_list);
+	fri_free(friends);
 
 	return 0;
 }
