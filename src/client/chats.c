@@ -234,7 +234,7 @@ int cha_del_chat(chats *chats, int chat_id) {
  * Deletes chat member from the chat
  * Returns 0 or -1 if fails
  */
-int cha_del_member(chats *chats, int chat_id, char *name) {
+int cha_del_member(chats *chats, int chat_id, const char *name) {
 	chat_node *node;
 	
 	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
@@ -254,7 +254,7 @@ int cha_del_member(chats *chats, int chat_id, char *name) {
  * that means that the previous admin becomes a normal member
  * Returns 0 or -1 if fails
  */
-int cha_change_admin(chats *chats, int chat_id, char *name) {
+int cha_change_admin(chats *chats, int chat_id, const char *name) {
 	chat_node *node;
 	
 	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
@@ -274,7 +274,7 @@ int cha_change_admin(chats *chats, int chat_id, char *name) {
  * The previous admin is NOT introduced as a chat member
  * Returns 0 or -1 if fails
  */
-int cha_promote_to_admin(chats *chats, int chat_id, char *name) {
+int cha_promote_to_admin(chats *chats, int chat_id, const char *name) {
 	chat_node *node;
 	
 	if( (node = _chats_find_node(chats, chat_id)) == NULL
