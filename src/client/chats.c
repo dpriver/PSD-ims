@@ -25,6 +25,7 @@
 
 #include "chats.h"
 #include "friends.h"
+#include "messages.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -63,7 +64,7 @@ void _chats_free_node(chat_node *node) {
 	if (node->info != NULL) {
 		free(node->info->description);
 		free(node->info->admin);
-		//_chats_free_member(node->info->admin);
+		mes_free(node->info->messages);
 		_chats_free_member_list(node->info->members);
 		free(node->info);
 	}
@@ -201,6 +202,11 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
 	if( (info = cha_info_new(chat_id, description, aux_admin, aux_member_list)) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not create chat info");
 		return -1; // can not create chat info
+	}
+
+	if( (info->messages = mes_new()) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not create message list");
+		return -1;
 	}
 
 	DEBUG_INFO_PRINTF("Created chat %d with %d members", info->id, info->members->n_members);

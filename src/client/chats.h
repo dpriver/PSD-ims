@@ -28,6 +28,7 @@
 
 
 #include "friends.h"
+#include "messages.h"
 
 typedef struct chat_member chat_member;
 struct chat_member {
@@ -47,7 +48,7 @@ struct chat_info {
 	char *description;
 	chat_member *admin;
 	chat_member_list *members;
-	//message_list *messages;
+	messages *messages;
 };
 
 typedef struct chat_node chat_node;
