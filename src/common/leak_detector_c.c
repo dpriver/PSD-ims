@@ -5,6 +5,7 @@
 
 #undef		malloc
 #undef		calloc
+#undef		realloc
 #undef 		free
 
 
@@ -12,8 +13,10 @@ static MEM_LEAK * ptr_start = NULL;
 static MEM_LEAK * ptr_last =  NULL;
 
 static n_elems_alloc = 0;
-static n_elems_free = 0;
 static n_elems_list = 0;
+
+static n_alloc_errors = 0;
+static n_free_errors = 0;
 
 /*
  * logs mem_alloc information
@@ -62,7 +65,9 @@ void report_mem_leak(void)
 			fwrite(info, (strlen(info) + 1) , 1, fp_write);
 		}
 	}
-	sprintf(info, "LIST=%d, ALLOC=%d\n\n", n_elems_list, n_elems_alloc);
+	sprintf(info, "LIST=%d, ALLOC=%d\n", n_elems_list, n_elems_alloc);
+	fwrite(info, (strlen(info) + 1) , 1, fp_write);
+	sprintf(info, "ALLOC_ERR=%d, FREE_ERR=%d\n\n", n_alloc_errors, n_free_errors);
 	fwrite(info, (strlen(info) + 1) , 1, fp_write);
 	
 	fclose(fp_write);
@@ -94,12 +99,26 @@ void clear()
 void * xmalloc (unsigned int size, const char * file, unsigned int line)
 {
 	void * ptr = malloc (size);
-	if (ptr != NULL) 
-	{
+	if (ptr == NULL) {
+		n_alloc_errors++;
+	}
+	else {
 		n_elems_alloc++;
 		add_mem_info(ptr, size, file, line);
 	}
 	return ptr;
+}
+
+
+void *xrealloc(void *ptr, size_t size, const char * file, unsigned int line)
+{
+	void *ptr_new = realloc(ptr, size);
+	if(ptr_new != NULL)
+	{
+		remove_mem_info(ptr);
+		add_mem_info(ptr_new, size, file, line);
+	}
+	return ptr_new;
 }
 
 /*
@@ -124,9 +143,13 @@ void * xcalloc (unsigned int elements, unsigned int size, const char * file, uns
  */
 void xfree(void * mem_ref)
 {
-	n_elems_alloc--;
-	remove_mem_info(mem_ref);
-	free(mem_ref);
+	if( remove_mem_info(mem_ref) == 0 ) {
+		n_elems_alloc--;
+		free(mem_ref);
+	}
+	else {
+		n_free_errors++;
+	}
 }
 
 
@@ -156,7 +179,6 @@ void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsign
 		ptr_last = mem_leak;				
 	}
 	n_elems_list++;
-	//log_mem_alloc("ALLOCATED" ,mem_ref, size, file, line);
 }
 
 
@@ -164,7 +186,7 @@ void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsign
  * if the allocated memory info is part of the list, removes it
  *
  */
-void remove_mem_info (void * mem_ref)
+int remove_mem_info (void * mem_ref)
 {
 	MEM_LEAK  *leak_info, *leak_info_prev = NULL;
 
@@ -176,7 +198,7 @@ void remove_mem_info (void * mem_ref)
 		if( leak_info->mem_info.address == mem_ref ) {
 
 			// Deletes the mem registry
-			if( leak_info_prev == NULL ) { // deletes the first element
+			if( leak_info_prev == NULL ) { // is the first element
 				ptr_start = leak_info->next;
 				if( ptr_last == leak_info ) { // is also the last
 					ptr_last = NULL;
@@ -188,12 +210,13 @@ void remove_mem_info (void * mem_ref)
 					ptr_last = leak_info_prev;
 				}
 			}
+			n_elems_list--;
 
 			free(leak_info);
-			n_elems_list--;
-			return;
+			return 0;
 		}
 		leak_info_prev = leak_info;
 		leak_info = leak_info->next;
 	}
+	return -1;
 }
