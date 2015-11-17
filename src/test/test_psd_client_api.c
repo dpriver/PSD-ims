@@ -30,7 +30,6 @@
 #include "leak_detector_c.h"
 
 
-
 void print_friends(psd_ims_client *client);
 void print_chats(psd_ims_client *client);
 
@@ -45,7 +44,6 @@ int main( int argc, char **argv ) {
 	char *aux_chat_members[5]; 
 
 	atexit(report_mem_leak);
-
 
 	if ( (client = psd_new_client()) == NULL ) {
 		printf("Could not create psd_client structure\n");		
@@ -75,7 +73,6 @@ int main( int argc, char **argv ) {
 
 
 	printf("= Deleting some friends =====\n");
-	psd_del_friend(client, "Juanito");
 	psd_del_friend(client, "qewd");
 	psd_del_friend(client, "Pepe");
 	print_friends(client);
@@ -84,31 +81,51 @@ int main( int argc, char **argv ) {
 	printf("= Creating some chats =====\n");
 	aux_chat_members[0] = friends[1];
 	if ( psd_add_chat(client, 0, "Chat con mi colega Manolito", user_name, aux_chat_members, 1) ) {
-		printf("Could not create chat\n");
+		printf("Could not create chat 0\n");
 	}
+	else {
+		printf("Created chat 0 with members:\n");
+		cha_print_chat_members(client->chats, 0);
+	}
+
 	aux_chat_members[0] = friends[0];
 	if ( psd_add_chat(client, 1, "Chat con mi colega Juanito", user_name, aux_chat_members, 1) ) {
-		printf("Could not create chat\n");
+		printf("Could not create chat 1\n");
 	}
+	else {
+		printf("Created chat 1 with members:\n");
+		cha_print_chat_members(client->chats, 1);
+	}
+	
 	aux_chat_members[0] = friends[3];
-	aux_chat_members[0] = friends[0];
+	aux_chat_members[1] = friends[0];
 	if ( psd_add_chat(client, 2, "Chat con mis colegas Culero y Juanito", user_name, aux_chat_members, 2) ) {
-		printf("Could not create chat\n");
+		printf("Could not create chat 2\n");
+	}
+	else {
+		printf("Created chat 2 with members:\n");
+		cha_print_chat_members(client->chats, 2);
 	}
 
-
-	if ( psd_add_friend_to_chat(client, 1, "qewd") ) {
-		printf("Could not add user to chat\n");
-	}
-	if ( psd_del_friend_from_chat(client, 1, "qewd") ) {
-		printf("Could not delete user from chat\n");
-	}
 	print_chats(client);
 
-	if ( psd_del_chat(client, 1) ) {
+	if ( psd_add_friend_to_chat(client, 1, "Culero") != 0) {
+		printf("Could not add user to chat\n");
+	}
+	else {
+		cha_print_chat_members(client->chats, 1);
+	}
+	if ( psd_del_friend_from_chat(client, 1, "Culero") != 0 ) {
+		printf("Could not delete user from chat\n");
+	}
+	else {
+		cha_print_chat_members(client->chats, 1);
+	}
+
+	if ( psd_del_chat(client, 1) != 0) {
 		printf("Could not delete chat\n");
 	}
-	if ( psd_del_chat(client, 0) ) {
+	if ( psd_del_chat(client, 0) != 0) {
 		printf("Could not delete chat\n");
 	}
 	print_chats(client);
@@ -128,7 +145,7 @@ void print_friends(psd_ims_client *client) {
 
 void print_chats(psd_ims_client *client) {
 	printf(" --------- chats -----------------------\n");
-	//cha_print_list(client->chats);
+	cha_print_chat_list(client->chats);
 	printf("----------------------------------------\n");
 }
 

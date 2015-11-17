@@ -74,8 +74,9 @@ int main (int argc, char **argv) {
 	if( cha_add_chat(chats, 2, "Chat con mis colegas Juanito y Manolito", aux_friend_list[0], &aux_friend_list[1], 1) == -1 ) {
 		printf("Could not add chat\n");
 	}
-
-	cha_lst_free(chats);
+	print_chats(chats);
+	
+	cha_free(chats);
 	fri_free(friends);
 	
 }

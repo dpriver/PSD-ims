@@ -44,15 +44,15 @@ tests: test_message
 	@echo $(ECHO_FLAGS) "\t====== TESTS built succesfully ======\n"
 
 common_debug: common_message
-	@$(MAKE) -C $(COMMON_DIR) EXTRA_CFLAGS=-DDEBUG  all
+	@$(MAKE) -C $(COMMON_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE"  all
 	@echo $(ECHO_FLAGS) "\t====== COMMON (DEBUG) built succesfully ======\n"
 
 client_debug: client_message
-	@$(MAKE) -C $(CLIENT_DIR) EXTRA_CFLAGS=-DDEBUG all
+	@$(MAKE) -C $(CLIENT_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE" all
 	@echo $(ECHO_FLAGS) "\t====== CLIENT (DEBUG) built succesfully ======\n"
 
 server_debug: server_message
-	@$(MAKE) -C $(SERVER_DIR) EXTRA_CFLAGS=-DDEBUG  all
+	@$(MAKE) -C $(SERVER_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE"  all
 	@echo $(ECHO_FLAGS) "\t====== SERVER (DEBUG) built succesfully ======\n"
 
 

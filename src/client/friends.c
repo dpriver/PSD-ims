@@ -28,12 +28,19 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef DEBUG_TRACE
+	#undef DEBUG_TRACE
+#endif
+
+#include "debug_def.h"
+
 #ifdef DEBUG
 #include "leak_detector_c.h"
 #endif
 
 
 void _friends_free_info(friend_info *info) {
+	DEBUG_TRACE_PRINT();
 	if (info != NULL) {
 		free(info->name);
 		free(info->information);
@@ -42,17 +49,18 @@ void _friends_free_info(friend_info *info) {
 }
 
 void _friends_delete_node(friend_node *node) {	
+	DEBUG_TRACE_PRINT();
+	// link list
+	node->prev->next = node->next;
+	node->next->prev = node->prev;
 
-		// link list
-		node->prev->next = node->next;
-		node->next->prev = node->prev;
-
-		// free node
-		_friends_free_info(node->info);
-		free(node);
+	// free node
+	_friends_free_info(node->info);
+	free(node);
 }
 
 friend_node *_friends_find_node(friend_list *list, const char *friend_name) {
+	DEBUG_TRACE_PRINT();
 	friend_node *aux_node;
 
 	aux_node = list->next;
@@ -66,6 +74,7 @@ friend_node *_friends_find_node(friend_list *list, const char *friend_name) {
 }
 
 void _friends_free_req_info(request_info *info) {
+	DEBUG_TRACE_PRINT();
 	if (info != NULL) {
 		free(info->user_name);
 		free(info);
@@ -73,17 +82,19 @@ void _friends_free_req_info(request_info *info) {
 }
 
 void _friends_delete_req_node(friend_request_node *node) {
-		// link list
-		node->prev->next = node->next;
-		node->next->prev = node->prev;
+	DEBUG_TRACE_PRINT();
+	// link list
+	node->prev->next = node->next;
+	node->next->prev = node->prev;
 
-		// free node
-		_friends_free_req_info(node->info);
-		free(node);
+	// free node
+	_friends_free_req_info(node->info);
+	free(node);
 }
 
 
 friend_request_node *_friends_find_req_node(friend_request_list *list, const char *user_name) {
+	DEBUG_TRACE_PRINT();
 	friend_request_node *aux_node;
 
 	aux_node = list->next;
@@ -106,6 +117,7 @@ friend_request_node *_friends_find_req_node(friend_request_list *list, const cha
  * Returns a pointer to the list phantom node or NULL if fails
  */
 friends *fri_new() {
+	DEBUG_TRACE_PRINT();
 	friends *friends_new;
 
 	if ( (friends_new = malloc( sizeof(friends) )) == NULL ) {
@@ -140,6 +152,7 @@ friends *fri_new() {
  * Frees the friend list
  */
 void fri_free(friends *friends) {
+	DEBUG_TRACE_PRINT();
 
 	fri_lst_free(friends->friend_list);
 	fri_reqlst_free(friends->sended_requests);
@@ -152,6 +165,7 @@ void fri_free(friends *friends) {
  * Prints all friends line by line
  */
 void fri_print_friend_list(friends *friends) {
+	DEBUG_TRACE_PRINT();
 	fri_lst_print(friends->friend_list);
 }
 
@@ -160,6 +174,7 @@ void fri_print_friend_list(friends *friends) {
  * Prints all sended request line by line
  */
 void fri_print_snd_request_list(friends *friends) {
+	DEBUG_TRACE_PRINT();
 	fri_reqlst_print(friends->sended_requests);
 }
 
@@ -168,6 +183,7 @@ void fri_print_snd_request_list(friends *friends) {
  * Prints all received request line by line
  */
 void fri_print_rcv_request_list(friends *friends) {
+	DEBUG_TRACE_PRINT();
 	fri_reqlst_print(friends->received_requests);
 }
 
@@ -178,6 +194,7 @@ void fri_print_rcv_request_list(friends *friends) {
  * Returns 0 or -1 if fails
  */
 int fri_add_friend(friends *friends, const char *name, const char *information) {
+	DEBUG_TRACE_PRINT();
 	friend_info *info;
 
 	if ( (info = fri_info_new(name, information)) == NULL ) {
@@ -185,6 +202,7 @@ int fri_add_friend(friends *friends, const char *name, const char *information) 
 	}
 
 	if ( fri_lst_add(friends->friend_list, info) == -1 ) {
+		DEBUG_FAILURE_PRINTF("Could not add friend to list");
 		return -1;
 	}
 
@@ -197,6 +215,7 @@ int fri_add_friend(friends *friends, const char *name, const char *information) 
  * Returns 0 or -1 if fails
  */
 int fri_add_snd_request(friends *friends, const char *user_name, int send_date) {
+	DEBUG_TRACE_PRINT();
 	request_info *info;
 
 	if ( (info = fri_reqinfo_new(user_name, send_date)) == NULL ) {
@@ -204,6 +223,7 @@ int fri_add_snd_request(friends *friends, const char *user_name, int send_date) 
 	}
 
 	if ( fri_reqlst_add(friends->sended_requests, info) == -1 ) {
+		DEBUG_FAILURE_PRINTF("Could not add snd request to list");
 		return -1;
 	}
 
@@ -216,6 +236,7 @@ int fri_add_snd_request(friends *friends, const char *user_name, int send_date) 
  * Returns 0 or -1 if fails
  */
 int fri_add_rcv_request(friends *friends, const char *user_name, int send_date) {
+	DEBUG_TRACE_PRINT();
 	request_info *info;
 
 	if ( (info = fri_reqinfo_new(user_name, send_date)) == NULL ) {
@@ -223,6 +244,7 @@ int fri_add_rcv_request(friends *friends, const char *user_name, int send_date) 
 	}
 
 	if ( fri_reqlst_add(friends->received_requests, info) == -1 ) {
+		DEBUG_FAILURE_PRINTF("Could not add recv request to list");
 		return -1;
 	}
 
@@ -235,6 +257,7 @@ int fri_add_rcv_request(friends *friends, const char *user_name, int send_date) 
  * Returns 0 or -1 if "name" does not exist in the list
  */
 int fri_del_friend(friends *friends, const char *name) {
+	DEBUG_TRACE_PRINT();
 	return fri_lst_del(friends->friend_list, name);
 }
 
@@ -244,6 +267,7 @@ int fri_del_friend(friends *friends, const char *name) {
  * Returns 0 or -1 if fails
  */
 int fri_del_snd_request(friends *friends, const char *user_name) {
+	DEBUG_TRACE_PRINT();
 	return fri_reqlst_del(friends->sended_requests, user_name);
 }
 
@@ -253,6 +277,7 @@ int fri_del_snd_request(friends *friends, const char *user_name) {
  * Returns 0 or -1 if fails
  */
 int fri_del_rcv_request(friends *friends, const char *user_name) {
+	DEBUG_TRACE_PRINT();
 	return fri_reqlst_del(friends->received_requests, user_name);
 }
 
@@ -262,8 +287,13 @@ int fri_del_rcv_request(friends *friends, const char *user_name) {
  * Returns a pointer to the chat_info of NULL if fails
  */
 friend_info *fri_find_friend(friends *friends, const char *name) {
+	DEBUG_TRACE_PRINT();
 	friend_node *node;
-	node = _friends_find_node(friends->friend_list, name);	
+
+	if( (node = _friends_find_node(friends->friend_list, name)) == NULL ) {
+		return NULL;
+	}	
+	
 	return node->info;
 }
 
@@ -273,6 +303,7 @@ friend_info *fri_find_friend(friends *friends, const char *name) {
  * Returns a pointer to the chat_info of NULL if fails
  */
 request_info *fri_find_snd_request(friends *friends, const char *name) {
+	DEBUG_TRACE_PRINT();
 	friend_request_node *node;
 	node = _friends_find_req_node(friends->sended_requests, name);	
 	return node->info;
@@ -284,6 +315,7 @@ request_info *fri_find_snd_request(friends *friends, const char *name) {
  * Returns a pointer to the chat_info of NULL if fails
  */
 request_info *fri_find_rcv_request(friends *friends, const char *name) {
+	DEBUG_TRACE_PRINT();
 	friend_request_node *node;
 	node = _friends_find_req_node(friends->received_requests, name);	
 	return node->info;
@@ -299,6 +331,7 @@ request_info *fri_find_rcv_request(friends *friends, const char *name) {
  * Returns a pointer to the list phantom node or NULL if fails
  */
 friend_list *fri_lst_new() {
+	DEBUG_TRACE_PRINT();
 	friend_node *new_list = NULL;
 
 	if ( new_list = malloc( sizeof(friend_node) ) ) {
@@ -315,10 +348,8 @@ friend_list *fri_lst_new() {
  * Frees the friend list
  */
 void fri_lst_free(friend_list *list) {
+	DEBUG_TRACE_PRINT();
 	while ( list->next != list ) {
-#ifdef DEBUG
-		printf("Deleting node: %s\n", list->next->info->name);
-#endif
 		_friends_delete_node(list->next);
 	}
 
@@ -330,6 +361,7 @@ void fri_lst_free(friend_list *list) {
  * Prints all friends line by line
  */
 void fri_lst_print(friend_list *list) {
+	DEBUG_TRACE_PRINT();
 	friend_node *aux_node;
 
 	aux_node = list->next;
@@ -346,6 +378,7 @@ void fri_lst_print(friend_list *list) {
  * Returns 0 or -1 if fails
  */
 int fri_lst_add(friend_list *list, friend_info *info) {
+	DEBUG_TRACE_PRINT();
 	friend_node *node;
 
 	if (node = malloc(sizeof(friend_node))) {
@@ -366,12 +399,13 @@ int fri_lst_add(friend_list *list, friend_info *info) {
  * Returns 0 or -1 if "name" does not exist in the list
  */
 int fri_lst_del(friend_list *list, const char *name) {
+	DEBUG_TRACE_PRINT();
 	friend_node *aux_node;	
 	if ( aux_node = _friends_find_node(list, name) ) {
 		_friends_delete_node(aux_node);
 		return 0;	
 	}
-
+	DEBUG_FAILURE_PRINTF("Could not find friend in list");
 	return -1;
 }
 
@@ -381,6 +415,7 @@ int fri_lst_del(friend_list *list, const char *name) {
  * Returns a pointer to the chat_info of NULL if fails
  */
 friend_info *fri_lst_find(friend_list *list, const char *name) {
+	DEBUG_TRACE_PRINT();
 	friend_node *friend_node;
 	friend_node = _friends_find_node(list, name);	
 	return friend_node->info;
@@ -396,6 +431,7 @@ friend_info *fri_lst_find(friend_list *list, const char *name) {
  * Returns a pointer to the structure or NULL if fails
  */
 friend_info *fri_info_new(const char *name, const char *information) {
+	DEBUG_TRACE_PRINT();
 	friend_info *info;
 
 	if (info = malloc(sizeof(friend_info))) {
@@ -416,6 +452,7 @@ friend_info *fri_info_new(const char *name, const char *information) {
  * Frees the friend_info struct
  */
 void fri_info_free(friend_info *info) {
+	DEBUG_TRACE_PRINT();
 	_friends_free_info(info);
 }
 
@@ -429,6 +466,7 @@ void fri_info_free(friend_info *info) {
  * Returns a pointer to the list or NULL if fails
  */
 friend_request_list *fri_reqlst_new() {
+	DEBUG_TRACE_PRINT();
 	friend_request_node *new_list = NULL;
 
 	if ( new_list = malloc( sizeof(friend_request_node) ) ) {
@@ -445,10 +483,8 @@ friend_request_list *fri_reqlst_new() {
  * Frees the request list
  */
 void fri_reqlst_free(friend_request_list *list) {
+	DEBUG_TRACE_PRINT();
 	while ( list->next != list ) {
-#ifdef DEBUG
-		printf("Deleting node: %s\n", list->next->info->user_name);
-#endif
 		_friends_delete_req_node(list->next);
 	}
 
@@ -460,6 +496,7 @@ void fri_reqlst_free(friend_request_list *list) {
  * Prints all request line by line
  */
 void fri_reqlst_print(friend_request_list *list) {
+	DEBUG_TRACE_PRINT();
 	friend_request_node *aux_node;
 
 	aux_node = list->next;
@@ -477,6 +514,7 @@ void fri_reqlst_print(friend_request_list *list) {
  * Returns 0 or -1 if fails
  */
 int fri_reqlst_add(friend_request_list *list, request_info *info) {
+	DEBUG_TRACE_PRINT();
 	friend_request_node *node;
 
 	if (node = malloc(sizeof(friend_request_node))) {
@@ -497,12 +535,13 @@ int fri_reqlst_add(friend_request_list *list, request_info *info) {
  * Returns 0 or -1 if "name" does not exist in the list
  */
 int fri_reqlst_del(friend_request_list *list, const char *name) {
+	DEBUG_TRACE_PRINT();
 	friend_request_node *aux_node;	
 	if ( aux_node = _friends_find_req_node(list, name) ) {
 		_friends_delete_req_node(aux_node);
 		return 0;	
 	}
-
+	DEBUG_FAILURE_PRINTF("Could not find request in list");
 	return -1;
 }
 
@@ -512,6 +551,7 @@ int fri_reqlst_del(friend_request_list *list, const char *name) {
  * Returns a pointer to the chat_info of NULL if fails
  */
 request_info *fri_reqlst_find(friend_request_list *list, const char *name) {
+	DEBUG_TRACE_PRINT();
 	friend_request_node *node;
 	node = _friends_find_req_node(list, name);	
 	return node->info;
@@ -527,6 +567,7 @@ request_info *fri_reqlst_find(friend_request_list *list, const char *name) {
  * Returns a pointer to the structure or NULL if fails
  */
 request_info *fri_reqinfo_new(const char *user_name, int send_date) {
+	DEBUG_TRACE_PRINT();
 	request_info *info;
 
 	if (info = malloc(sizeof(request_info))) {
@@ -546,6 +587,7 @@ request_info *fri_reqinfo_new(const char *user_name, int send_date) {
  * Frees the request_info struct
  */
 void fri_reqinfo_free(request_info *info) {
+	DEBUG_TRACE_PRINT();
 	_friends_free_req_info(info);
 }
 

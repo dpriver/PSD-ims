@@ -29,6 +29,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef DEBUG_TRACE
+	#undef DEBUG_TRACE
+#endif
+#ifdef DEBUG_INFO
+	#undef DEBUG_INFO
+#endif
+
+#include "debug_def.h"
+
 #ifdef DEBUG
 #include "leak_detector_c.h"
 #endif
@@ -43,6 +52,7 @@
  * Returns a pointer to the structure or NULL if fails
  */
 psd_ims_client *psd_new_client() {
+	DEBUG_TRACE_PRINT();
 	psd_ims_client *client;
 
 	client = malloc( sizeof(psd_ims_client) );
@@ -52,7 +62,6 @@ psd_ims_client *psd_new_client() {
 
 	client->friends = fri_new();
 	client->chats = cha_new();
-	client->chats = NULL;
 
 	return client;
 }
@@ -62,10 +71,9 @@ psd_ims_client *psd_new_client() {
  * Removes and frees the client struct
  */
 void psd_free_client(psd_ims_client *client) {
-
+	DEBUG_TRACE_PRINT();
 	fri_free(client->friends);
-	//chats_free_list(client->chats);
-
+	cha_free(client->chats);
 	free(client->user_name);
 	free(client->user_pass);
 
@@ -78,12 +86,12 @@ void psd_free_client(psd_ims_client *client) {
  * Returns o or -1 if fails
  */
 int psd_set_name(psd_ims_client *client, const char *name) {
-	char *user_name;	
+	DEBUG_TRACE_PRINT();
+	char *user_name;
 
 	if ( (user_name = malloc(strlen(name) + sizeof(char))) == NULL ) {
 		return -1;
 	}
-
 	strcpy(user_name, name);
 	client->user_name = user_name;
 
@@ -96,6 +104,7 @@ int psd_set_name(psd_ims_client *client, const char *name) {
  * Returns o or -1 if fails
  */
 int psd_set_pass(psd_ims_client *client, const char *pass) {
+	DEBUG_TRACE_PRINT();
 	char *user_pass;	
 
 	if ( (user_pass = malloc(strlen(pass) + sizeof(char))) == NULL ) {
@@ -117,6 +126,7 @@ int psd_set_pass(psd_ims_client *client, const char *pass) {
  * Prints all chats line by line
  */
 void psd_print_chats(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
 	cha_print_chat_list(client->chats);
 }
 
@@ -127,10 +137,10 @@ void psd_print_chats(psd_ims_client *client) {
  */
 int psd_add_chat(psd_ims_client *client, int id, const char *description, const char *admin,
 			char *members[], int n_members) {
+	DEBUG_TRACE_PRINT();
 	int i;
 	friend_info *aux_admin;
 	friend_info **aux_friend_list;
-
 
 	if ( strcmp(admin, client->user_name) == 0 ) {
 		aux_admin = NULL;
@@ -144,13 +154,17 @@ int psd_add_chat(psd_ims_client *client, int id, const char *description, const 
 
 	aux_friend_list = malloc( sizeof(friend_info)*n_members );
 
-	for( i = 0 ; i < n_members-1 ; i++) {
+	for( i = 0 ; i < n_members ; i++) {
 		aux_friend_list[i] = fri_find_friend(client->friends, members[i]);
 	}
 
 	if( cha_add_chat(client->chats, id, description, aux_admin, aux_friend_list, n_members) == -1 ) {
+		free(aux_friend_list);
 		return -1;
 	}
+
+	free(aux_friend_list);
+	return 0;
 }
 
 
@@ -159,6 +173,7 @@ int psd_add_chat(psd_ims_client *client, int id, const char *description, const 
  * Returns 0 or -1 if "chat_id" does not exist in the list
  */
 int psd_del_chat(psd_ims_client *client, int chat_id) {
+	DEBUG_TRACE_PRINT();
 	return cha_del_chat(client->chats, chat_id);
 }
 
@@ -168,6 +183,7 @@ int psd_del_chat(psd_ims_client *client, int chat_id) {
  * Returns 0 or -1 if fails
  */
 int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user_name) {
+	DEBUG_TRACE_PRINT();
 	friend_info *friend_info;
 
 	// find friend in client->friends
@@ -188,6 +204,7 @@ int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user
  * Returns 0 or -1 if fails
  */
 int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *user_name) {
+	DEBUG_TRACE_PRINT();
 	return cha_del_member(client->chats, chat_id, user_name);
 }
 
@@ -198,6 +215,7 @@ int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *us
  * Returns 0 or -1 if fails
  */
 int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_name) {
+	DEBUG_TRACE_PRINT();
 	return cha_change_admin(client->chats, chat_id, user_name);
 }
 
@@ -208,6 +226,7 @@ int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_
  * Returns 0 or -1 if fails
  */
 int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *user_name) {
+	DEBUG_TRACE_PRINT();
 	return cha_promote_to_admin(client->chats, chat_id, user_name);
 }
 
@@ -220,6 +239,7 @@ int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *u
  * Prints all friends line by line
  */
 void psd_print_friends(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
 	fri_print_friend_list(client->friends);
 }
 
@@ -229,6 +249,7 @@ void psd_print_friends(psd_ims_client *client) {
  * Returns 0 or -1 if fails
  */
 int psd_add_friend(psd_ims_client *client, const char *name, const char *information) {
+	DEBUG_TRACE_PRINT();
 	return fri_add_friend(client->friends, name, information);
 }
 
@@ -238,6 +259,7 @@ int psd_add_friend(psd_ims_client *client, const char *name, const char *informa
  * Returns 0 or -1 if "name" does not exist in the list
  */
 int psd_del_friend(psd_ims_client *client, const char *name) {
+	DEBUG_TRACE_PRINT();
 	return fri_del_friend(client->friends, name);
 }
 
