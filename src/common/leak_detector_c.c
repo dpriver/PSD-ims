@@ -9,167 +9,31 @@
 
 
 static MEM_LEAK * ptr_start = NULL;
-static MEM_LEAK * ptr_next =  NULL;
+static MEM_LEAK * ptr_last =  NULL;
+
+static n_elems_alloc = 0;
+static n_elems_free = 0;
+static n_elems_list = 0;
 
 /*
- * adds allocated memory info. into the list
- *
+ * logs mem_alloc information
  */
-void add(MEM_INFO alloc_info)
-{
-
-	MEM_LEAK * mem_leak_info = NULL;
-	mem_leak_info = (MEM_LEAK *) malloc (sizeof(MEM_LEAK));
-	mem_leak_info->mem_info.address = alloc_info.address;
-	mem_leak_info->mem_info.size = alloc_info.size;
-	strcpy(mem_leak_info->mem_info.file_name, alloc_info.file_name); 
-	mem_leak_info->mem_info.line = alloc_info.line;
-	mem_leak_info->next = NULL;
-
-	if (ptr_start == NULL)	
-	{
-		ptr_start = mem_leak_info;
-		ptr_next = ptr_start;
-	}
-	else {
-		ptr_next->next = mem_leak_info;
-		ptr_next = ptr_next->next;				
-	}
-
-}
-
 /*
- * erases memory info. from the list
- *
- */
-void erase(unsigned pos)
+void log_mem_alloc(const char *operation, void * mem_ref, unsigned int size,  const char * file, unsigned int line) 
 {
-
-	unsigned index = 0;
-	MEM_LEAK * alloc_info, * temp;
-	
-	if(pos == 0)
-	{
-		MEM_LEAK * temp = ptr_start;
-		ptr_start = ptr_start->next;
-		free(temp);
-	}
-	else 
-	{
-		for(index = 0, alloc_info = ptr_start; index < pos; 
-			alloc_info = alloc_info->next, ++index)
-		{
-			if(pos == index + 1)
-			{
-				temp = alloc_info->next;
-				alloc_info->next =  temp->next;
-				free(temp);
-				break;
-			}
-		}
-	}
+	char info[1024];
+	FILE * fp_write = fopen (OUTPUT_LOG_FILE, "a+");
+	fseek(fp_write, 0, SEEK_END);
+	sprintf(info, "%s: ADDR=%p SIZE=%d FILE=%s [%d]\n", operation, mem_ref, size, file, line);
+	fwrite(info, (strlen(info) + 1) , 1, fp_write);
+	fclose(fp_write);
 }
-
-/*
- * deletes all the elements from the list
- */
-void clear()
-{
-	MEM_LEAK * temp = ptr_start;
-	MEM_LEAK * alloc_info = ptr_start;
-
-	while(alloc_info != NULL) 
-	{
-		alloc_info = alloc_info->next;
-		free(temp);
-		temp = alloc_info;
-	}
-}
-
-/*
- * replacement of malloc
- */
-void * xmalloc (unsigned int size, const char * file, unsigned int line)
-{
-	void * ptr = malloc (size);
-	if (ptr != NULL) 
-	{
-		add_mem_info(ptr, size, file, line);
-		//printf("Created memory -> %p: size=%d\n",ptr, size);
-	}
-	return ptr;
-}
-
-/*
- * replacement of calloc
- */
-void * xcalloc (unsigned int elements, unsigned int size, const char * file, unsigned int line)
-{
-	unsigned total_size;
-	void * ptr = calloc(elements , size);
-	if(ptr != NULL)
-	{
-		total_size = elements * size;
-		add_mem_info (ptr, total_size, file, line);
-		//printf("Created memory -> %p: size=%d\n",ptr, total_size);
-	}
-	return ptr;
-}
-
-
-/*
- * replacement of free
- */
-void xfree(void * mem_ref)
-{
-	//printf("Free memory -> %p\n", mem_ref);
-	remove_mem_info(mem_ref);
-	free(mem_ref);
-}
-
-/*
- * gets the allocated memory info and adds it to a list
- *
- */
-void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsigned int line)
-{
-	MEM_INFO mem_alloc_info;
-
-	/* fill up the structure with all info */
-	memset( &mem_alloc_info, 0, sizeof ( mem_alloc_info ) );
-	mem_alloc_info.address 	= mem_ref;
-	mem_alloc_info.size = size;
-	strncpy(mem_alloc_info.file_name, file, FILE_NAME_LENGTH);
-	mem_alloc_info.line = line;
-	
-	/* add the above info to a list */
-	add(mem_alloc_info);
-}
-
-/*
- * if the allocated memory info is part of the list, removes it
- *
- */
-void remove_mem_info (void * mem_ref)
-{
-	unsigned short index;
-	MEM_LEAK  * leak_info = ptr_start;
-
-	/* check if allocate memory is in our list */
-	for(index = 0; leak_info != NULL; ++index, leak_info = leak_info->next)
-	{
-		if ( leak_info->mem_info.address == mem_ref )
-		{
-			erase ( index );
-			break;
-		}
-	}
-}
+*/
 
 /*
  * writes all info of the unallocated memory into a file
  */
-void report_mem_leak(void)
+void report_mem_leak(void) 
 {
 	unsigned short index;
 	MEM_LEAK * leak_info;
@@ -197,6 +61,139 @@ void report_mem_leak(void)
 			sprintf(info, "%s\n", "-----------------------------------");	
 			fwrite(info, (strlen(info) + 1) , 1, fp_write);
 		}
-	}	
+	}
+	sprintf(info, "LIST=%d, ALLOC=%d\n\n", n_elems_list, n_elems_alloc);
+	fwrite(info, (strlen(info) + 1) , 1, fp_write);
+	
+	fclose(fp_write);
 	clear();
+}
+
+
+
+/*
+ * deletes all the elements from the list
+ */
+void clear()
+{
+	MEM_LEAK * temp = NULL;
+	MEM_LEAK * alloc_info = ptr_start;
+
+	while(alloc_info != NULL) 
+	{
+		temp = alloc_info;
+		alloc_info = alloc_info->next;
+		free(temp);
+	}
+}
+
+
+/*
+ * replacement of malloc
+ */
+void * xmalloc (unsigned int size, const char * file, unsigned int line)
+{
+	void * ptr = malloc (size);
+	if (ptr != NULL) 
+	{
+		n_elems_alloc++;
+		add_mem_info(ptr, size, file, line);
+	}
+	return ptr;
+}
+
+/*
+ * replacement of calloc
+ */
+void * xcalloc (unsigned int elements, unsigned int size, const char * file, unsigned int line)
+{
+	unsigned total_size;
+	void * ptr = calloc(elements , size);
+	if(ptr != NULL)
+	{
+		n_elems_alloc++;
+		total_size = elements * size;
+		add_mem_info (ptr, total_size, file, line);
+	}
+	return ptr;
+}
+
+
+/*
+ * replacement of free
+ */
+void xfree(void * mem_ref)
+{
+	n_elems_alloc--;
+	remove_mem_info(mem_ref);
+	free(mem_ref);
+}
+
+
+/*
+ * gets the allocated memory info and adds it to a list
+ *
+ */
+void add_mem_info (void * mem_ref, unsigned int size,  const char * file, unsigned int line)
+{
+	/* fill up the structure with all info */
+	MEM_LEAK * mem_leak = NULL;
+
+	mem_leak = (MEM_LEAK *) malloc (sizeof(MEM_LEAK));
+	mem_leak->mem_info.address = mem_ref;
+	mem_leak->mem_info.size = size;
+	strcpy(mem_leak->mem_info.file_name, file);
+	mem_leak->mem_info.line = line;
+	mem_leak->next = NULL;
+
+	if (ptr_start == NULL)	
+	{
+		ptr_start = mem_leak;
+		ptr_last = mem_leak;
+	}
+	else {
+		ptr_last->next = mem_leak;
+		ptr_last = mem_leak;				
+	}
+	n_elems_list++;
+	//log_mem_alloc("ALLOCATED" ,mem_ref, size, file, line);
+}
+
+
+/*
+ * if the allocated memory info is part of the list, removes it
+ *
+ */
+void remove_mem_info (void * mem_ref)
+{
+	MEM_LEAK  *leak_info, *leak_info_prev = NULL;
+
+	/* check if allocate memory is in our list */
+	leak_info = ptr_start;
+
+	while( leak_info != NULL ) {
+
+		if( leak_info->mem_info.address == mem_ref ) {
+
+			// Deletes the mem registry
+			if( leak_info_prev == NULL ) { // deletes the first element
+				ptr_start = leak_info->next;
+				if( ptr_last == leak_info ) { // is also the last
+					ptr_last = NULL;
+				}	
+			}
+			else { // is not the first element
+				leak_info_prev->next = leak_info->next;
+				if( ptr_last == leak_info ) { // but is the last one
+					ptr_last = leak_info_prev;
+				}
+			}
+
+			free(leak_info);
+			n_elems_list--;
+			return;
+		}
+		leak_info_prev = leak_info;
+		leak_info = leak_info->next;
+	}
 }
