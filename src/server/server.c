@@ -78,8 +78,7 @@ int main( int argc, char **argv) {
 //(struct soap *soap, int a, int b, int *res)
 int psdims__user_register(struct soap *soap, char *name, char *passwd,char *description, int *ERRCODE){
 	*ERRCODE = 10;
-	add_user(bd,get_cont(bd),name,passwd,description);
-    sum_cont(bd);
+	add_user(bd,name,passwd,description);
 	return SOAP_OK; 
 }
 

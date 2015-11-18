@@ -30,7 +30,7 @@
 
 MYSQL* init_bd(char user[],char pass[],char name_bd[]);
 
-void add_user(MYSQL* bd,int id,char* name,char* pass, char* information);
+void add_user(MYSQL* bd,char* name,char* pass, char* information);
 
 void del_user(MYSQL* bd,char* name);
 
@@ -46,7 +46,7 @@ void refuse_request(MYSQL* bd,int id1,int id2);
 
 void del_friends(MYSQL* bd,int id1,int id2);
 
-void add_chat(MYSQL* bd,int id1,int id_admin, char* description);
+void add_chat(MYSQL* bd,int id_admin, char* description);
 
 void del_chat(MYSQL* bd,int id);
 

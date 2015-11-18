@@ -5,7 +5,7 @@ USE PSD;
 /*--------------------------CREATE TABLE---------------------------------------*/
 
 CREATE TABLE users(
- ID INT NOT NULL ,
+ ID INT NOT NULL AUTO_INCREMENT,
  NAME VARCHAR(25) NOT NULL UNIQUE ,
  PASS VARCHAR(25) NOT NULL ,
  INFORMATION VARCHAR(100),
@@ -13,7 +13,7 @@ CREATE TABLE users(
 );
 
 CREATE TABLE chats(
- ID INT(10) NOT NULL,
+ ID INT(10) NOT NULL AUTO_INCREMENT,
  ID_ADMIN INT(10) NOT NULL,
  DECRIPTION VARCHAR(100),
  PRIMARY KEY(ID),
@@ -52,25 +52,22 @@ CREATE TABLE request(
  FOREIGN KEY (ID2_request) REFERENCES users(ID) on delete cascade on update cascade 
 );
 
-CREATE TABLE contador(
- CONT INT(10) NOT NULL
-);
 
 /*--------------------------INSERT DATA---------------------------------------*/
 
 /*TABLE USERS*/
 
-INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(1,'Pepe','contrasena1','Guapo');
-INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(2,'Antonio','contrasena2','Feo');
-INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(3,'Maria','contrasena3','Gorda');
-INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(4,'Carmen','contrasena4','Delgada');
-INSERT INTO users(ID,NAME,PASS,INFORMATION) VALUES(6,'Carlos','contrasena5','Indiferente');
+INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Pepe','contrasena1','Guapo');
+INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Antonio','contrasena2','Feo');
+INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Maria','contrasena3','Gorda');
+INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Carmen','contrasena4','Delgada');
+INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Carlos','contrasena5','Indiferente');
 
 /*TABLE CHATS*/
 
-INSERT INTO chats(ID,ID_ADMIN,DECRIPTION) VALUES(1,1,'chat 1');
-INSERT INTO chats(ID,ID_ADMIN,DECRIPTION) VALUES(2,1,'chat 2');
-INSERT INTO chats(ID,ID_ADMIN,DECRIPTION) VALUES(3,2,'chat 3');
+INSERT INTO chats(ID_ADMIN,DECRIPTION) VALUES(1,'chat 1');
+INSERT INTO chats(ID_ADMIN,DECRIPTION) VALUES(1,'chat 2');
+INSERT INTO chats(ID_ADMIN,DECRIPTION) VALUES(2,'chat 3');
 
 /*TABLE USER_CHATS*/
 
@@ -90,11 +87,9 @@ INSERT INTO friends(ID1,ID2) VALUES(2,4);
 /*TABLE REQUEST*/
 
 INSERT INTO request(ID1,ID2_request) VALUES(1,3);
-INSERT INTO request(ID1,ID2_request) VALUES(4,6);
-INSERT INTO request(ID1,ID2_request) VALUES(6,2);
+INSERT INTO request(ID1,ID2_request) VALUES(4,3);
+INSERT INTO request(ID1,ID2_request) VALUES(5,2);
 
-/*INSERT CONT*/
 
-INSERT INTO contador(CONT) VALUES(7);
 
 
