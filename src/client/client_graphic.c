@@ -25,11 +25,26 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "psd_ims_client.h"
 
 
 
 typedef enum {DEFAULT, EXIT, LOGIN, USER_MAIN, USER_LIST, USER_SEND, USER_RECEIVE} menu_type;
+
+
+
+void menu_header_show(const char *string) {
+	write(1,"\E[H\E[2J",7);
+	printf("=============================================\n");
+	printf("              %s\n", string);
+	printf("=============================================\n");
+}
+
+void menu_footer_show() {
+	printf("\n");
+	printf("Opcion -> ");
+}
 
 int get_user_input() {
 	char input;
@@ -42,18 +57,6 @@ int get_user_input() {
 
 void save_state(psd_ims_client *client) {
 
-}
-
-void menu_header_show() {
-	printf("\n\n");
-	printf("=============================================\n");
-	printf("              PSD-IMS Client\n");
-	printf("=============================================\n");
-}
-
-void menu_footer_show() {
-	printf("\n");
-	printf("Opcion -> ");
 }
 
 
@@ -77,7 +80,7 @@ int recv_new_chats(psd_ims_client *client) {
 }
 
 void screen_menu_recv_show() {
-	menu_header_show();
+	menu_header_show("PSD IMS - Receive menu");
 	printf(" 1. Recibir notificaciones pendientes\n");
 	printf(" 2. Recibir mensajes pendientes\n");
 	printf(" 3. Recibir nuevos chats\n");
@@ -138,7 +141,7 @@ int send_request_decline(psd_ims_client *client) {
 }
 
 void screen_menu_send_show() {
-	menu_header_show();
+	menu_header_show("PSD IMS - Send menu");
 	printf(" 1. Enviar mensaje\n");
 	printf(" 2. Enviar peticion de amistad\n");
 	printf(" 3. Aceptar peticion de amistad\n");
@@ -205,7 +208,7 @@ void list_friend_requests(psd_ims_client *client) {
 }
 
 void screen_menu_list_show() {
-	menu_header_show();
+	menu_header_show("PSD IMS - List menu");
 	printf(" 1. Listar amigos\n");
 	printf(" 2. Listar chats\n");
 	printf(" 3. Listar miembros de un chat\n");
@@ -255,7 +258,7 @@ int menu_list(psd_ims_client *client, menu_type *next_menu_ret) {
 
 
 void screen_menu_main_show() {
-	menu_header_show();
+	menu_header_show("PSD IMS - Main user menu");
 	printf(" 1. Listar\n");
 	printf(" 2. Enviar\n");
 	printf(" 3. Recibir\n");
@@ -321,7 +324,7 @@ int login(psd_ims_client *client) {
 
 
 void screen_login_show() {
-	menu_header_show();
+	menu_header_show("PSD IMS - Login");
 	printf(" 1. Alta\n");
 	printf(" 2. Login\n");
 	printf("\n 0. Salir\n");
