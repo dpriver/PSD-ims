@@ -227,7 +227,7 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
  * Returns 0 or -1 if fails
  */
 int cha_add_messages(chats *chats, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages) {
-	DEBUG_TRACE_PRINTF();
+	DEBUG_TRACE_PRINT();
 	
 	int i;
 	chat_info *chat_info;
