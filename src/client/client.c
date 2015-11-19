@@ -29,6 +29,7 @@
 #include "leak_detector_c.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main( int argc, char **argv ) {
 
@@ -60,26 +61,35 @@ int main( int argc, char **argv ) {
 	serverURL = argv[1];
 	operation = atoi(argv[2]);
 
+	psdims__login_info *login = malloc(sizeof(psdims__login_info));
+	psdims__register_info *user_info=malloc(sizeof(psdims__register_info));
+	
 	switch (operation) {
 		case 0:
  			printf("Introduce tu nick =>");
-            scanf("%s", name);
+            scanf("%s", user_info->name);
             printf("Introduce tu contraseña =>");
-			scanf("%s", passwd);
+			scanf("%s", user_info->password);
             printf("Introduce una breve descripcion tuya =>");
-			scanf("%s", description);
-			soap_call_psdims__user_register(&soap, serverURL, "", name, passwd,description, &result);
+			scanf("%s", user_info->information);
+
+			soap_call_psdims__user_register(&soap, serverURL, "",user_info,&result);
+			
+			//srtcpy(login->name,user_info->name);
+			//srtcpy(login->name,user_info->name);
 			break;
 		case 1:
             printf("Introduce tu nick =>");
-            scanf("%s", name);
-			soap_call_psdims__user_unregister(&soap, serverURL, "", name, &result);
+            scanf("%s", login->name); //only draft
+
+			soap_call_psdims__user_unregister(&soap, serverURL, "",login,&result);
 			break;
-		case 2:
+		/*
+			case 2:
 			soap_call_psdims__friend_request(&soap, serverURL, "", name, passwd, dummyname, &result);
 			break;
 		case 3:
-			//soap_call_psdims__get_request(&soap, serverURL, "", name, passwd, dummyname, /*TODO*/);
+			//soap_call_psdims__get_request(&soap, serverURL, "", name, passwd, dummyname, NULL);
 			break;
 		case 4:
 			soap_call_psdims__accept_request(&soap, serverURL, "", name, passwd, dummyname, &result);
@@ -87,6 +97,7 @@ int main( int argc, char **argv ) {
 		case 5:
 			soap_call_psdims__decline_request(&soap, serverURL, "", name, passwd, dummyname, &result);
 			break;
+        */
 	}
 
 	if (soap.error) {
