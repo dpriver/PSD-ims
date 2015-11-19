@@ -49,6 +49,9 @@ typedef struct message_list messages;
 /* =========================================================================
  *  Structs access macros
  * =========================================================================*/
+#define mes_GET_N_MESSAGES(message_list) \
+		message_list->n_messages
+
 #define mes_GET_SENDER(message_info) \
 		message_info.sender
 
@@ -90,10 +93,10 @@ void mes_print_message_list(messages *messages);
 int mes_add_message(messages *messages, const char *sender, const char *text, int send_date, const char *attach_path);
 
 /*
- * Removes and frees the first message that matches the provided "id"
+ * Removes the last "n_messages" messages
  * Returns 0 or -1 if "id" does not exist in the list
  */
-int mes_del_message(messages *messages, int id);
+int mes_del_last_messages(messages *messages, int n_messages);
 
 
 #endif /* __MESSAGES */

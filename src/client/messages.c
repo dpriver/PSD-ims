@@ -34,6 +34,26 @@
 #endif
 
 
+int _mes_del_message(messages *messages, int id) {
+	int i;
+
+	if( (id < 0) || (id > messages->n_messages-1) ) {
+		return -1;
+	}
+
+	for(i = id ; i < messages->n_messages-1 ; i++) {
+		messages->list[i] = messages->list[i+1];
+	}
+	messages->n_messages--;
+
+	if( (messages->lenght - messages->n_messages) > 5 ) {
+		if ( (messages->list = realloc(messages->list, sizeof(message_info)*(messages->lenght - 5)) ) == NULL ) {
+			return -1;
+		}
+	}
+	messages->lenght -= 5;
+}
+
 
 /* =========================================================================
  *  Message struct API
@@ -124,20 +144,17 @@ int mes_add_message(messages *messages, const char *sender, const char *text, in
 
 
 /*
- * Removes and frees the first message that matches the provided "id"
+ * Removes the last "n_messages" messages
  * Returns 0 or -1 if "id" does not exist in the list
  */
-int mes_del_message(messages *messages, int id) {
+int mes_del_last_messages(messages *messages, int n_messages) {
 	int i;
 
-	if( (id < 0) || (id >= messages->n_messages)  ) {
-		return -1;
+	if( (n_messages > messages->n_messages) ) {
+		n_messages = messages->n_messages;
 	}
 
-	for(i = id ; i < messages->n_messages-1 ; i++) {
-		messages->list[i] = messages->list[i+1];
-	}
-	messages->n_messages--;
+	messages->n_messages -= n_messages;
 
 	if( (messages->lenght - messages->n_messages) > 5 ) {
 		if ( (messages->list = realloc(messages->list, sizeof(message_info)*(messages->lenght - 5)) ) == NULL ) {

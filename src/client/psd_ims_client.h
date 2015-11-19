@@ -106,6 +106,22 @@ int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user
 int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *user_name);
 
 /*
+ * Adds the messages in the chat
+ * Returns 0 or -1 if fails
+ */
+int psd_add_messages(psd_ims_client *client, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages);
+
+/*
+ * Clears the chat pending messages counter
+ */
+int psd_clean_pending_messages(psd_ims_client *client, int chat_id);
+
+/*
+ * Updates the chat pending messages counter
+ */
+int psd_update_pending_messages(psd_ims_client *client, int chat_id, int n_messages);
+
+/*
  * Switches the current admin with the chat member named "user_name"
  * that means that the previous admin becomes a normal member
  * Returns 0 or -1 if fails
@@ -134,6 +150,16 @@ void psd_print_friends(psd_ims_client *client);
  * Returns 0 or -1 if fails
  */
 int psd_add_friend(psd_ims_client *client, const char *name, const char *information);
+
+/*
+ * Adds a sended friend request to "name"
+ */
+int psd_add_friend_req_snd(psd_ims_client *client, const char *name,  int send_date);
+
+/*
+ * Adds a received friend request from "name"
+ */
+int psd_add_friend_req_rcv(psd_ims_client *client, const char *name, int send_date);
 
 /*
  * Removes and frees the first friend that matches "name"

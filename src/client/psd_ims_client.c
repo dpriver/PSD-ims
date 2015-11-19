@@ -26,7 +26,7 @@
 #include "psd_ims_client.h"
 #include "friends.h"
 #include "chats.h"
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #ifdef DEBUG_TRACE
@@ -210,6 +210,32 @@ int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *us
 
 
 /*
+ * Adds the messages in the chat
+ * Returns 0 or -1 if fails
+ */
+int psd_add_messages(psd_ims_client *client, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages) {
+	DEBUG_TRACE_PRINT();
+	return cha_add_messages(client->chats, chat_id, sender, text, send_date, attach_path, n_messages);
+}
+
+
+/*
+ * Clears the chat pending messages counter
+ */
+int psd_clean_pending_messages(psd_ims_client *client, int chat_id) {
+	return cha_set_unread(client->chats, chat_id, 0);
+}
+
+
+/*
+ * Updates the chat pending messages counter
+ */
+int psd_update_pending_messages(psd_ims_client *client, int chat_id, int n_messages) {
+	return cha_update_unread(client->chats, chat_id, n_messages);
+}
+
+
+/*
  * Switches the current admin with the chat member named "user_name"
  * that means that the previous admin becomes a normal member
  * Returns 0 or -1 if fails
@@ -251,6 +277,22 @@ void psd_print_friends(psd_ims_client *client) {
 int psd_add_friend(psd_ims_client *client, const char *name, const char *information) {
 	DEBUG_TRACE_PRINT();
 	return fri_add_friend(client->friends, name, information);
+}
+
+
+/*
+ * Adds a sended friend request to "name"
+ */
+int psd_add_friend_req_snd(psd_ims_client *client, const char *name, int send_date) {
+	return fri_add_snd_request(client->friends, name, send_date);
+}	
+
+
+/*
+ * Adds a received friend request from "name"
+ */
+int psd_add_friend_req_rcv(psd_ims_client *client, const char *name, int send_date) {
+	return fri_add_rcv_request(client->friends, name, send_date);
 }
 
 

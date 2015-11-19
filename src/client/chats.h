@@ -46,6 +46,7 @@ typedef struct chat_info chat_info;
 struct chat_info {
 	int id;
 	char *description;
+	int unread_messages;
 	chat_member *admin;
 	chat_member_list *members;
 	messages *messages;
@@ -73,6 +74,12 @@ typedef chat_list chats;
 
 #define cha_GET_N_MEMBERS(chat_info) \
 		chat_info->members->n_members
+
+#define cha_GET_N_UNREAD(chat_info) \
+		chat_info->unread_messages
+
+#define cha_SET_N_UNREAD(chat_info, n_messages) \
+		chat_info->unread_messages = n_messages
 
 #define cha_GET_MEMBER_NAME(chat_member) \
 		fri_GET_FRIEND_NAME(chat_member->info)
@@ -113,6 +120,12 @@ void cha_print_chat_members(chats *chats, int chat_id);
 int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], int n_members);
 
 /*
+ * Adds the messages in the chat
+ * Returns 0 or -1 if fails
+ */
+int cha_add_messages(chats *chats, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages);
+
+/*
  * Creates a new chat member in the list with the provided info
  * Returns 0 or -1 if fails
  */
@@ -129,6 +142,19 @@ int cha_del_chat(chats *chats, int chat_id);
  * Returns 0 or -1 if fails
  */
 int cha_del_member(chats *chats, int chat_id, const char *name);
+
+/*
+ * Sets the number of unread messages
+ * Returns 0 or -1 if fails
+ */
+int cha_set_unread(chats *chats, int chat_id, int n_messages);
+
+/*
+ * Updates the number of unread messages, the number of unread will be
+ * (current_unread + n_messages), n_messages can be a negative number
+ * Returns 0 or -1 if fails
+ */
+int cha_update_unread(chats *chats, int chat_id, int n_messages);
 
 /*
  * Switches the current admin with the chat member named "name"

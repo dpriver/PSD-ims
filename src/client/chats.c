@@ -223,6 +223,32 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
 
 
 /*
+ * Adds the messages in the chat
+ * Returns 0 or -1 if fails
+ */
+int cha_add_messages(chats *chats, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages) {
+	DEBUG_TRACE_PRINTF();
+	
+	int i;
+	chat_info *chat_info;
+	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1;
+	}
+
+	for( i=0; i< n_messages; i++ ) {
+		if( mes_add_message(chat_info->messages, sender[i], text[i], send_date[i], attach_path[i]) != 0 ) {
+			DEBUG_FAILURE_PRINTF("Could not add the message");
+			mes_del_last_messages(chat_info->messages, i); // (i+1) messages (-1) the last failed
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+
+/*
  * Creates a new chat member in the list with the provided info
  * Returns 0 or -1 if fails
  */
@@ -279,6 +305,55 @@ int cha_del_member(chats *chats, int chat_id, const char *name) {
 		DEBUG_FAILURE_PRINTF("Could not delete member from chat");
 		return -1; // can not delete member from chat
 	}
+
+	return 0;
+}
+
+
+/*
+ * Sets the number of unread messages
+ * Returns 0 or -1 if fails
+ */
+int cha_set_unread(chats *chats, int chat_id, int n_messages) {
+	DEBUG_TRACE_PRINT();
+	chat_info *chat_info;
+	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1;
+	}
+
+	if( n_messages < 0 ) {
+		DEBUG_FAILURE_PRINTF("Can not set unread messages to less than 0");
+		return -1;
+	}
+
+	cha_SET_N_UNREAD(chat_info, n_messages);
+	return 0;
+}
+
+
+/*
+ * Updates the number of unread messages, the number of unread will be
+ * (current_unread + n_messages), n_messages can be a negative number
+ * Returns 0 or -1 if fails
+ */
+int cha_update_unread(chats *chats, int chat_id, int n_messages) {
+	DEBUG_TRACE_PRINT();
+	chat_info *chat_info;
+	int unread;
+
+	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1;
+	}
+
+	unread = cha_GET_N_UNREAD(chat_info) + n_messages;
+	if( unread < 0 ) {
+		DEBUG_FAILURE_PRINTF("Can not set unread messages to less than 0");
+		return -1;
+	}
+
+	cha_SET_N_UNREAD(chat_info, unread);
 
 	return 0;
 }
