@@ -29,8 +29,80 @@
 //gsoap psdims service encoding: literal
 //gsoap psdims service namespace: urn:psdims
 
+typedef enum psdims__notification_type { FRIEND_REQ, PENDING_MESS } psdims__notification_type;
 
-typedef struct psdims__request_list{
+typedef struct psdims__notification_info {
+	psdims__notification_type type;
+	int chat_id;
+	int n_messages;
+	char *name;
+	int send_date;
+} psdims__notification_info;
+
+typedef struct psdims__notification_list {
+	int __sizenelems;
+	psdims__notification_info *notifications;
+} psdims__notification_list;
+
+typedef struct psdims__login_info {
+	char *name;
+	char *password;
+} psdims__login_info;
+
+typedef struct psdims__register_info {
+	char *name;
+	char *password;
+	char *information;
+} psdims__register_info;
+
+// Users
+typedef struct psdims__user_info {
+	char *name;
+	char *information;
+} psdims__user_info;
+
+typedef struct psdims__user_list {
+	int __sizenelems;
+	psdims__user_info *user_info;
+} psdims__user_list;
+
+
+// Messages
+typedef struct psdims__message_info {
+	char *user;
+	char *text;
+	int send_date;
+} psdims__message_info;
+
+typedef struct psdims__message_list {
+	int __sizenelems;
+	char **user;
+	char **text;
+	int *send_date;
+} psdims__message_list;
+
+
+// Chats and chat members
+typedef struct psdims__member_list {
+	int __sizenelems;
+	char **name;
+} psdims__member_list;
+
+typedef struct psdims__chat_info {
+	int chat_id;
+	char *description;
+	char *admin;
+	psdims__member_list *members;
+} psdims__chat_info;
+
+typedef struct psdims__chat_list {
+	int __sizenelems;
+	psdims__chat_info *chat_info;
+} psdims__chat_list;
+
+
+
+typedef struct psdims__request_list {
 	int __sizenelems;	
 	char **name;
 } psdims__request_list;
@@ -40,22 +112,34 @@ typedef struct psdims__request_list{
  * Basicas
  ********************************************************************/
 // register user
-int psdims__user_register(char *name, char *passwd,	char *description, int *ERRCODE);
+int psdims__user_register(psdims__register_info *user_info, int *ERRCODE);
 
 // borrar user
-int psdims__user_unregister(char *name, int *ERRCODE);
+int psdims__user_unregister(psdims__login_info *login, int *ERRCODE);
+
+// get friend list
+int psdims__get_friends(psdims__login_info *login, psdims__user_list *friends);
+
+// get chat list
+int psdims__get_chats(psdims__login_info *login, psdims__chat_list *chats);
+
+// get messages from chat
+int psdims__get_chat_messages(psdims__login_info *login, int chat_id, psdims__message_list *messages);
+
+// get pending notifications
+int psdims__get_pending_notifications(psdims__login_info *login, psdims__notification_list *notifications);
+
+// Send message
+int psdims__send_message(psdims__login_info *login, psdims__message_info *message);
 
 // enviar solicitud de amistad a usuario
-int psdims__friend_request(char *name, char *passwd, char* request_name, int *ERRCODE);
-
-// recibir solicitudes de amistad pendientes
-int psdims__get_requests(char *name, char *passwd, psdims__request_list *requests);
+int psdims__send_friend_request(psdims__login_info *login, char* request_name, int *ERRCODE);
 
 // aceptar solicitud de amistad
-int psdims__accept_request(char *name, char *passwd, char *request_name, int *ERRCODE);
+int psdims__accept_request(psdims__login_info *login, char *request_name, int *ERRCODE);
 
 // rechazar solicitud de amistad
-int psdims__decline_request(char *name, char *passwd, char *request_name, int *ERRCODE);
+int psdims__decline_request(psdims__login_info *login, char *request_name, int *ERRCODE);
 
 
 /********************************************************************
