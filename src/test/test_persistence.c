@@ -21,6 +21,6 @@ int main(){
   //add_user_chat(bd,4,1);
   //del_user_chat(bd,2,1);
   //printf("%d\n",get_cont(bd));
-  sum_cont(bd);
+  //sum_cont(bd);
 return 0;
 }

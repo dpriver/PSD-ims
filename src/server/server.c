@@ -76,58 +76,59 @@ int main( int argc, char **argv) {
 }
 
 //(struct soap *soap, int a, int b, int *res)
-int psdims__user_register(psdims__register_info *user_info, int *ERRCODE){
+int psdims__user_register(struct soap *soap,psdims__register_info *user_info, int *ERRCODE){
 	*ERRCODE = 10;
+
 	add_user(bd,user_info->name,user_info->password,user_info->information);
 	return SOAP_OK; 
 }
 
 // borrar user
-int psdims__user_unregister(psdims__login_info *login, int *ERRCODE){
+int psdims__user_unregister(struct soap *soap,psdims__login_info *login, int *ERRCODE){
 	*ERRCODE = 11;
-	del_user(bd,login->name);
+	del_user(bd,&login->name);
 	return SOAP_OK; 
 }
 
 
-int psdims__get_friends(psdims__login_info *login, psdims__user_list *friends){
+int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__user_list *friends){
 	return SOAP_OK; 
 }
 
 // get chat list
-int psdims__get_chats(psdims__login_info *login, psdims__chat_list *chats){
+int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_list *chats){
 	return SOAP_OK; 
 }
 
 // get messages from chat
-int psdims__get_chat_messages(psdims__login_info *login, int chat_id, psdims__message_list *messages){
+int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int chat_id, psdims__message_list *messages){
 	return SOAP_OK; 
 }
 
 // get pending notifications
-int psdims__get_pending_notifications(psdims__login_info *login, psdims__notification_list *notifications){
+int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *login, psdims__notification_list *notifications){
 	return SOAP_OK; 
 }
 
 // Send message
-int psdims__send_message(psdims__login_info *login, psdims__message_info *message){
+int psdims__send_message(struct soap *soap,psdims__login_info *login, psdims__message_info *message){
 	return SOAP_OK; 
 }
 
 // enviar solicitud de amistad a usuario
-int psdims__send_friend_request(psdims__login_info *login, char* request_name, int *ERRCODE){
+int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, char* request_name, int *ERRCODE){
     *ERRCODE=1;
 	return SOAP_OK; 
 }
 
 // aceptar solicitud de amistad
-int psdims__accept_request(psdims__login_info *login, char *request_name, int *ERRCODE){
+int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *request_name, int *ERRCODE){
 	*ERRCODE=1;
 	return SOAP_OK; 
 }
 
 // rechazar solicitud de amistad
-int psdims__decline_request(psdims__login_info *login, char *request_name, int *ERRCODE){
+int psdims__decline_request(struct soap *soap,psdims__login_info *login, char *request_name, int *ERRCODE){
 	*ERRCODE=1;
 	return SOAP_OK; 
 }
