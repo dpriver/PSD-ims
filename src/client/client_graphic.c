@@ -100,13 +100,13 @@ int menu_recv(psd_ims_client *client, menu_type *next_menu_ret) {
 		switch(option) {
 			case 0: break;   // salir
 			case 1:	// go to listing menu
-				recv_notifications(client);
+				//recv_notifications(client);
 				break;
 			case 2: // go to send menu
-				recv_pending_messages(client);
+				//recv_pending_messages(client);
 				break;
 			case 3: // go to receive menu
-				recv_new_chats(client);
+				//recv_new_chats(client);
 				break;
 		}		
 	} while( option != 0 );
@@ -163,16 +163,16 @@ int menu_send(psd_ims_client *client, menu_type *next_menu_ret) {
 		switch(option) {
 			case 0: break;   // salir
 			case 1:	// go to listing menu
-				send_message(client);
+				//send_message(client);
 				break;
 			case 2: // go to send menu
-				send_friend_request(client);
+				//send_friend_request(client);
 				break;
 			case 3: // go to receive menu
-				send_request_accept(client);
+				//send_request_accept(client);
 				break;
 			case 4:
-				send_request_decline(client);
+				//send_request_decline(client);
 				break;
 		}		
 	} while( option != 0 );
@@ -344,13 +344,15 @@ int menu_login(psd_ims_client *client, menu_type *next_menu_ret) {
 		switch(option) {
 			case 0: break;   // salir
 			case 1:	
-				alta();
+				//user_register();
 				break;
 			case 2: 
+				/*
 				if( login(client) == 0) {
 					next_menu = USER_MAIN;
 					option = 0;
-				} 
+				}
+				*/
 				break;
 		}		
 	} while( option != 0 );

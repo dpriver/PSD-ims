@@ -1,6 +1,6 @@
 MAIN_SRC=server.c
-SOURCES=persistence.c
-HEADERS=persistence.h
+SOURCES=persistence.c psd_ims_server.c
+HEADERS=persistence.h psd_ims_server.h
 
 COMMON_LIBS=*
 RPC_LIBS=soapC soapServer

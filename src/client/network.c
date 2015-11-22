@@ -64,48 +64,100 @@ void *free_network(network *network) {
 
 
 int recv_notifications(network *network, psd_ims_client *client) {
-
+	// call the gsoap method
+	// add the new notifications to the client struct
 	return -1;
 }
 
 
-int recv_pending_messages(network *network, psd_ims_client *client) {
-
+int recv_pending_messages(network *network, psd_ims_client *client, int chat_id) {
+	// call the gsoap method
+	// add the new messages to the client struct
 	return -1;
 }
 
 
 int recv_new_chats(network *network, psd_ims_client *client) {
-
+	// call the gsoap method
+	// add the new chats to the client struct
 	return -1;
 }
 
 
-int send_message(network *network, psd_ims_client *client) {
-
+int send_message(network *network, psd_ims_client *client, int chat_id, char *text, char *attach_path) {
+	// Create the psdims__message_info struct
+	// call the gsoap method
 	return -1;
 }
 
 
-int send_friend_request(network *network, psd_ims_client *client) {
+int send_friend_request(network *network, psd_ims_client *client, char *user) {
+/*
+	int errcode;
+	int soap_response;
+	psdims__login_info login_info;
 
+	login_info.name = name;
+	login_info.password = password;
+
+	soap_response = soap_call_psdims__send_friend_request(&network->soap, network->serverURL, "", &login_info, user, &errcode);
+	if( soap_response != SOAP_OK ) {
+		DEBUG_FAILURE_PRINTF("Server request failed");
+		return -1;
+	}
+
+	// TODO add friend_request to client struct
+	return 0;
+*/
 	return -1;
 }
 
 
-int send_request_accept(network *network, psd_ims_client *client) {
+int send_request_accept(network *network, psd_ims_client *client, char *user) {
+/*
+	int errcode;
+	int soap_response;
+	psdims__login_info login_info;
 
+	login_info.name = name;
+	login_info.password = password;
+
+	soap_response = soap_call_psdims__accept_request(&network->soap, network->serverURL, "", &login_info, user, &errcode);
+	if( soap_response != SOAP_OK ) {
+		DEBUG_FAILURE_PRINTF("Server request failed");
+		return -1;
+	}
+
+	// TODO delete friend_request from client struct
+	return 0;
+*/
 	return -1;
 }
 
 
-int send_request_decline(network *network, psd_ims_client *client) {
+int send_request_decline(network *network, psd_ims_client *client, char *user) {
+/*
+	int errcode;
+	int soap_response;
+	psdims__login_info login_info;
 
+	login_info.name = name;
+	login_info.password = password;
+
+	soap_response = soap_call_psdims__decline_request(&network->soap, network->serverURL, "", &login_info, user, &errcode);
+	if( soap_response != SOAP_OK ) {
+		DEBUG_FAILURE_PRINTF("Server request failed");
+		return -1;
+	}
+
+	// TODO delete friend_request from client struct
+	return 0;
+*/
 	return -1;
 }
 
 
-int alta(network *network, char *name, char *password, char *information) {
+int user_register(network *network, char *name, char *password, char *information) {
 	int soap_response = 0;
 	psdims__register_info * user_info;
 
@@ -124,7 +176,6 @@ int alta(network *network, char *name, char *password, char *information) {
 	}
 
 	// Comprobar error del servidor
-
 	return 0;
 }
 
@@ -150,7 +201,7 @@ int login(network *network, psd_ims_client *client, char *name, char *password) 
 
 	printf("Name: %s\n", user_info.name);
 	printf("Information: %s\n", user_info.information);
-	// Comprobar error del servidor
+	// TODO add user information to client struct
 
 	return 0;
 }

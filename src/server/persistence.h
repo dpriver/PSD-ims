@@ -28,31 +28,44 @@
 
 #include <mysql.h>
 
-MYSQL * init_bd(char user[],char pass[],char name_bd[]);
+typedef struct persistence persistence;
+struct persistence {
+	MYSQL *mysql;
+	char *location;
+	char *bd_name;
+	char *user_name;
+	char *user_pass;
+};
 
-int add_user(MYSQL* bd,char* name,char* pass, char* information);
 
-void del_user(MYSQL* bd,char* name);
+persistence * init_persistence(char user[],char pass[]);
 
-int exist_user(MYSQL* bd,char name[]);
+void free_persistence(persistence *persistence);
 
-int get_id_user(MYSQL* bd,char name[]);
+int add_user(persistence* persistence, char* name, char* pass, char* information);
 
-void accept_friend(MYSQL* bd, int id1,int id2);
+int del_user(persistence* persistence, char* name);
 
-void send_request(MYSQL* bd,int id1,int id2);
+int user_exist(persistence* persistence, char name[]);
 
-void refuse_request(MYSQL* bd,int id1,int id2);
+int get_user_id(persistence* persistence, char name[]);
 
-void del_friends(MYSQL* bd,int id1,int id2);
+int decline_friend_request(persistence* persistence, int user_id1, int user_id2);
 
-void add_chat(MYSQL* bd,int id_admin, char* description);
+int accept_friend_request(persistence* persistence, int user_id1, int user_id2);
 
-void del_chat(MYSQL* bd,int id);
+int send_request(persistence* persistence, int user_id1, int user_id2);
 
-void add_user_chat(MYSQL* bd,int id_user,int id_chat);
+int del_friends(persistence* persistence, int user_id1, int user_id2);
 
-void del_user_chat(MYSQL* bd,int id_user,int id_chat);
+int add_chat(persistence* persistence, int admin_id, char* description);
+
+int del_chat(persistence* persistence, int user_id);
+
+int add_user_chat(persistence* persistence, int user_id, int chat_id);
+
+int del_user_chat(persistence* persistence, int user_id, int chat_id);
+
 
 #endif /* __PERSISTENCE */
 

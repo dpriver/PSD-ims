@@ -1,7 +1,7 @@
 /*******************************************************************************
- *	network.h
+ *	psd_ims_server.h
  *
- *  client network management
+ *  Server network management
  *
  *
  *  This file is part of PSD-IMS
@@ -26,49 +26,19 @@
 #ifndef __NETWORK
 #define __NETWORK
 
-
 #include "soapH.h"
-//#include "psdims.nsmap"
-#include "psd_ims_client.h"
-
-typedef struct network network;
-struct network {
-	char *serverURL;
-	struct soap soap;
-};
+#include "psdims.nsmap"
+#include "persistence.h"
+#include <mysql.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 
-network *init_network(char *serverURL);
+int init_server(int bind_port, char persistence_user[], char persistence_pass[]);
 
+void free_server();
 
-void *free_network(network *network);
-
-
-int recv_notifications(network *network, psd_ims_client *client);
-
-
-int recv_pending_messages(network *network, psd_ims_client *client, int chat_id);
-
-
-int recv_new_chats(network *network, psd_ims_client *client);
-
-
-int send_message(network *network, psd_ims_client *client, int chat_id, char *text, char *attach_path);
-
-
-int send_friend_request(network *network, psd_ims_client *client, char *user);
-
-
-int send_request_accept(network *network, psd_ims_client *client, char *user);
-
-
-int send_request_decline(network *network, psd_ims_client *client, char *user);
-
-
-int user_register(network *network, char *name, char *password, char *information);
-
-
-int login(network *network, psd_ims_client *client, char *name, char *password);
+int listen_connection();
 
 
 #endif /* __NETWORK */
