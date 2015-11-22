@@ -38,15 +38,20 @@ int main( int argc, char **argv) {
 	int m, s;
 	struct soap soap;
 
-
-	if (argc < 2) {
-		printf("Usage: %s <port>\n", argv[0]);
+	if (argc < 4) {
+		printf("Usage: %s <port> <bd_user> <bd_pass>\n", argv[0]);
 		exit(-1);
 	}	
 
 	// Init environment
 	soap_init(&soap);
-    bd=init_bd("root","calasancio3","PSD");
+  bd = init_bd(argv[2], argv[3] ,"PSD");
+
+	if( bd == NULL ) {
+		printf("Faied to initialize DataBase\n");
+		return -1;
+	}
+
 	// Bind to the specified port	
 	m = soap_bind(&soap, NULL, atoi(argv[1]), 100);
 
@@ -78,15 +83,25 @@ int main( int argc, char **argv) {
 //(struct soap *soap, int a, int b, int *res)
 int psdims__user_register(struct soap *soap,psdims__register_info *user_info, int *ERRCODE){
 	*ERRCODE = 10;
+	if ( (user_info->name == NULL) || (user_info->name == NULL) || (user_info->name == NULL) ) {
+		printf("Some fields are empty\n");
+		return -1;
+	}
+	printf("Agregando usuario a la base de datos:\n");
+	printf("NAME: %s\n", user_info->name);
+	printf("PASS: %s\n", user_info->password);
+	printf("INFO: %s\n", user_info->information);
 
-	add_user(bd,user_info->name,user_info->password,user_info->information);
+	if( add_user(bd, user_info->name, user_info->password, user_info->information) != 0 ) {
+		printf("Failed to add_user\n");
+	}
 	return SOAP_OK; 
 }
 
 // borrar user
 int psdims__user_unregister(struct soap *soap,psdims__login_info *login, int *ERRCODE){
 	*ERRCODE = 11;
-	del_user(bd,&login->name);
+	del_user(bd,login->name);
 	return SOAP_OK; 
 }
 

@@ -66,23 +66,27 @@ int main( int argc, char **argv ) {
 	
 	switch (operation) {
 		case 0:
- 			printf("Introduce tu nick =>");
+			printf("Introduce tu nick => ");
 			user_info->name = malloc(40);
-            scanf("%s", user_info->name);
-            printf("Introduce tu contraseña =>");
+			scanf("%s", user_info->name);
+			printf("Introduce tu contraseña => ");
 			user_info->password = malloc(40);
 			scanf("%s", user_info->password);
-            printf("Introduce una breve descripcion tuya =>");
+			printf("Introduce una breve descripcion tuya => ");
 			user_info->information = malloc(50);
 			scanf("%s", user_info->information);
 
-			soap_call_psdims__user_register(&soap, serverURL, "",user_info,&result);
+			if( soap_call_psdims__user_register(&soap, serverURL, "", user_info, &result) != SOAP_OK ) {
+				printf("Problemas con soap...\n");
+			}
+			
+			printf("Respuesta de soap %d\n", result); 
 			//srtcpy(login->name,user_info->name);
 			//srtcpy(login->name,user_info->name);
 			break;
 		case 1:
-            printf("Introduce tu nick =>");
-            scanf("%s", &login->name); //only draft
+      printf("Introduce tu nick =>");
+      scanf("%s", login->name); //only draft
 
 			soap_call_psdims__user_unregister(&soap, serverURL, "",login,&result);
 			break;
@@ -110,7 +114,7 @@ int main( int argc, char **argv ) {
 
 	//printf("Result is = %d\n", result);
 	
-	soap_end(&soap
+	soap_end(&soap);
 	soap_done(&soap);
 	return 0;
 }

@@ -2,9 +2,18 @@
 #include <mysql.h>
 #include "persistence.h"
 
-int main(){
-  MYSQL* bd;
-  bd= init_bd("root","calasancio3","PSD");
+
+int main(int argc, char **argv){
+
+	MYSQL *bd;
+
+	if (argc < 3) {
+		printf("Usage: %s <bd_user> <bd_pass>\n", argv[0]);
+		return -1;
+	}	
+
+	// Init environment
+  //bd = (MYSQL *)init_bd(argv[1], argv[2] ,"PSD");
   
   //add_user(bd,10,"pepe","contrasena","information asdasdd asdasdaa sdaaasdas");
   //add_user(bd,2,"antonio","information");
@@ -22,5 +31,5 @@ int main(){
   //del_user_chat(bd,2,1);
   //printf("%d\n",get_cont(bd));
   //sum_cont(bd);
-return 0;
+	return 0;
 }

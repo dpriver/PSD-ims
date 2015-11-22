@@ -28,9 +28,9 @@
 
 #include <mysql.h>
 
-MYSQL* init_bd(char user[],char pass[],char name_bd[]);
+MYSQL * init_bd(char user[],char pass[],char name_bd[]);
 
-void add_user(MYSQL* bd,char* name,char* pass, char* information);
+int add_user(MYSQL* bd,char* name,char* pass, char* information);
 
 void del_user(MYSQL* bd,char* name);
 
