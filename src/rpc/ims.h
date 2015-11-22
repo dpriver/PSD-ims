@@ -117,6 +117,9 @@ int psdims__user_register(psdims__register_info *user_info, int *ERRCODE);
 // borrar user
 int psdims__user_unregister(psdims__login_info *login, int *ERRCODE);
 
+// get user information
+int psdims__get_user(psdims__login_info *login, psdims__user_info *user_info);
+
 // get friend list
 int psdims__get_friends(psdims__login_info *login, psdims__user_list *friends);
 
