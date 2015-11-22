@@ -23,8 +23,8 @@
  *
  ********************************************************************************/
 
-#ifndef __PERSISTANCE
-#define __PERSISTANCE
+#ifndef __PERSISTENCE
+#define __PERSISTENCE
 
 #include <mysql.h>
 
@@ -54,5 +54,5 @@ void add_user_chat(MYSQL* bd,int id_user,int id_chat);
 
 void del_user_chat(MYSQL* bd,int id_user,int id_chat);
 
-#endif /* __PERSISTANCE */
+#endif /* __PERSISTENCE */
 

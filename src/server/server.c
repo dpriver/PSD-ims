@@ -99,12 +99,26 @@ int psdims__user_register(struct soap *soap,psdims__register_info *user_info, in
 }
 
 // borrar user
-int psdims__user_unregister(struct soap *soap,psdims__login_info *login, int *ERRCODE){
+int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *ERRCODE){
 	*ERRCODE = 11;
 	del_user(bd,login->name);
 	return SOAP_OK; 
 }
 
+int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_info *user_info) {
+	// Buscar el usuario mediante persistence
+		// [si se encuentra]
+			//user_info->name = malloc(sizeof(char)*10);
+			//user_info->information = malloc(sizeof(char)*50);
+			//strcpy(user_info->name, <name>);
+			//strcpy(user_info->information, <information>); 
+			//return SOAP_OK
+		//[SI no se encuentra]
+			//soap->user = (char*)malloc(sizeof(char)*200);
+			//strcpy((char *)soap->user, "Incorrect login credentials");
+			//return SOAP_USER_ERROR
+	return SOAP_OK;
+}
 
 int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__user_list *friends){
 	return SOAP_OK; 

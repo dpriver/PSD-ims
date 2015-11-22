@@ -63,7 +63,7 @@ void save_state(psd_ims_client *client) {
 /* =========================================================================
  *  User send Menu
  * =========================================================================*/
-
+/*
 int recv_notifications(psd_ims_client *client) {
 
 	return 0;
@@ -78,6 +78,7 @@ int recv_new_chats(psd_ims_client *client) {
 
 	return 0;
 }
+*/
 
 void screen_menu_recv_show() {
 	menu_header_show("PSD IMS - Receive menu");
@@ -119,7 +120,7 @@ int menu_recv(psd_ims_client *client, menu_type *next_menu_ret) {
 /* =========================================================================
  *  User send Menu
  * =========================================================================*/
-
+/*
 int send_message(psd_ims_client *client) {
 
 	return 0;
@@ -139,6 +140,7 @@ int send_request_decline(psd_ims_client *client) {
 
 	return 0;
 }
+*/
 
 void screen_menu_send_show() {
 	menu_header_show("PSD IMS - Send menu");
@@ -306,7 +308,7 @@ int menu_user(psd_ims_client *client, menu_type *next_menu_ret) {
 /* =========================================================================
  *  Login Menu
  * =========================================================================*/
-
+/*
 int alta() {
 	// Pedir el nombre de usuario
 	// pedir el password
@@ -321,7 +323,7 @@ int login(psd_ims_client *client) {
 	// intentar recibir del server la información del usuario
 	return 0;
 }
-
+*/
 
 void screen_login_show() {
 	menu_header_show("PSD IMS - Login");

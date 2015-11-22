@@ -23,72 +23,50 @@
  *
  ********************************************************************************/
 
-#include "soapH.h"
-#include "psdims.nsmap"
-#include "friends.h"
-#include "leak_detector_c.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "network.h"
+#include "psd_ims_client.h"
+
+#ifdef DEBUG
+#include "leak_detector_c.h"
+#endif
+
 int main( int argc, char **argv ) {
 
-	struct soap soap;
-	char *serverURL;
+
+
 	int operation = 0;
-	int result = 0;
+	int return_value;
+	network *network;
+
 	atexit(report_mem_leak);
 
-	friend_node *friend_list;
 
-	char name[20] = "pepito";
-	char passwd[20] = "abcd1234";
-	char dummyname[20] = "juanito";
-	char description[100];
+	char dummy_name[] = "pepito";
+	char dummy_password[] = "qwed";
+	char dummy_description[] = "juanito";
 
 	if (argc < 3) {
 		printf("Usage: %s http://server:port <operation>\n", argv[0]);
 		exit(-1);
 	}
-
-	//friend_list = new_friend_list();
-	//print_friend_list(friend_list);
-	//free_friend_list(friend_list);
-	
-	//return 0;
-	soap_init(&soap);
-
-	serverURL = argv[1];
 	operation = atoi(argv[2]);
 
-	psdims__login_info *login = malloc(sizeof(psdims__login_info));
-	psdims__register_info *user_info=malloc(sizeof(psdims__register_info));
+	if( (network = init_network(argv[1])) == NULL) {
+		printf("Coult not create network estructure\n");
+		return 0;
+	}
 	
 	switch (operation) {
 		case 0:
-			printf("Introduce tu nick => ");
-			user_info->name = malloc(40);
-			scanf("%s", user_info->name);
-			printf("Introduce tu contraseña => ");
-			user_info->password = malloc(40);
-			scanf("%s", user_info->password);
-			printf("Introduce una breve descripcion tuya => ");
-			user_info->information = malloc(50);
-			scanf("%s", user_info->information);
-
-			if( soap_call_psdims__user_register(&soap, serverURL, "", user_info, &result) != SOAP_OK ) {
-				printf("Problemas con soap...\n");
+			if( login(network, NULL, dummy_name, dummy_password) != 0 ) {
+				printf("Error at login\n");
 			}
-			
-			printf("Respuesta de soap %d\n", result); 
-			//srtcpy(login->name,user_info->name);
-			//srtcpy(login->name,user_info->name);
 			break;
 		case 1:
-      printf("Introduce tu nick =>");
-      scanf("%s", login->name); //only draft
-
-			soap_call_psdims__user_unregister(&soap, serverURL, "",login,&result);
 			break;
 		/*
 			case 2:
@@ -105,16 +83,10 @@ int main( int argc, char **argv ) {
 			break;
         */
 	}
-	
-
-	if (soap.error) {
-		soap_print_fault(&soap, stderr);
-		exit(-1);
-	}
 
 	//printf("Result is = %d\n", result);
 	
-	soap_end(&soap);
-	soap_done(&soap);
+	free_network(network);	
+
 	return 0;
 }
