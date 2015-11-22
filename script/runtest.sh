@@ -1,9 +1,9 @@
 #!/bin/bash
 
 echo "Compiling"
-cd ../
-make clean
-make all
+#cd ../
+#make clean
+#make all
 echo "Finished the compiling"
 
 echo "Creating database"
