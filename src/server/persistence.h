@@ -48,6 +48,8 @@ int del_user(persistence* persistence, char* name);
 
 int user_exist(persistence* persistence, char name[]);
 
+char* get_user_pass(persistence* persistence, char name[]);
+
 int get_user_id(persistence* persistence, char name[]);
 
 int decline_friend_request(persistence* persistence, int user_id1, int user_id2);

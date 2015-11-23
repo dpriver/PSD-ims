@@ -41,13 +41,12 @@ int main( int argc, char **argv ) {
 	int operation = 0;
 	int return_value;
 	network *network;
-
+	psdims__user_info *user_info;
+	
 	atexit(report_mem_leak);
 
 
-	char dummy_name[] = "pepito";
-	char dummy_password[] = "qwed";
-	char dummy_description[] = "juanito";
+	
 
 	if (argc < 3) {
 		printf("Usage: %s http://server:port <operation>\n", argv[0]);
@@ -62,11 +61,15 @@ int main( int argc, char **argv ) {
 	
 	switch (operation) {
 		case 0:
-			if( login(network, NULL, dummy_name, dummy_password) != 0 ) {
+			if( login(network, NULL,user_info) != 0 ) {
 				printf("Error at login\n");
 			}
+			printf("%s\n",user_info->name);
 			break;
-		case 1:
+		case 1:		 
+			if(user_register(network,user_info)){
+				printf("Error at register\n");
+			}
 			break;
 		/*
 			case 2:

@@ -65,10 +65,10 @@ int send_request_accept(network *network, psd_ims_client *client, char *user);
 int send_request_decline(network *network, psd_ims_client *client, char *user);
 
 
-int user_register(network *network, char *name, char *password, char *information);
+int user_register(network *network,psdims__user_info *user_info);
 
 
-int login(network *network, psd_ims_client *client, char *name, char *password);
+int login(network *network, psd_ims_client *client,psdims__user_info *user_info);
 
 
 #endif /* __NETWORK */

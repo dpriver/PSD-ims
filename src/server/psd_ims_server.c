@@ -117,6 +117,15 @@ int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *E
 
 
 int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_info *user_info) {
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+	user_info->name = malloc(sizeof(char)*50);
+	strcpy(user_info->name,login->name);
+    
 	// Buscar el usuario mediante persistence
 		// [si se encuentra]
 			//user_info->name = malloc(sizeof(char)*10);

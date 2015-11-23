@@ -156,41 +156,60 @@ int send_request_decline(network *network, psd_ims_client *client, char *user) {
 	return -1;
 }
 
-
-int user_register(network *network, char *name, char *password, char *information) {
+int user_register(network *network,psdims__user_info *user_info){
 	int soap_response = 0;
-	psdims__register_info * user_info;
+	psdims__register_info *register_info=malloc(sizeof(psdims__register_info));
 
 	if( (user_info = malloc( sizeof(psdims__register_info) )) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not allocate register_info estructure");
 		return -1;
 	}
+	
+	register_info->name=malloc(50);
+	printf("Escribe tu nuevo nick=>");
+ 	scanf("%s",register_info->name);
 
-	user_info->name = name;
-	user_info->password = password;
-	user_info->information = information;
+	register_info->password=malloc(50);
+ 	printf("Escribe tu contraseña=>");
+ 	scanf("%s",register_info->password);
 
-	if( soap_call_psdims__user_register(&network->soap, network->serverURL, "", user_info, &soap_response) != SOAP_OK ) {
+	register_info->information=malloc(200);
+	printf("Describete un poco=>");
+    scanf("%s",register_info->information);
+
+	if( soap_call_psdims__user_register(&network->soap, network->serverURL, "", register_info, &soap_response) != SOAP_OK ) {
 		DEBUG_FAILURE_PRINTF("Server request failed");
 		return -1;
 	}
 
+    //FUNCIONA, PERO AL DEVOLVER LA LLAMADA DE SOAP LANZA VIOLACIÓN DE SEGMENTO,FALLO DE SOAP
+
+	strcpy(user_info->name,register_info->name);
+	strcpy(user_info->information,register_info->information);
+	
 	// Comprobar error del servidor
 	return 0;
 }
 
 
-int login(network *network, psd_ims_client *client, char *name, char *password) {
+int login(network *network, psd_ims_client *client,psdims__user_info *user_info) {
 	int soap_response = 0;
-	psdims__login_info login_info;
-	psdims__user_info user_info;
+	psdims__login_info *login_info=malloc(sizeof(psdims__login_info));
 	char *soap_error;
+    char *name,*password;
 
+	login_info->name=malloc(50);
+	printf("Pon tu nick=>");
+ 	scanf("%s",login_info->name);
+	
+	login_info->password=malloc(50);
+ 	printf("Escribe tu contraseña=>");
+ 	scanf("%s",login_info->password);
 
-	login_info.name = name;
-	login_info.password = password;
+	soap_response = soap_call_psdims__get_user(&network->soap, network->serverURL, "", login_info, user_info);
+   
+    //FUNCIONA, PERO AL DEVOLVER LA LLAMADA DE SOAP LANZA VIOLACIÓN DE SEGMENTO,FALLO DE SOAP
 
-	soap_response = soap_call_psdims__get_user(&network->soap, network->serverURL, "", &login_info, &user_info);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
@@ -198,9 +217,12 @@ int login(network *network, psd_ims_client *client, char *name, char *password) 
 		free(soap_error);
 		return -1;
 	}
+	 
+ 	printf("%s\n",user_info->name);
+	//printf("Name: %s\n", user_info.name);
+	//printf("Information: %s\n", user_info.information);
 
-	printf("Name: %s\n", user_info.name);
-	printf("Information: %s\n", user_info.information);
+	free(login_info);
 	// TODO add user information to client struct
 
 	return 0;
