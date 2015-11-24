@@ -6,12 +6,15 @@ TODO
 
 Client
 ----------
-1. Client_graphic functionality
-2. Client command mode implementation
-3. Persistence
+1. Network functionality
+2. Client_graphic functionality
+3. Client command mode implementation
+4. Persistence
+5. Catch CTRL-C signal
 
 Server
 ----------
 1. psd_ims_server functionality
 2. Persistente
-3. Threaded server
+3. Catch CTRL-C signal
+4. Threaded server
