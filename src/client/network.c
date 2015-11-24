@@ -192,9 +192,7 @@ int net_login(network *network, char *name, char *password) {
 		return -1;
 	}
 
-	printf("Name: %s\n", user_info.name);
-	printf("Information: %s\n", user_info.information);
-	// TODO add user information to client struct
+	DEBUG_INFO_PRINTF("LOGGED Name:%s Info:%s", user_info.name, user_info.information);
 
 	return 0;
 }

@@ -22,7 +22,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ********************************************************************************/
-
+	// Is simplier to work here with gsoap structs...
+	// try to abstract them in network is a mess
+#include "soapH.h"
 #include "psd_ims_client.h"
 #include "friends.h"
 #include "chats.h"
@@ -133,6 +135,9 @@ int psd_set_pass(psd_ims_client *client, const char *pass) {
 int psd_login(psd_ims_client *client, char *name, char *password) {
 	DEBUG_TRACE_PRINT();
 	DEBUG_FAILURE_PRINTF("Not implemented");
+	// Llamar a gsoap para obtener la info de "name" "password"
+		// si el server la devuelve, agregar en client y devolver 0
+		// si no, devolver -1
 	return -1;
 }
 
@@ -144,6 +149,9 @@ int psd_login(psd_ims_client *client, char *name, char *password) {
 int psd_user_register(psd_ims_client *client, char *name, char *password, char *information) {
 	DEBUG_TRACE_PRINT();
 	DEBUG_FAILURE_PRINTF("Not implemented");
+	// llamar a gsoap para registrar el usuario
+	// si tiene éxito devolver 0
+	// si no,devolver -1
 	return -1;
 }
 

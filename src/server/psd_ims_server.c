@@ -202,10 +202,7 @@ int psdims__user_register(struct soap *soap,psdims__register_info *user_info, in
 		return SOAP_USER_ERROR;
 	}
 
-	DEBUG_INFO_PRINTF("Agregando usuario a la base de datos:");
-	DEBUG_INFO_PRINTF("NAME: %s", user_info->name);
-	DEBUG_INFO_PRINTF("PASS: %s", user_info->password);
-	DEBUG_INFO_PRINTF("INFO: %s", user_info->information);
+	DEBUG_INFO_PRINTF("Registering: name:%s pass:%s", user_info->name, user_info->password);
 
 	if( add_user(server.persistence, user_info->name, user_info->password, user_info->information) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Failed to add user");
