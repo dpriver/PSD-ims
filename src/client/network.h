@@ -29,7 +29,6 @@
 
 #include "soapH.h"
 //#include "psdims.nsmap"
-#include "psd_ims_client.h"
 
 typedef struct network network;
 struct network {
@@ -38,37 +37,27 @@ struct network {
 };
 
 
-network *init_network(char *serverURL);
+network *net_new(char *serverURL);
 
+void net_free(network *network);
 
-void *free_network(network *network);
+int net_recv_notifications(network *network);
 
+int net_recv_pending_messages(network *network, int chat_id);
 
-int recv_notifications(network *network, psd_ims_client *client);
+int net_recv_new_chats(network *network);
 
+int net_send_message(network *network, int chat_id, char *text, char *attach_path);
 
-int recv_pending_messages(network *network, psd_ims_client *client, int chat_id);
+int net_send_friend_request(network *network, char *user);
 
+int net_send_request_accept(network *network, char *user);
 
-int recv_new_chats(network *network, psd_ims_client *client);
+int net_send_request_decline(network *network, char *user);
 
+int net_user_register(network *network, char *name, char *password, char *information);
 
-int send_message(network *network, psd_ims_client *client, int chat_id, char *text, char *attach_path);
-
-
-int send_friend_request(network *network, psd_ims_client *client, char *user);
-
-
-int send_request_accept(network *network, psd_ims_client *client, char *user);
-
-
-int send_request_decline(network *network, psd_ims_client *client, char *user);
-
-
-int user_register(network *network,psdims__user_info *user_info);
-
-
-int login(network *network, psd_ims_client *client,psdims__user_info *user_info);
+int net_login(network *network, char *name, char *password);
 
 
 #endif /* __NETWORK */

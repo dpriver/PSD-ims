@@ -28,6 +28,7 @@
 
 #include "friends.h"
 #include "chats.h"
+#include "network.h"
 
 typedef chat_node chat_list;
 typedef friend_node friend_list;
@@ -36,10 +37,13 @@ typedef struct psd_ims_client psd_ims_client;
 struct psd_ims_client {
 	char *user_name;
 	char *user_pass;
+	char *user_info;
 	int last_connection;
+	network *network;
 	friends *friends;
 	chat_list *chats;
 };
+
 
 
 /* =========================================================================
@@ -65,9 +69,68 @@ int psd_set_name(psd_ims_client *client, const char *name);
 
 /*
  * Sets client password
- * Returns o or -1 if fails
+ * Returns 0 or -1 if fails
  */
 int psd_set_pass(psd_ims_client *client, const char *pass);
+
+
+/* =========================================================================
+ *  Network operations
+ * =========================================================================*/
+
+/*
+ * Gets the user information from the server
+ * Returns 0 or -1 if fails
+ */
+int psd_login(psd_ims_client *client, char *name, char *password);
+
+/*
+ * Register the user in the system
+ * Returns 0 or -1 if fails
+ */
+int psd_user_register(psd_ims_client *client, char *name, char *password, char *information);
+
+/*
+ * Receive the pending notifications
+ * Returns the number of received notifications or -1 if fails
+ */
+int psd_recv_notifications(psd_ims_client *client);
+
+/*
+ * Receive the pending messages
+ * Returns the number of received messages or -1 if fails
+ */
+int psd_recv_pending_messages(psd_ims_client *client, int chat_id);
+
+/*
+ * Receive the locally not registered chats
+ * Returns the number of created chats or -1 if fails
+ */
+int psd_recv_new_chats(psd_ims_client *client);
+
+/*
+ * Send a message to the chat "chat_id"
+ * Returns 0 or -1 if fails
+ */
+int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *attach_path);
+
+/*
+ * Send a friend request to "user"
+ * Returns 0 or -1 if fails
+ */
+int psd_send_friend_request(psd_ims_client *client, char *user);
+
+/*
+ * Accept a friend request from "user"
+ * Returns 0 or -1 if fails
+ */
+int psd_send_request_accept(psd_ims_client *client, char *user);
+
+/*
+ * Reject a friend request from "user"
+ * Returns 0 or -1 if fails
+ */
+int psd_send_request_decline(psd_ims_client *client, char *user);
 
 
 /* =========================================================================

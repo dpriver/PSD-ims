@@ -34,18 +34,46 @@
 #include "leak_detector_c.h"
 #endif
 
+
+int _login(network *network) {
+
+	char name[50];
+	char pass[50];
+	char info[50];
+
+	printf(" User NAME => ");
+	scanf("%s", name);
+	printf(" User PASS => ");
+	scanf("%s", pass);
+	
+	return net_login(network, name, pass);
+}
+
+
+int _user_register(network *network) {
+	char name[50];
+	char pass[50];
+	char info[50];
+
+	printf(" User NAME => ");
+	scanf("%s", name);
+	printf(" User PASS => ");
+	scanf("%s", pass);
+	printf(" User INFO => ");
+	scanf("%s", info);
+	
+	return net_user_register(network, name, pass, info);
+}
+
+
+
 int main( int argc, char **argv ) {
-
-
 
 	int operation = 0;
 	int return_value;
 	network *network;
-	psdims__user_info *user_info;
 	
 	atexit(report_mem_leak);
-
-
 	
 
 	if (argc < 3) {
@@ -54,20 +82,19 @@ int main( int argc, char **argv ) {
 	}
 	operation = atoi(argv[2]);
 
-	if( (network = init_network(argv[1])) == NULL) {
+	if( (network = net_new(argv[1])) == NULL) {
 		printf("Coult not create network estructure\n");
 		return 0;
 	}
 	
 	switch (operation) {
 		case 0:
-			if( login(network, NULL,user_info) != 0 ) {
+			if( _login(network) != 0 ) {
 				printf("Error at login\n");
 			}
-			printf("%s\n",user_info->name);
 			break;
 		case 1:		 
-			if(user_register(network,user_info)){
+			if( _user_register(network) != 0 ){
 				printf("Error at register\n");
 			}
 			break;
@@ -89,7 +116,7 @@ int main( int argc, char **argv ) {
 
 	//printf("Result is = %d\n", result);
 	
-	free_network(network);	
+	net_free(network);	
 
 	return 0;
 }

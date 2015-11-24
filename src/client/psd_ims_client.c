@@ -26,6 +26,7 @@
 #include "psd_ims_client.h"
 #include "friends.h"
 #include "chats.h"
+#include "network.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -62,6 +63,7 @@ psd_ims_client *psd_new_client() {
 
 	client->friends = fri_new();
 	client->chats = cha_new();
+	client->network = net_new("url");
 
 	return client;
 }
@@ -74,6 +76,8 @@ void psd_free_client(psd_ims_client *client) {
 	DEBUG_TRACE_PRINT();
 	fri_free(client->friends);
 	cha_free(client->chats);
+	net_free(client->network);	
+
 	free(client->user_name);
 	free(client->user_pass);
 
@@ -115,6 +119,109 @@ int psd_set_pass(psd_ims_client *client, const char *pass) {
 	client->user_pass = user_pass;
 
 	return 0;
+}
+
+
+/* =========================================================================
+ *  Network operations
+ * =========================================================================*/
+
+/*
+ * Gets the user information from the server
+ * Returns 0 or -1 if fails
+ */
+int psd_login(psd_ims_client *client, char *name, char *password) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
+}
+
+
+/*
+ * Register the user in the system
+ * Returns 0 or -1 if fails
+ */
+int psd_user_register(psd_ims_client *client, char *name, char *password, char *information) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
+}
+
+
+/*
+ * Receive the pending notifications
+ * Returns the number of received notifications or -1 if fails
+ */
+int psd_recv_notifications(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
+}
+
+
+/*
+ * Receive the pending messages
+ * Returns the number of received messages or -1 if fails
+ */
+int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return 0;
+}
+
+
+/*
+ * Receive the locally not registered chats
+ * Returns the number of created chats or -1 if fails
+ */
+int psd_recv_new_chats(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return 0;
+}
+
+
+/*
+ * Send a message to the chat "chat_id"
+ * Returns 0 or -1 if fails
+ */
+int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *attach_path) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
+}
+
+
+/*
+ * Send a friend request to "user"
+ * Returns 0 or -1 if fails
+ */
+int psd_send_friend_request(psd_ims_client *client, char *user) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
+}
+
+
+/*
+ * Accept a friend request from "user"
+ * Returns 0 or -1 if fails
+ */
+int psd_send_request_accept(psd_ims_client *client, char *user) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
+}
+
+
+/*
+ * Reject a friend request from "user"
+ * Returns 0 or -1 if fails
+ */
+int psd_send_request_decline(psd_ims_client *client, char *user) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
 }
 
 
