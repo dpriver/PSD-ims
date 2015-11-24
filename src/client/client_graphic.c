@@ -63,7 +63,7 @@ void save_state(psd_ims_client *client) {
 /* =========================================================================
  *  User send Menu
  * =========================================================================*/
-/*
+ 
 int recv_notifications(psd_ims_client *client) {
 
 	return 0;
@@ -78,7 +78,7 @@ int recv_new_chats(psd_ims_client *client) {
 
 	return 0;
 }
-*/
+
 
 void screen_menu_recv_show() {
 	menu_header_show("PSD IMS - Receive menu");
@@ -100,13 +100,13 @@ int menu_recv(psd_ims_client *client, menu_type *next_menu_ret) {
 		switch(option) {
 			case 0: break;   // salir
 			case 1:	// go to listing menu
-				//recv_notifications(client);
+				recv_notifications(client);
 				break;
 			case 2: // go to send menu
-				//recv_pending_messages(client);
+				recv_pending_messages(client);
 				break;
 			case 3: // go to receive menu
-				//recv_new_chats(client);
+				recv_new_chats(client);
 				break;
 		}		
 	} while( option != 0 );
@@ -120,7 +120,7 @@ int menu_recv(psd_ims_client *client, menu_type *next_menu_ret) {
 /* =========================================================================
  *  User send Menu
  * =========================================================================*/
-/*
+
 int send_message(psd_ims_client *client) {
 
 	return 0;
@@ -140,7 +140,7 @@ int send_request_decline(psd_ims_client *client) {
 
 	return 0;
 }
-*/
+
 
 void screen_menu_send_show() {
 	menu_header_show("PSD IMS - Send menu");
@@ -163,16 +163,16 @@ int menu_send(psd_ims_client *client, menu_type *next_menu_ret) {
 		switch(option) {
 			case 0: break;   // salir
 			case 1:	// go to listing menu
-				//send_message(client);
+				send_message(client);
 				break;
 			case 2: // go to send menu
-				//send_friend_request(client);
+				send_friend_request(client);
 				break;
 			case 3: // go to receive menu
-				//send_request_accept(client);
+				send_request_accept(client);
 				break;
 			case 4:
-				//send_request_decline(client);
+				send_request_decline(client);
 				break;
 		}		
 	} while( option != 0 );
@@ -308,8 +308,8 @@ int menu_user(psd_ims_client *client, menu_type *next_menu_ret) {
 /* =========================================================================
  *  Login Menu
  * =========================================================================*/
-/*
-int alta() {
+
+int user_register() {
 	// Pedir el nombre de usuario
 	// pedir el password
 	// pedir la descripción
@@ -323,7 +323,7 @@ int login(psd_ims_client *client) {
 	// intentar recibir del server la información del usuario
 	return 0;
 }
-*/
+
 
 void screen_login_show() {
 	menu_header_show("PSD IMS - Login");
