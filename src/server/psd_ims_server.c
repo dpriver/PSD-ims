@@ -318,7 +318,7 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__send_message(struct soap *soap,psdims__login_info *login, psdims__message_info *message){
+int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_id,  psdims__message_info *message, int *ERRCODE){
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario

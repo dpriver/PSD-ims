@@ -133,7 +133,7 @@ int psdims__get_chat_messages(psdims__login_info *login, int chat_id, psdims__me
 int psdims__get_pending_notifications(psdims__login_info *login, psdims__notification_list *notifications);
 
 // Send message
-int psdims__send_message(psdims__login_info *login, psdims__message_info *message);
+int psdims__send_message(psdims__login_info *login, int chat_id, psdims__message_info *message, int *ERRCODE);
 
 // enviar solicitud de amistad a usuario
 int psdims__send_friend_request(psdims__login_info *login, char* request_name, int *ERRCODE);

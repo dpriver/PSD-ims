@@ -1,6 +1,6 @@
 SOURCES=
-CLIENT_SOURCES=test_client_friend_list.c test_client_chat_list.c test_persistence.c test_psd_client_api.c test_client_graphic.c
-SERVER_SOURCES=
+CLIENT_SOURCES=test_client_friend_list.c test_client_chat_list.c test_psd_client_api.c test_client_graphic.c test_client_network.c
+SERVER_SOURCES=test_persistence.c
 HEADERS=
 
 CLIENT_TARGET=$(CLIENT_SOURCES:%.c=$(CLIENT_TEST_BIN_DIR)/%)
