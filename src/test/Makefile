@@ -1,6 +1,6 @@
 SOURCES=
 CLIENT_SOURCES=test_client_friend_list.c test_client_chat_list.c test_psd_client_api.c test_client_graphic.c test_client_network.c
-SERVER_SOURCES=test_persistence.c
+SERVER_SOURCES=test_psd_server.c 
 HEADERS=
 
 CLIENT_TARGET=$(CLIENT_SOURCES:%.c=$(CLIENT_TEST_BIN_DIR)/%)
@@ -31,11 +31,11 @@ CLIENT_OBJ_DIR=$(PROJECT_DIR)/build/client
 SERVER_OBJ_DIR=$(PROJECT_DIR)/build/server
 COMMON_OBJ_DIR=$(PROJECT_DIR)/build/common
 RPC_OBJ_DIR=$(PROJECT_DIR)/build/rpc
-TEST_OBJ_DIR=$(PROJECT_DIR)/build/test
+TEST_OBJ_DIR=$(PROJECT_DIR)/build/test/
 
 TEST_BIN_DIR=$(PROJECT_DIR)/bin/test
-CLIENT_TEST_BIN_DIR=$(PROJECT_DIR)/bin/test
-SERVER_TEST_BIN_DIR=$(PROJECT_DIR)/bin/test
+CLIENT_TEST_BIN_DIR=$(PROJECT_DIR)/bin/test/client
+SERVER_TEST_BIN_DIR=$(PROJECT_DIR)/bin/test/server
 
 #-------------------------------------------------------------
 # Configuration
@@ -69,11 +69,11 @@ $(TEST_OBJ_DIR)/%.o: %.c
 
 $(SERVER_TEST_BIN_DIR)/%:
 	@echo $(ECHO_FLAGS) "\tLD " $@	
-	@gcc -o $@ $(@:$(TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(CLIENT_OBJ_DIR)/*.o $(SERVER_RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	@gcc -o $@ $(@:$(SERVER_TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(SERVER_OBJ_DIR)/*.o $(SERVER_RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 
 $(CLIENT_TEST_BIN_DIR)/%:
 	@echo $(ECHO_FLAGS) "\tLD " $@	
-	@gcc -o $@ $(@:$(TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(CLIENT_OBJ_DIR)/*.o $(CLIENT_RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	@gcc -o $@ $(@:$(CLIENT_TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(CLIENT_OBJ_DIR)/*.o $(CLIENT_RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 
 #------------------------------------------------------------------------------------
 #		Directories 
@@ -81,6 +81,8 @@ $(CLIENT_TEST_BIN_DIR)/%:
 $(TEST_BIN_DIR):
 	@echo $(ECHO_FLAGS) "\tCreating dir $(CLIENT_TEST_BIN_DIR)"
 	@mkdir -p $(CLIENT_TEST_BIN_DIR)
+	@echo $(ECHO_FLAGS) "\tCreating dir $(SERVER_TEST_BIN_DIR)"
+	@mkdir -p $(SERVER_TEST_BIN_DIR)
 
 $(TEST_OBJ_DIR):
 	@echo $(ECHO_FLAGS) "\tCreating dir $(TEST_OBJ_DIR)"
