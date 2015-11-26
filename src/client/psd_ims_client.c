@@ -31,6 +31,7 @@
 #include "network.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifdef DEBUG_TRACE
 	#undef DEBUG_TRACE

@@ -28,6 +28,7 @@
 #include "network.h"
 #include "psd_ims_client.h"
 
+#include <stdlib.h>
 
 #include "debug_def.h"
 
