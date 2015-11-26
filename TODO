@@ -1,16 +1,16 @@
 TODO
 ==========================
 
+gsoap "send" functions should return the timestamp "send_date" 
+
 1. File support
 2. SSL support
 
 Client
 ----------
-1. Network functionality
-2. Client_graphic functionality
-3. Client command mode implementation
-4. Persistence
-5. Catch CTRL-C signal
+1. Client command mode implementation
+2. Persistence
+
 
 Server
 ----------
