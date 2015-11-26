@@ -114,6 +114,12 @@ void cha_print_chat_list(chats *chats);
 void cha_print_chat_members(chats *chats, int chat_id);
 
 /*
+ * Gets the chat's last message send-date
+ * Returns the send date or 0 if the list is empty
+ */
+int cha_get_last_message_date(chats *chats, int chat_id);
+
+/*
  * Creates a new chat in the list with the provided info
  * Returns 0 or -1 if fails
  */

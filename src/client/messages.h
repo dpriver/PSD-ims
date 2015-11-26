@@ -87,6 +87,12 @@ void mes_free(messages *messages);
 void mes_print_message_list(messages *messages);
 
 /*
+ * Gets the last added message's send_date
+ * Returns the send date or 0 if the list is empty
+ */
+int mes_get_last_message_date(messages *messages);
+
+/*
  * Creates a new message in the list with the provided info
  * Returns 0 or -1 if fails
  */
