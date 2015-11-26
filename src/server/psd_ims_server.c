@@ -220,6 +220,13 @@ int psdims__user_register(struct soap *soap,psdims__register_info *user_info, in
 int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *ERRCODE){
 	*ERRCODE = 11;
 
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
 	if( del_user(server.persistence, login->name) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Failed to delete user");
 		return SOAP_USER_ERROR;
