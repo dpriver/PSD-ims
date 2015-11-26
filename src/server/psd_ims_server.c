@@ -243,6 +243,9 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
 	user_info->name = malloc(sizeof(char)*50);
 	strcpy(user_info->name,login->name);
     
+	user_info->information = malloc(200);
+	get_user_info(server.persistence,get_user_id(server.persistence,login->name),user_info->information);
+
 	// Buscar el usuario mediante persistence
 		// [si se encuentra]
 			//user_info->name = malloc(sizeof(char)*10);
@@ -267,6 +270,10 @@ int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__use
 
 	if(user_exist(server.persistence,login->name)!=1)
 		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
 
 	id=get_user_id(server.persistence,login->name);
 	
@@ -293,6 +300,10 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_
 	if(user_exist(server.persistence,login->name)!=1)
 		return SOAP_USER_ERROR;
 
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
 	id=get_user_id(server.persistence,login->name);
 
 
@@ -312,11 +323,26 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int chat_id, psdims__message_list *messages){
+int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int chat_id,int timestamp, psdims__message_list *messages){
+	int id_user;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	id_user=get_user_id(server.persistence,login->name);
+
+	if(exist_user_in_chat(server.persistence,id_user,chat_id)!=1)
+		return SOAP_USER_ERROR;
+
+
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario
-	// buscar todos los mensajes del chat "chat_id"
+	// buscar todos los mensajes del chat "chat_id" > tiemstamp
 
 	// Es necesario un mecanismo para obtener solo los mensajes pendientes del usuario
 	return SOAP_OK; 

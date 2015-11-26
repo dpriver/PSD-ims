@@ -9,7 +9,7 @@ void test_list_friends(persistence *persistence){
 	get_list_friends(persistence,2,friends);
 
 	while(i<friends->__sizenelems){
-		printf("%s ,  %s\n",friends->user_info[i].name,friends->user_info[i].information);
+		printf("%s ,  %s\n",friends->user[i].name,friends->user[i].information);
 		i++;
 	}
 }
@@ -29,10 +29,29 @@ void test_list_chats(persistence *persistence){
 	}
 }
 
+void test_get_messages_request(persistence *persistence,int id_user,int id_chat){
+	int i=0;
+	psdims__message_list *messages=malloc(sizeof(psdims__message_list));
+
+	if(exist_user_in_chat(persistence,id_user,id_chat)!=1){
+		printf("No exite el usuario en ese chat\n");
+		exit(1);
+	}
+		
+
+	get_list_messages(persistence,id_chat,21,messages);
+
+	while(i<messages->__sizenelems){
+		printf("%s ,  %s ,  %d\n",messages->messages[i].user,messages->messages[i].text,messages->messages[i].send_date);
+		i++;
+	}
+}
+
+
 int main(int argc, char **argv){
 	persistence *persistence=init_persistence(argv[1],argv[2]);	
 
-	test_list_chats(persistence);
+	test_get_messages_request(persistence,3,3);
 	
 	free_persistence(persistence);
 

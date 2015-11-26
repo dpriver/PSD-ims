@@ -130,7 +130,7 @@ int psdims__get_friends(psdims__login_info *login, psdims__user_list *friends);
 int psdims__get_chats(psdims__login_info *login, psdims__chat_list *chats);
 
 // get messages from chat
-int psdims__get_chat_messages(psdims__login_info *login, int chat_id, psdims__message_list *messages);
+int psdims__get_chat_messages(psdims__login_info *login, int chat_id,int timestamp, psdims__message_list *messages);
 
 // get pending notifications
 int psdims__get_pending_notifications(psdims__login_info *login, psdims__notification_list *notifications);

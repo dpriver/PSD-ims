@@ -37,15 +37,14 @@ CREATE TABLE users_chats(
 CREATE TABLE messages(
  ID_SENDER INT(10) NOT NULL, 
  ID_CHAT INT(10) NOT NULL,
- FILE_ INT(1) NOT NULL,
+ FILE_ VARCHAR(500) ,
  TEXT VARCHAR(500) ,
- SEND_TIMESTAMP TIME,
- RECEIVE_TIMESTAMP TIME,
+ SEND_TIMESTAMP INT(10),
  FOREIGN KEY (ID_SENDER) REFERENCES users(ID) on delete cascade on update cascade,
  FOREIGN KEY (ID_CHAT) REFERENCES chats(ID) on delete cascade on update cascade
 );
 
-CREATE TABLE request(
+CREATE TABLE friends_request(
  ID1 INT(10) NOT NULL, 
  ID2_request INT(10) NOT NULL,
  FOREIGN KEY (ID1) REFERENCES users(ID) on delete cascade on update cascade,
@@ -86,10 +85,15 @@ INSERT INTO friends(ID1,ID2) VALUES(2,4);
 
 /*TABLE REQUEST*/
 
-INSERT INTO request(ID1,ID2_request) VALUES(1,3);
-INSERT INTO request(ID1,ID2_request) VALUES(4,3);
-INSERT INTO request(ID1,ID2_request) VALUES(5,2);
+INSERT INTO friends_request(ID1,ID2_request) VALUES(1,3);
+INSERT INTO friends_request(ID1,ID2_request) VALUES(4,3);
+INSERT INTO friends_request(ID1,ID2_request) VALUES(5,2);
 
+/*TABLE MESSAGES*/
 
-
+INSERT INTO messages(ID_SENDER,ID_CHAT,FILE_,TEXT,SEND_TIMESTAMP) VALUES(3,3,'fichero.txt','hola que tal guapo?',20);
+INSERT INTO messages(ID_SENDER,ID_CHAT,FILE_,TEXT,SEND_TIMESTAMP) VALUES(4,3,'null','pues muy bien y tsdfu?',22);
+INSERT INTO messages(ID_SENDER,ID_CHAT,FILE_,TEXT,SEND_TIMESTAMP) VALUES(4,3,'null','tuu?*',20);
+INSERT INTO messages(ID_SENDER,ID_CHAT,FILE_,TEXT,SEND_TIMESTAMP) VALUES(1,1,'null','uuuuooola',15);
+INSERT INTO messages(ID_SENDER,ID_CHAT,FILE_,TEXT,SEND_TIMESTAMP) VALUES(1,1,'null','uuuuooola*2',25);
 

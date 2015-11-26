@@ -61,9 +61,13 @@ int get_id_admin_chat(persistence* persistence,int id_chat);
 
 int get_chat_info(persistence* persistence, int chat_id,char* buff);
 
+int exist_user_in_chat(persistence* persistence,int user_id, int chat_id);
+
 int get_list_friends(persistence* persistence,int user_id,psdims__user_list *friends);
 
 int get_member_list_chats(persistence* persistence,int chat_id,psdims__member_list *members);
+
+int get_list_messages(persistence* persistence,int chat_id,int timestamp,psdims__message_list *messages);
 
 int get_list_chats(persistence* persistence,int user_id,psdims__chat_list *chats);
 
