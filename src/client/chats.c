@@ -223,10 +223,33 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
 
 
 /*
+ * Adds the message in the chat
+ * Returns 0 or -1 if fails
+ */
+int cha_add_message(chats *chats, int chat_id, const char *sender, const char *text, int send_date, const char *attach_path) {
+	DEBUG_TRACE_PRINT();
+	
+	chat_info *chat_info;
+	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1;
+	}
+
+		if( mes_add_message(chat_info->messages, sender, text, send_date, attach_path) != 0 ) {
+			DEBUG_FAILURE_PRINTF("Could not add the message");
+			mes_del_last_messages(chat_info->messages, 1); // (i+1) messages (-1) the last failed
+			return -1;
+		}
+
+	return 0;
+}
+
+
+/*
  * Adds the messages in the chat
  * Returns 0 or -1 if fails
  */
-int cha_add_messages(chats *chats, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages) {
+int cha_add_messages(chats *chats, int chat_id, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages) {
 	DEBUG_TRACE_PRINT();
 	
 	int i;

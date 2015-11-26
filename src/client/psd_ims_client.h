@@ -172,7 +172,7 @@ int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *us
  * Adds the messages in the chat
  * Returns 0 or -1 if fails
  */
-int psd_add_messages(psd_ims_client *client, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages);
+int psd_add_messages(psd_ims_client *client, int chat_id, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages);
 
 /*
  * Clears the chat pending messages counter

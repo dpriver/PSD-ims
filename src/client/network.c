@@ -245,7 +245,6 @@ int net_send_message(network *network, int chat_id, char *text, char *attach_pat
 	message_info.text = text;
 	// TODO Falta el archivo adjunto
 
-	// TODO falta indicar el chat_id
 	if( soap_call_psdims__send_message(&network->soap, network->serverURL, "", &network->login_info, chat_id, &message_info, &soap_response) != SOAP_OK ) {
 		DEBUG_FAILURE_PRINTF("Server request failed");
 		return -1;

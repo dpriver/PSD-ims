@@ -76,16 +76,18 @@ typedef struct psdims__message_info {
 
 typedef struct psdims__message_list {
 	int __sizenelems;
-	char **user;
-	char **text;
-	int *send_date;
+	psdims__message_info *messages;
 } psdims__message_list;
 
+typedef struct psdims__string {
+	int __sizenelems;
+	char *string;
+} psdims__string;
 
 // Chats and chat members
 typedef struct psdims__member_list {
 	int __sizenelems;
-	char **name;
+	psdims__string *name;
 } psdims__member_list;
 
 typedef struct psdims__chat_info {
@@ -99,6 +101,7 @@ typedef struct psdims__chat_list {
 	int __sizenelems;
 	psdims__chat_info *chat_info;
 } psdims__chat_list;
+
 
 
 

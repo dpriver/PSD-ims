@@ -120,10 +120,16 @@ void cha_print_chat_members(chats *chats, int chat_id);
 int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], int n_members);
 
 /*
+ * Adds the message in the chat
+ * Returns 0 or -1 if fails
+ */
+int cha_add_message(chats *chats, int chat_id, const char *sender, const char *text, int send_date, const char *attach_path);
+
+/*
  * Adds the messages in the chat
  * Returns 0 or -1 if fails
  */
-int cha_add_messages(chats *chats, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages);
+int cha_add_messages(chats *chats, int chat_id, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages);
 
 /*
  * Creates a new chat member in the list with the provided info

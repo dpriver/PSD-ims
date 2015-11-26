@@ -134,11 +134,31 @@ int psd_set_pass(psd_ims_client *client, const char *pass) {
  */
 int psd_login(psd_ims_client *client, char *name, char *password) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	// Llamar a gsoap para obtener la info de "name" "password"
-		// si el server la devuelve, agregar en client y devolver 0
-		// si no, devolver -1
-	return -1;
+	psdims__user_info *user_info;
+
+	if( (user_info = net_login(client->network, name, password)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Bad login");
+		return -1;
+	}
+	
+	if ( (client->user_name = malloc( strlen(name)+sizeof(char) )) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory");
+		return -1;
+	}
+	if ( (client->user_pass = malloc( strlen(password)+sizeof(char) )) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory");
+		return -1;
+	}
+	if ( (client->user_info = malloc( strlen(user_info->information)+sizeof(char) )) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory");
+		return -1;
+	}
+
+	strcpy(client->user_name, name);
+	strcpy(client->user_pass, password);
+	strcpy(client->user_info, user_info->information);
+
+	return 0;
 }
 
 
@@ -148,11 +168,13 @@ int psd_login(psd_ims_client *client, char *name, char *password) {
  */
 int psd_user_register(psd_ims_client *client, char *name, char *password, char *information) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	// llamar a gsoap para registrar el usuario
-	// si tiene éxito devolver 0
-	// si no,devolver -1
-	return -1;
+
+	if( net_user_register(client->network, name, password, information) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not register the user");
+		return -1;
+	}
+
+	return 0;
 }
 
 
@@ -173,7 +195,37 @@ int psd_recv_notifications(psd_ims_client *client) {
  */
 int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
+	psdims__message_list *list;
+	char **sender;
+	char **text;
+	char **attach_path;
+	int *send_date;
+
+	int i;
+
+	if( (list = net_recv_pending_messages(client->network, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not get the message list");
+		return -1;
+	}
+	
+	sender = (char**)malloc(sizeof(char*)*list->__sizenelems);
+	text = (char**)malloc(sizeof(char*)*list->__sizenelems);
+	attach_path = (char**)malloc(sizeof(char*)*list->__sizenelems);
+	send_date = (int*)malloc(sizeof(char)*list->__sizenelems);
+
+
+	for( i = 0; i < list->__sizenelems; i++) {
+		sender[i] = list->messages[i].user;
+		text[i] = list->messages[i].text;
+		attach_path[i] = NULL;	
+		send_date[i] = list->messages[i].send_date;
+	}
+
+	if ( cha_add_messages(client->chats, chat_id, sender, text, send_date, attach_path, list->__sizenelems) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not add messages");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -195,8 +247,21 @@ int psd_recv_new_chats(psd_ims_client *client) {
  */
 int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *attach_path) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return -1;
+	int send_date = 0;
+
+	// TODO send message should return the send_date
+	// send_date = ///
+	if( net_send_message(client->network, chat_id, text, attach_path) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not send the message");
+		return -1;
+	}
+
+	if ( cha_add_message(client->chats, chat_id, NULL, text, send_date, attach_path) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not add the message, but it has been sended");
+		return -1;
+	}
+
+	return 0;
 }
 
 
@@ -206,8 +271,21 @@ int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *atta
  */
 int psd_send_friend_request(psd_ims_client *client, char *user) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return -1;
+	int send_date = 0;
+
+	// TODO send friend request should return the send_date
+	// send_date = ///
+	if ( net_send_friend_request(client->network, user) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not send the friend request");	
+		return -1;
+	}
+
+	if ( psd_add_friend_req_snd(client, user, send_date) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not add the request locally, but it has been sended");
+		return -1;
+	}
+	
+	return 0;
 }
 
 
@@ -217,8 +295,18 @@ int psd_send_friend_request(psd_ims_client *client, char *user) {
  */
 int psd_send_request_accept(psd_ims_client *client, char *user) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return -1;
+
+	if ( net_send_request_accept(client->network, user) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not accept the friend request");	
+		return -1;
+	}
+
+	if ( fri_del_rcv_request(client->friends, user) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not remove the request locally, but it has been accepted");
+		return -1;
+	}
+	
+	return 0;
 }
 
 
@@ -228,8 +316,18 @@ int psd_send_request_accept(psd_ims_client *client, char *user) {
  */
 int psd_send_request_decline(psd_ims_client *client, char *user) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return -1;
+
+	if ( net_send_request_decline(client->network, user) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not accept the friend request");	
+		return -1;
+	}
+
+	if ( fri_del_rcv_request(client->friends, user) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not remove the request locally, but it has been declined");
+		return -1;
+	}
+	
+	return 0;
 }
 
 
@@ -328,7 +426,7 @@ int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *us
  * Adds the messages in the chat
  * Returns 0 or -1 if fails
  */
-int psd_add_messages(psd_ims_client *client, int chat_id, const char *sender[], const char *text[], int send_date[], const char *attach_path[], int n_messages) {
+int psd_add_messages(psd_ims_client *client, int chat_id, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages) {
 	DEBUG_TRACE_PRINT();
 	return cha_add_messages(client->chats, chat_id, sender, text, send_date, attach_path, n_messages);
 }
