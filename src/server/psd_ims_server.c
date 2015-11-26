@@ -264,8 +264,7 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
  */
 int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__user_list *friends){
 	int id;
-	char *list;
-	int i;
+
 	if(user_exist(server.persistence,login->name)!=1)
 		return SOAP_USER_ERROR;
 
@@ -290,6 +289,18 @@ int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__use
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
 int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_list *chats){
+	int id;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+	id=get_user_id(server.persistence,login->name);
+
+	chats=malloc(sizeof(psdims__chat_list));
+
+	if(get_list_chats(server.persistence,id,chats)!=0){
+		return SOAP_USER_ERROR;
+	}
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario
