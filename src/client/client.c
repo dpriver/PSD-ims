@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "psd_ims_client.h"
+#include "client_graphic.h"
 
 #ifdef DEBUG
 #include "leak_detector_c.h"

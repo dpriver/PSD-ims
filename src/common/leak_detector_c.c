@@ -12,11 +12,11 @@
 static MEM_LEAK * ptr_start = NULL;
 static MEM_LEAK * ptr_last =  NULL;
 
-static n_elems_alloc = 0;
-static n_elems_list = 0;
+static int n_elems_alloc = 0;
+static int n_elems_list = 0;
 
-static n_alloc_errors = 0;
-static n_free_errors = 0;
+static int n_alloc_errors = 0;
+static int n_free_errors = 0;
 
 /*
  * logs mem_alloc information
