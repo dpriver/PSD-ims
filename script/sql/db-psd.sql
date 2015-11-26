@@ -86,7 +86,7 @@ INSERT INTO friends(ID1,ID2) VALUES(2,4);
 /*TABLE REQUEST*/
 
 INSERT INTO friends_request(ID1,ID2_request) VALUES(1,3);
-INSERT INTO friends_request(ID1,ID2_request) VALUES(4,3);
+INSERT INTO friends_request(ID1,ID2_request) VALUES(5,3);
 INSERT INTO friends_request(ID1,ID2_request) VALUES(5,2);
 
 /*TABLE MESSAGES*/

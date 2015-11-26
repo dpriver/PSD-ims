@@ -440,6 +440,25 @@ int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, cha
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
 int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *request_name, int *ERRCODE){
+	int id_user,id_request_name;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0)
+		return SOAP_USER_ERROR;
+
+	id_user=get_user_id(server.persistence,login->name);
+	id_request_name=get_user_id(server.persistence,request_name);
+
+	if(exist_request(server.persistence,id_user,id_request_name)==0){
+		printf("No existe una petición de amistad\n");
+		exit(1);
+	}
+    
+    if(accept_friend_request(server.persistence,id_user,id_request_name)!=0)
+		return SOAP_USER_ERROR;
+
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario
@@ -456,6 +475,25 @@ int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *re
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
 int psdims__decline_request(struct soap *soap,psdims__login_info *login, char *request_name, int *ERRCODE){
+	int id_user,id_request_name;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0)
+		return SOAP_USER_ERROR;
+
+	id_user=get_user_id(server.persistence,login->name);
+	id_request_name=get_user_id(server.persistence,request_name);
+
+	if(exist_request(server.persistence,id_user,id_request_name)==0){
+		printf("No existe una petición de amistad\n");
+		exit(1);
+	}
+
+	if(decline_friend_request(server.persistence,id_user,id_request_name)!=0)
+		return SOAP_USER_ERROR;
+
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario

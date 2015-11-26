@@ -64,6 +64,29 @@ void test_send_request(persistence *persistence,int id_user,int id_request_name)
 	send_request(persistence,id_user, id_request_name);
 }
 
+void test_accept_request(persistence *persistence,int id_user,int id_request_name){
+	int i=0;
+	psdims__message_list *messages=malloc(sizeof(psdims__message_list));
+
+	if(exist_request(persistence,id_user,id_request_name)==0){
+		printf("No existe una petición de amistad\n");
+		exit(1);
+	}
+    
+    accept_friend_request(persistence,id_user,id_request_name);
+}
+
+void test_decline_request(persistence *persistence,int id_user,int id_request_name){
+	int i=0;
+	psdims__message_list *messages=malloc(sizeof(psdims__message_list));
+
+	if(exist_request(persistence,id_user,id_request_name)==0){
+		printf("No existe una petición de amistad\n");
+		exit(1);
+	}
+    
+    decline_friend_request(persistence,id_user,id_request_name);
+}
 
 int main(int argc, char **argv){
 	persistence *persistence=init_persistence(argv[1],argv[2]);	
@@ -74,7 +97,11 @@ int main(int argc, char **argv){
 
 	//test_list_friends(persistence);
 
-	test_send_request(persistence,1,4);
+	//test_send_request(persistence,1,4);
+
+	//test_accept_request(persistence,1,4);
+
+	test_decline_request(persistence,4,3);
 
 	free_persistence(persistence);
 
