@@ -305,7 +305,7 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_
 	}
 
 	id=get_user_id(server.persistence,login->name);
-
+	
 
 	if(get_list_chats(server.persistence,id,chats)!=0){
 		return SOAP_USER_ERROR;
@@ -338,6 +338,8 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
 	if(exist_user_in_chat(server.persistence,id_user,chat_id)!=1)
 		return SOAP_USER_ERROR;
 
+	if(get_list_messages(server.persistence,chat_id,timestamp,messages)!=0)
+		return SOAP_USER_ERROR;
 
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
@@ -367,6 +369,25 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
 int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_id,  psdims__message_info *message, int *ERRCODE){
+	int id_user;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	id_user=get_user_id(server.persistence,login->name);
+
+	if(exist_user_in_chat(server.persistence,id_user,chat_id)!=1)
+		return SOAP_USER_ERROR;
+	
+	if( send_messages(server.persistence,chat_id,message)!=0)
+		return SOAP_USER_ERROR;
+
+	
+
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario
@@ -380,6 +401,30 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
 int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, char* request_name, int *ERRCODE){
+	int id_user,id_request_name;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	id_user=get_user_id(server.persistence,login->name);
+	id_request_name=get_user_id(server.persistence,request_name);
+
+	if(exist_friendly(server.persistence,id_user,id_request_name)!=0){
+		printf("Ya son amigos\n");
+		exit(1);
+	}
+
+	if(exist_request(server.persistence,id_user,id_request_name)!=0){
+		printf("Ya existe una petición de amistad\n");
+		exit(1);
+	}
+
+	if(send_request(server.persistence,id_user, id_request_name)!=0)
+		return SOAP_USER_ERROR;
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario

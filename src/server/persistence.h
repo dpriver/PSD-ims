@@ -63,6 +63,8 @@ int get_chat_info(persistence* persistence, int chat_id,char* buff);
 
 int exist_user_in_chat(persistence* persistence,int user_id, int chat_id);
 
+int chat_exist(persistence* persistence, int chat_id);
+
 int get_list_friends(persistence* persistence,int user_id,psdims__user_list *friends);
 
 int get_member_list_chats(persistence* persistence,int chat_id,psdims__member_list *members);
@@ -71,11 +73,17 @@ int get_list_messages(persistence* persistence,int chat_id,int timestamp,psdims_
 
 int get_list_chats(persistence* persistence,int user_id,psdims__chat_list *chats);
 
+int send_messages(persistence* persistence,int chat_id,psdims__message_info *message);
+
 int decline_friend_request(persistence* persistence, int user_id1, int user_id2);
 
 int accept_friend_request(persistence* persistence, int user_id1, int user_id2);
 
 int send_request(persistence* persistence, int user_id1, int user_id2);
+
+int exist_request(persistence* persistence,int user_id1, int user_id2);
+
+int exist_friendly(persistence* persistence,int user_id1, int user_id2);
 
 int del_friends(persistence* persistence, int user_id1, int user_id2);
 

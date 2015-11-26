@@ -47,12 +47,35 @@ void test_get_messages_request(persistence *persistence,int id_user,int id_chat)
 	}
 }
 
+void test_send_request(persistence *persistence,int id_user,int id_request_name){
+	int i=0;
+	psdims__message_list *messages=malloc(sizeof(psdims__message_list));
+
+	if(exist_friendly(persistence,id_user,id_request_name)!=0){
+		printf("Ya son amigos\n");
+		exit(1);
+	}
+
+	if(exist_request(persistence,id_user,id_request_name)!=0){
+		printf("Ya existe una petición de amistad\n");
+		exit(1);
+	}
+
+	send_request(persistence,id_user, id_request_name);
+}
+
 
 int main(int argc, char **argv){
 	persistence *persistence=init_persistence(argv[1],argv[2]);	
 
-	test_get_messages_request(persistence,3,3);
+	//test_get_messages_request(persistence,3,3);
 	
+	//test_list_chats(persistence);
+
+	//test_list_friends(persistence);
+
+	test_send_request(persistence,1,4);
+
 	free_persistence(persistence);
 
 	return 0;
