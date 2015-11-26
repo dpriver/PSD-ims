@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "friends.h"
 #include "leak_detector_c.h"
