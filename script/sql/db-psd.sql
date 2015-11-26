@@ -57,7 +57,7 @@ CREATE TABLE request(
 
 /*TABLE USERS*/
 
-INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Pepe','contrasena1','Guapo');
+INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Pepe','contrasena1','Guapo y mas que guapo');
 INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Antonio','contrasena2','Feo');
 INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Maria','contrasena3','Gorda');
 INSERT INTO users(NAME,PASS,INFORMATION) VALUES('Carmen','contrasena4','Delgada');

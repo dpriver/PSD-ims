@@ -1,13 +1,13 @@
 SOURCES=
 CLIENT_SOURCES=test_client_friend_list.c test_client_chat_list.c test_psd_client_api.c test_client_graphic.c test_client_network.c
-SERVER_SOURCES=test_psd_server.c 
+SERVER_SOURCES=test_psd_server.c test_persistence.c
 HEADERS=
 
 CLIENT_TARGET=$(CLIENT_SOURCES:%.c=$(CLIENT_TEST_BIN_DIR)/%)
 SERVER_TARGET=$(SERVER_SOURCES:%.c=$(SERVER_TEST_BIN_DIR)/%)
 
-CLIENT_COBJS=$(CLIENT_SOURCES:%.c=$(TEST_OBJ_DIR)/%.o)
-SERVER_COBJS=$(SERVER_SOURCES:%.c=$(TEST_OBJ_DIR)/%.o)
+CLIENT_COBJS=$(CLIENT_SOURCES:%.c=$(CLIENT_TEST_OBJ_DIR)/%.o)
+SERVER_COBJS=$(SERVER_SOURCES:%.c=$(SERVER_TEST_OBJ_DIR)/%.o)
 CHEADS=$(HEADERS)
 # LINK_OBJS=$(CLIENT_OBJ_DIR)/* $(SERVER_OBJ_DIR)/* $(COMMON_OBJ_DIR)/*
 CLIENT_RPC_LIBS=soapC soapClient
@@ -31,7 +31,9 @@ CLIENT_OBJ_DIR=$(PROJECT_DIR)/build/client
 SERVER_OBJ_DIR=$(PROJECT_DIR)/build/server
 COMMON_OBJ_DIR=$(PROJECT_DIR)/build/common
 RPC_OBJ_DIR=$(PROJECT_DIR)/build/rpc
-TEST_OBJ_DIR=$(PROJECT_DIR)/build/test/
+TEST_OBJ_DIR=$(PROJECT_DIR)/build/test
+CLIENT_TEST_OBJ_DIR=$(TEST_OBJ_DIR)/client
+SERVER_TEST_OBJ_DIR=$(TEST_OBJ_DIR)/server
 
 TEST_BIN_DIR=$(PROJECT_DIR)/bin/test
 CLIENT_TEST_BIN_DIR=$(PROJECT_DIR)/bin/test/client
@@ -41,7 +43,8 @@ SERVER_TEST_BIN_DIR=$(PROJECT_DIR)/bin/test/server
 # Configuration
 #-------------------------------------------------------------
 MYSQL_CFLAGS := $(shell mysql_config --cflags)
-CFLAGS=-I$(GSOAP_INCLUDE) -I$(COMMON_HEAD_DIR) -I$(CLIENT_HEAD_DIR) -I$(SERVER_HEAD_DIR) -I$(RPC_HEAD_DIR) $(MYSQL_CFLAGS)
+CLIENT_CFLAGS=-I$(GSOAP_INCLUDE) -I$(COMMON_HEAD_DIR) -I$(CLIENT_HEAD_DIR) -I$(RPC_HEAD_DIR) $(MYSQL_CFLAGS)
+SERVER_CFLAGS=-I$(GSOAP_INCLUDE) -I$(COMMON_HEAD_DIR) -I$(SERVER_HEAD_DIR) -I$(RPC_HEAD_DIR) $(MYSQL_CFLAGS)
 MYSQL_LDFLAGS := $(shell mysql_config --libs)
 LDFLAGS=-L$(GSOAP_LIB) $(MYSQL_LDFLAGS)
 LDLIBS=-lgsoap $(SSL_LIBS)
@@ -63,17 +66,21 @@ $(CLIENT_COBJS): | $(TEST_OBJ_DIR)
 
 $(SERVER_COBJS): | $(TEST_OBJ_DIR)
 
-$(TEST_OBJ_DIR)/%.o: %.c
+$(SERVER_TEST_OBJ_DIR)/%.o: %.c
 	@echo $(ECHO_FLAGS) "\tCC" $@
-	@gcc -c -o $@ $< $(CFLAGS)
+	@gcc -c -o $@ $< $(SERVER_CFLAGS)
+
+$(CLIENT_TEST_OBJ_DIR)/%.o: %.c
+	@echo $(ECHO_FLAGS) "\tCC" $@
+	@gcc -c -o $@ $< $(CLIENT_CFLAGS)
 
 $(SERVER_TEST_BIN_DIR)/%:
 	@echo $(ECHO_FLAGS) "\tLD " $@	
-	@gcc -o $@ $(@:$(SERVER_TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(SERVER_OBJ_DIR)/*.o $(SERVER_RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	@gcc -o $@ $(@:$(SERVER_TEST_BIN_DIR)/%=$(SERVER_TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(SERVER_OBJ_DIR)/*.o $(SERVER_RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 
 $(CLIENT_TEST_BIN_DIR)/%:
 	@echo $(ECHO_FLAGS) "\tLD " $@	
-	@gcc -o $@ $(@:$(CLIENT_TEST_BIN_DIR)/%=$(TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(CLIENT_OBJ_DIR)/*.o $(CLIENT_RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
+	@gcc -o $@ $(@:$(CLIENT_TEST_BIN_DIR)/%=$(CLIENT_TEST_OBJ_DIR)/%.o) $(COMMON_OBJ_DIR)/*.o $(CLIENT_OBJ_DIR)/*.o $(CLIENT_RPC_OBJS) $(LDFLAGS) $(SSL_FLAGS) $(LDLIBS)
 
 #------------------------------------------------------------------------------------
 #		Directories 
@@ -85,8 +92,10 @@ $(TEST_BIN_DIR):
 	@mkdir -p $(SERVER_TEST_BIN_DIR)
 
 $(TEST_OBJ_DIR):
-	@echo $(ECHO_FLAGS) "\tCreating dir $(TEST_OBJ_DIR)"
-	@mkdir -p $(TEST_OBJ_DIR)
+	@echo $(ECHO_FLAGS) "\tCreating dir $(CLIENT_TEST_OBJ_DIR)"
+	@mkdir -p $(CLIENT_TEST_OBJ_DIR)
+	@echo $(ECHO_FLAGS) "\tCreating dir $(SERVER_TEST_OBJ_DIR)"
+	@mkdir -p $(SERVER_TEST_OBJ_DIR)
 
 clean:
 	@rm -rf *.o

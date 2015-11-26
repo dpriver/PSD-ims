@@ -1,35 +1,25 @@
 #include <stdio.h>
-#include <mysql.h>
 #include "persistence.h"
+#include "soapH.h"
 
+void test_list_friends(persistence *persistence){
+	int i=0;
+	psdims__user_list *friends=malloc(sizeof(psdims__user_list));
+
+	get_list_friends(persistence,2,friends);
+
+	while(i<friends->__sizenelems){
+		printf("%s ,  %s\n",friends->user_info[i].name,friends->user_info[i].information);
+		i++;
+	}
+}
 
 int main(int argc, char **argv){
+	persistence *persistence=init_persistence(argv[1],argv[2]);	
 
-	MYSQL *bd;
+	test_list_friends(persistence);
+	
+	free_persistence(persistence);
 
-	if (argc < 3) {
-		printf("Usage: %s <bd_user> <bd_pass>\n", argv[0]);
-		return -1;
-	}	
-
-	// Init environment
-  //bd = (MYSQL *)init_bd(argv[1], argv[2] ,"PSD");
-  
-  //add_user(bd,10,"pepe","contrasena","information asdasdd asdasdaa sdaaasdas");
-  //add_user(bd,2,"antonio","information");
-  //del_user(bd,"pepe");
- //printf("%d\n",exist_user(bd,"pe12312pe2"));
-  //accept_friend(bd,1,2);
-  //send_request(bd,1,2);
-  //accept_friend(bd,1,2);
-  //refuse_request(bd,1,2);
-  //del_friends(bd,1,2); 
-   //get_id_user(bd,"antonio");
-  //add_chat(bd,2,2,"informarcion");
-  //del_chat(bd,1);
-  //add_user_chat(bd,4,1);
-  //del_user_chat(bd,2,1);
-  //printf("%d\n",get_cont(bd));
-  //sum_cont(bd);
 	return 0;
 }

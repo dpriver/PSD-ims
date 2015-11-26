@@ -1,11 +1,11 @@
 /*******************************************************************************
- *	psd_ims_server.h
+ *	test_client_graphic.h
  *
- *  Server network management
+ *  Test for the client graphic (console) interface
  *
  *
  *  This file is part of PSD-IMS
- *
+ * 
  *  Copyright (C) 2015  Daniel Pinto Rivero, Javier Bermúdez Blanco
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -22,22 +22,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ********************************************************************************/
+#include "psd_ims_server.h"
 
-#ifndef __PSD_IMS_SERVER
-#define __PSD_IMS_SERVER
+int main (){
+	
 
-#include "soapH.h"
-#include "persistence.h"
-#include <mysql.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-
-int init_server(int bind_port, char persistence_user[], char persistence_pass[]);
-
-void free_server();
-
-int listen_connection();
-
-
-#endif /* __PSD_IMS_SERVER */
+return 0;
+}

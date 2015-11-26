@@ -27,6 +27,7 @@
 #define __PERSISTENCE
 
 #include <mysql.h>
+#include "soapH.h"
 
 typedef struct persistence persistence;
 struct persistence {
@@ -51,6 +52,12 @@ int user_exist(persistence* persistence, char name[]);
 char* get_user_pass(persistence* persistence, char name[]);
 
 int get_user_id(persistence* persistence, char name[]);
+
+int get_user_name(persistence* persistence, int user_id,char* buff);
+
+int get_user_info(persistence* persistence, int user_id,char* buff);
+
+int get_list_friends(persistence* persistence,int user_id,psdims__user_list *friends);
 
 int decline_friend_request(persistence* persistence, int user_id1, int user_id2);
 

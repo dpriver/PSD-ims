@@ -24,7 +24,7 @@
  ********************************************************************************/
 
 #include "soapH.h"
-//#include "psdims.nsmap"
+#include "psdims.nsmap"
 #include "persistence.h"
 #include <pthread.h>
 #include <mysql.h>
@@ -263,6 +263,19 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
 int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__user_list *friends){
+	int id;
+	char *list;
+	int i;
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+	id=get_user_id(server.persistence,login->name);
+	
+	friends=malloc(sizeof(psdims__user_list));
+
+  	if(get_list_friends(server.persistence,id,friends)!=0){
+		return SOAP_USER_ERROR;
+	}
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario
