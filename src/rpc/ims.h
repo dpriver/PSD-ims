@@ -63,7 +63,7 @@ typedef struct psdims__user_info {
 
 typedef struct psdims__user_list {
 	int __sizenelems;
-	psdims__user_info *user_info;
+	psdims__user_info *user;
 } psdims__user_list;
 
 
