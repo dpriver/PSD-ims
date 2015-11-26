@@ -63,6 +63,8 @@ int get_chat_info(persistence* persistence, int chat_id,char* buff);
 
 int get_list_friends(persistence* persistence,int user_id,psdims__user_list *friends);
 
+int get_member_list_chats(persistence* persistence,int chat_id,psdims__member_list *members);
+
 int get_list_chats(persistence* persistence,int user_id,psdims__chat_list *chats);
 
 int decline_friend_request(persistence* persistence, int user_id1, int user_id2);

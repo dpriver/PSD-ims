@@ -15,13 +15,16 @@ void test_list_friends(persistence *persistence){
 }
 
 void test_list_chats(persistence *persistence){
-	int i=0;
+	int i=0,j;
 	psdims__chat_list *chats=malloc(sizeof(psdims__chat_list));
 
 	get_list_chats(persistence,1,chats);
 
 	while(i<chats->__sizenelems){
-		printf("Number chat=> %d, Admin chat=> %s , Description=> %s\n",chats->chat_info[i].chat_id,chats->chat_info[i].admin,chats->chat_info[i].description);
+		printf("Number chat=> %d, Admin chat=> %s , Description=> %s \n",chats->chat_info[i].chat_id,chats->chat_info[i].admin,chats->chat_info[i].description);
+		for(j=0;j<chats->chat_info[i].members->__sizenelems;j++){
+			printf("Miembro=> %s \n", chats->chat_info[i].members->name[j].string);
+			}
 		i++;
 	}
 }
