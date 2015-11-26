@@ -270,7 +270,6 @@ int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__use
 
 	id=get_user_id(server.persistence,login->name);
 	
-	friends=malloc(sizeof(psdims__user_list));
 
   	if(get_list_friends(server.persistence,id,friends)!=0){
 		return SOAP_USER_ERROR;
@@ -296,7 +295,6 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_
 
 	id=get_user_id(server.persistence,login->name);
 
-	chats=malloc(sizeof(psdims__chat_list));
 
 	if(get_list_chats(server.persistence,id,chats)!=0){
 		return SOAP_USER_ERROR;
