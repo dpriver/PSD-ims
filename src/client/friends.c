@@ -48,7 +48,7 @@ void _friends_free_info(friend_info *info) {
 	}
 }
 
-void _friends_delete_node(friend_node *node) {	
+void _friends_delete_node(friend_node *node) {
 	DEBUG_TRACE_PRINT();
 	// link list
 	node->prev->next = node->next;
@@ -143,6 +143,8 @@ friends *fri_new() {
 	}
 
 	friends_new->n_received_requests = 0;
+	friends_new->last_received_request_date = 0;
+	friends_new->last_sended_request_date = 0;
 
 	return friends_new;
 }
@@ -189,6 +191,26 @@ void fri_print_rcv_request_list(friends *friends) {
 
 
 /*
+ * gets the sended friend request with more recent send_date
+ * Returns the send_date or 0 it the list is empty
+ */
+int fri_get_last_snd_request_date(friends *friends) {
+	DEBUG_TRACE_PRINT();
+	return friends->last_sended_request_date;
+}
+
+
+/*
+ * gets the received friend request with more recent send_date
+ * Returns the send_date or 0 it the list is empty
+ */
+int fri_get_last_rcv_request_date(friends *friends) {
+	DEBUG_TRACE_PRINT();
+	return friends->last_received_request_date;
+}
+
+
+/*
  * Creates a new friend_node in the list with the provided info
  * "*info" is attached, not copied
  * Returns 0 or -1 if fails
@@ -227,6 +249,10 @@ int fri_add_snd_request(friends *friends, const char *user_name, int send_date) 
 		return -1;
 	}
 
+	if ( send_date > friends->last_sended_request_date ) {
+		friends->last_sended_request_date = send_date;
+	}
+
 	return 0;
 }
 
@@ -246,6 +272,10 @@ int fri_add_rcv_request(friends *friends, const char *user_name, int send_date) 
 	if ( fri_reqlst_add(friends->received_requests, info) == -1 ) {
 		DEBUG_FAILURE_PRINTF("Could not add recv request to list");
 		return -1;
+	}
+
+	if ( send_date > friends->last_received_request_date ) {
+		friends->last_received_request_date = send_date;
 	}
 
 	return 0;
@@ -411,8 +441,8 @@ int fri_lst_del(friend_list *list, const char *name) {
 
 
 /*
- * Finds the chat whos id is chat_id
- * Returns a pointer to the chat_info of NULL if fails
+ * Finds the friend whos name is name
+ * Returns a pointer to the friend_info of NULL if fails
  */
 friend_info *fri_lst_find(friend_list *list, const char *name) {
 	DEBUG_TRACE_PRINT();

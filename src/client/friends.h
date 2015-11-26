@@ -62,6 +62,8 @@ struct friends {
 	friend_list *friend_list;
 	friend_request_list *sended_requests;
 	friend_request_list *received_requests;
+	int last_received_request_date;
+	int last_sended_request_date;
 	int n_received_requests;
 };
 
@@ -113,6 +115,18 @@ void fri_print_snd_request_list(friends *friends);
  * Prints all received request line by line
  */
 void fri_print_rcv_request_list(friends *friends);
+
+/*
+ * gets the sended friend request with more recent send_date
+ * Returns 0 or -1 if fails
+ */
+int fri_get_last_snd_request_date(friends *friends);
+
+/*
+ * gets the received friend request with more recent send_date
+ * Returns 0 or -1 if fails
+ */
+int fri_get_last_rcv_request_date(friends *friends);
 
 /*
  * Creates a new friend_node in the list with the provided info
