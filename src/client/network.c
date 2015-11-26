@@ -169,7 +169,7 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id) {
 		return NULL;
 	}
 
-	soap_response = soap_call_psdims__get_chat_messages(&network->soap, network->serverURL, "", &network->login_info, chat_id, message_list);
+	soap_response = soap_call_psdims__get_chat_messages(&network->soap, network->serverURL, "", &network->login_info, chat_id,0, message_list);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
