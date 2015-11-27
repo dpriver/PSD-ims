@@ -82,6 +82,23 @@ void net_free(network *network) {
 
 
 /*
+ * Binds the network to the psd_ims server url
+ *
+ */
+int net_bind_network(network *network, char *serverURL) {
+	DEBUG_TRACE_PRINT();
+
+	if( (network->serverURL = malloc( sizeof(char)*(strlen(serverURL)+1) )) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate network estructure");
+		return -1;
+	}
+
+	strcpy(network->serverURL,serverURL);
+	return 0;
+}
+
+
+/*
  *
  *
  */

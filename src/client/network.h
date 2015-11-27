@@ -53,6 +53,12 @@ void net_free(network *network);
  *
  *
  */
+int net_bind_network(network *network, char *serverURL);
+
+/*
+ *
+ *
+ */
 psdims__user_info *net_login(network *network, char *name, char *password);
 
 /*

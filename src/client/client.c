@@ -38,8 +38,14 @@
 
 int main( int argc, char **argv ) {
 
+	if( argc < 2 ) {
+		printf("Usage: %s <url>:<port>\n", argv[0]);
+		return 0; 
+	}
+
 	// Initialize client
 	psd_ims_client *client = psd_new_client();
+	psd_bind_network(client, argv[1]);
 
 	// TODO If posible, load info from local files
 		

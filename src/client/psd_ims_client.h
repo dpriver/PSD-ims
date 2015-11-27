@@ -82,6 +82,11 @@ int psd_set_pass(psd_ims_client *client, const char *pass);
  * =========================================================================*/
 
 /*
+ * Init the network
+ */
+int psd_bind_network(psd_ims_client *client, char *serverURL);
+
+/*
  * Gets the user information from the server
  * Returns 0 or -1 if fails
  */
