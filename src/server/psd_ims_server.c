@@ -195,7 +195,7 @@ int mthread_listen_connection () {
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
 int psdims__user_register(struct soap *soap,psdims__register_info *user_info, int *ERRCODE){
-	*ERRCODE = 10;
+	*ERRCODE = 1;
 
 	if ( (user_info->name == NULL) || (user_info->name == NULL) || (user_info->name == NULL) ) {
 		DEBUG_FAILURE_PRINTF("Some fields are empty");
@@ -218,7 +218,7 @@ int psdims__user_register(struct soap *soap,psdims__register_info *user_info, in
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
 int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *ERRCODE){
-	*ERRCODE = 11;
+	*ERRCODE = 1;
 
 	if(user_exist(server.persistence,login->name)!=1)
 		return SOAP_USER_ERROR;
@@ -240,18 +240,18 @@ int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *E
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_info *user_info) {
+int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_info *user) {
 	if(user_exist(server.persistence,login->name)!=1)
 		return SOAP_USER_ERROR;
 
  	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
 		return SOAP_USER_ERROR;
 	}
-	user_info->name = malloc(sizeof(char)*50);
-	strcpy(user_info->name,login->name);
+	user->name = malloc(sizeof(char)*50);
+	strcpy(user->name,login->name);
     
-	user_info->information = malloc(200);
-	get_user_info(server.persistence,get_user_id(server.persistence,login->name),user_info->information);
+	user->information = malloc(200);
+	get_user_info(server.persistence,get_user_id(server.persistence,login->name),user->information);
 
 	// Buscar el usuario mediante persistence
 		// [si se encuentra]
@@ -330,7 +330,16 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int chat_id,int timestamp, psdims__message_list *messages){
+int psdims__get_chat_info(struct soap *soap, psdims__login_info *login, int chat_id, psdims__chat_info *chat) {
+	return SOAP_USER_ERROR;
+}
+
+
+/*
+ *
+ * Returns SOAP_OK or SOAP_USER_ERROR if fails
+ */
+int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int chat_id, int timestamp, psdims__message_list *messages){
 	int id_user;
 
 	if(user_exist(server.persistence,login->name)!=1)
@@ -362,12 +371,12 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *login, psdims__notification_list *notifications){
+int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *login, int timestamp, psdims__notifications *notifications){
 	// Si el usuario y el user no existen, salir
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario
 	// buscar todas las notificationes pendientes del usuario "id"
-	return SOAP_OK; 
+	return SOAP_USER_ERROR; 
 }
 
 
@@ -375,7 +384,7 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_id,  psdims__message_info *message, int *ERRCODE){
+int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_id,  psdims__message_info *message, int *timestamp){
 	int id_user;
 
 	if(user_exist(server.persistence,login->name)!=1)
@@ -399,6 +408,7 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 		// return SOAP_USER_ERROR
 	// obtener el id del usuario
 	// Agregar el mensaje al chat indicado (TODO Falta enviar chat_id)
+	*timestamp = 1;
 	return SOAP_OK; 
 }
 
@@ -407,7 +417,7 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, char* request_name, int *ERRCODE){
+int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, char* request_name, int *timestamp){
 	int id_user,id_request_name;
 
 	if(user_exist(server.persistence,login->name)!=1)
@@ -437,7 +447,7 @@ int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, cha
 	// obtener el id del usuario
 	// Comprobar que el nombre coincida con algún usuario y estos no sean ya amigos
 	// agregar la petición de amistad y la notificación para el otro usuario
-    *ERRCODE=1;
+    *timestamp=1;
 	return SOAP_OK; 
 }
 
@@ -446,7 +456,7 @@ int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, cha
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *request_name, int *ERRCODE){
+int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *request_name, int *timestamp){
 	int id_user,id_request_name;
 
 	if(user_exist(server.persistence,login->name)!=1)
@@ -472,7 +482,7 @@ int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *re
 	// Comprobar que el nombre coincida con algún usuario y haya una petición pendiente
 	// en la que el usuario sea el receptor
 	// borrar la peticion y agregarles como amigos
-	*ERRCODE=1;
+	*timestamp=1;
 	return SOAP_OK; 
 }
 
@@ -481,7 +491,7 @@ int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *re
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__decline_request(struct soap *soap,psdims__login_info *login, char *request_name, int *ERRCODE){
+int psdims__decline_request(struct soap *soap,psdims__login_info *login, char *request_name, int *timestamp){
 	int id_user,id_request_name;
 
 	if(user_exist(server.persistence,login->name)!=1)
@@ -507,7 +517,7 @@ int psdims__decline_request(struct soap *soap,psdims__login_info *login, char *r
 	// Comprobar que el nombre coincida con algún usuario y haya una petición pendiente
 	// en la que el usuario sea el receptor
 	// borrar la petición
-	*ERRCODE=1;
+	*timestamp=1;
 	return SOAP_OK; 
 }
 

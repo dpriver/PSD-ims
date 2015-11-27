@@ -137,7 +137,7 @@ int psdims__get_friends(psdims__login_info *login, psdims__user_list *friends);
 int psdims__get_chats(psdims__login_info *login, psdims__chat_list *chats);
 
 // get chat info
-int psdims__get_chat_info(psdims__login_info *login, psdims__chat_info *chat);
+int psdims__get_chat_info(psdims__login_info *login, int chat_id, psdims__chat_info *chat);
 
 // get messages from chat
 int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timestamp, psdims__message_list *messages);
@@ -146,16 +146,16 @@ int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timest
 int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, psdims__notifications *notifications);
 
 // Send message
-int psdims__send_message(psdims__login_info *login, int chat_id, psdims__message_info *message, int *send_date);
+int psdims__send_message(psdims__login_info *login, int chat_id, psdims__message_info *message, int *timestamp);
 
 // enviar solicitud de amistad a usuario
-int psdims__send_friend_request(psdims__login_info *login, char* request_name, int *send_date);
+int psdims__send_friend_request(psdims__login_info *login, char* request_name, int *timestamp);
 
 // aceptar solicitud de amistad
-int psdims__accept_request(psdims__login_info *login, char *request_name, int *send_date);
+int psdims__accept_request(psdims__login_info *login, char *request_name, int *timestamp);
 
 // rechazar solicitud de amistad
-int psdims__decline_request(psdims__login_info *login, char *request_name, int *send_date);
+int psdims__decline_request(psdims__login_info *login, char *request_name, int *timestamp);
 
 
 /********************************************************************
