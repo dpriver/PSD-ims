@@ -31,18 +31,28 @@
 
 typedef enum psdims__notification_type { FRIEND_REQ, PENDING_MESS } psdims__notification_type;
 
-typedef struct psdims__notification_info {
-	psdims__notification_type type;
-	int chat_id;
-	int n_messages;
-	char *name;
-	int send_date;
-} psdims__notification_info;
-
-typedef struct psdims__notification_list {
+typedef struct psdims__string {
 	int __sizenelems;
-	psdims__notification_info *notifications;
-} psdims__notification_list;
+	char *string;
+} psdims__string;
+
+typedef struct psdims__notif_friend_list {
+	int __sizenelems;	
+	psdims__string *name;
+} psdims__notif_friend_list;
+
+typedef struct psdims__notif_chat_list {
+	int __sizenelems;
+	int *chat_id;
+} psdims__notif_chat_list;
+
+typedef struct psdims__notifications {
+	psdims__notif_friend_list friend_request;
+	psdims__notif_friend_list deleted_friends;
+	psdims__notif_chat_list new_chats;
+	psdims__notif_chat_list deleted_chats;
+	psdims__notif_chat_list chats_with_messages;
+} psdims__notifications;
 
 typedef struct psdims__login_info {
 	char *name;
@@ -79,11 +89,6 @@ typedef struct psdims__message_list {
 	psdims__message_info *messages;
 } psdims__message_list;
 
-typedef struct psdims__string {
-	int __sizenelems;
-	char *string;
-} psdims__string;
-
 // Chats and chat members
 typedef struct psdims__member_list {
 	int __sizenelems;
@@ -102,13 +107,6 @@ typedef struct psdims__chat_list {
 	psdims__chat_info *chat_info;
 } psdims__chat_list;
 
-
-
-
-typedef struct psdims__request_list {
-	int __sizenelems;	
-	char **name;
-} psdims__request_list;
 
 
 /********************************************************************
@@ -130,10 +128,10 @@ int psdims__get_friends(psdims__login_info *login, psdims__user_list *friends);
 int psdims__get_chats(psdims__login_info *login, psdims__chat_list *chats);
 
 // get messages from chat
-int psdims__get_chat_messages(psdims__login_info *login, int chat_id,int timestamp, psdims__message_list *messages);
+int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timestamp, psdims__message_list *messages);
 
 // get pending notifications
-int psdims__get_pending_notifications(psdims__login_info *login, psdims__notification_list *notifications);
+int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, psdims__notifications *notifications);
 
 // Send message
 int psdims__send_message(psdims__login_info *login, int chat_id, psdims__message_info *message, int *send_date);
