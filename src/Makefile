@@ -45,15 +45,15 @@ tests: test_message
 
 common_debug_trace: common_message
 	@$(MAKE) -C $(COMMON_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE"  all
-	@echo $(ECHO_FLAGS) "\t====== COMMON (DEBUG) built succesfully ======\n"
+	@echo $(ECHO_FLAGS) "\t====== COMMON (DEBUG TRACE) built succesfully ======\n"
 
 client_debug_trace: client_message
 	@$(MAKE) -C $(CLIENT_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE" all
-	@echo $(ECHO_FLAGS) "\t====== CLIENT (DEBUG) built succesfully ======\n"
+	@echo $(ECHO_FLAGS) "\t====== CLIENT (DEBUG TRACE) built succesfully ======\n"
 
 server_debug_trace: server_message
-	@$(MAKE) -C $(SERVER_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_INFO -DDEBUG_FAILURE"  all
-	@echo $(ECHO_FLAGS) "\t====== SERVER (DEBUG) built succesfully ======\n"
+	@$(MAKE) -C $(SERVER_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE"  all
+	@echo $(ECHO_FLAGS) "\t====== SERVER (DEBUG TRACE) built succesfully ======\n"
 
 common_debug: common_message
 	@$(MAKE) -C $(COMMON_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_INFO -DDEBUG_FAILURE"  all
