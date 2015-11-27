@@ -69,7 +69,7 @@ int get_user_input() {
 
 void wait_user() {
 	char aux_char;
-	printf("\n Press ENTER to continue...\n");
+	printf("\n Press ENTER to continue...");
 	FLUSH_INPUT(aux_char);
 }
 

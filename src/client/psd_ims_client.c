@@ -34,13 +34,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef DEBUG_TRACE
-	#undef DEBUG_TRACE
-#endif
-#ifdef DEBUG_INFO
-	#undef DEBUG_INFO
-#endif
-
 #include "debug_def.h"
 
 #ifdef DEBUG

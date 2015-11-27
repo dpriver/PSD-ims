@@ -7,11 +7,20 @@ help:
 	@echo " - all			-> compile everything (client and server)"
 	@echo "========================================================================================"
 
-force_all: clean rpc_regenerate all_debug tests
+
+force_all: force_debug
+
+force_release: clean rpc_regenerate all tests
+
+force_debug: clean rpc_regenerate all_debug tests
+
+force_trace: clean rpc_regenerate all_debug_trace tests
 
 all: common rpc client server
 
 all_debug: common_debug rpc client_debug server_debug
+
+all_debug_trace: common_debug_trace rpc client_debug_trace server_debug_trace
 
 rpc_regenerate:
 	@$(MAKE) -C src rpc_generate
@@ -39,6 +48,15 @@ client_debug:
 
 server_debug:
 	@$(MAKE) -C src server_debug
+
+common_debug_trace:
+	@$(MAKE) -C src common_debug_trace
+
+client_debug_trace:
+	@$(MAKE) -C src client_debug_trace
+
+server_debug_trace:
+	@$(MAKE) -C src server_debug_trace
 
 client_:
 	@$(MAKE) -C src client

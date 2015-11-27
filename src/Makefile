@@ -43,16 +43,28 @@ tests: test_message
 	@$(MAKE) -C $(TEST_DIR) all
 	@echo $(ECHO_FLAGS) "\t====== TESTS built succesfully ======\n"
 
-common_debug: common_message
+common_debug_trace: common_message
 	@$(MAKE) -C $(COMMON_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE"  all
 	@echo $(ECHO_FLAGS) "\t====== COMMON (DEBUG) built succesfully ======\n"
 
-client_debug: client_message
+client_debug_trace: client_message
 	@$(MAKE) -C $(CLIENT_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE" all
 	@echo $(ECHO_FLAGS) "\t====== CLIENT (DEBUG) built succesfully ======\n"
 
+server_debug_trace: server_message
+	@$(MAKE) -C $(SERVER_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_INFO -DDEBUG_FAILURE"  all
+	@echo $(ECHO_FLAGS) "\t====== SERVER (DEBUG) built succesfully ======\n"
+
+common_debug: common_message
+	@$(MAKE) -C $(COMMON_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_INFO -DDEBUG_FAILURE"  all
+	@echo $(ECHO_FLAGS) "\t====== COMMON (DEBUG) built succesfully ======\n"
+
+client_debug: client_message
+	@$(MAKE) -C $(CLIENT_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_INFO -DDEBUG_FAILURE" all
+	@echo $(ECHO_FLAGS) "\t====== CLIENT (DEBUG) built succesfully ======\n"
+
 server_debug: server_message
-	@$(MAKE) -C $(SERVER_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_TRACE -DDEBUG_INFO -DDEBUG_FAILURE"  all
+	@$(MAKE) -C $(SERVER_DIR) EXTRA_CFLAGS="-DDEBUG -DDEBUG_INFO -DDEBUG_FAILURE"  all
 	@echo $(ECHO_FLAGS) "\t====== SERVER (DEBUG) built succesfully ======\n"
 
 
