@@ -243,18 +243,18 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
  */
 int cha_add_message(chats *chats, int chat_id, const char *sender, const char *text, int send_date, const char *attach_path) {
 	DEBUG_TRACE_PRINT();
-	
 	chat_info *chat_info;
+
 	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not find chat");
 		return -1;
 	}
 
-		if( mes_add_message(chat_info->messages, sender, text, send_date, attach_path) != 0 ) {
-			DEBUG_FAILURE_PRINTF("Could not add the message");
-			mes_del_last_messages(chat_info->messages, 1); // (i+1) messages (-1) the last failed
-			return -1;
-		}
+	if( mes_add_message(chat_info->messages, sender, text, send_date, attach_path) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not add the message");
+		mes_del_last_messages(chat_info->messages, 1); // (i+1) messages (-1) the last failed
+		return -1;
+	}
 
 	return 0;
 }
@@ -349,6 +349,23 @@ int cha_del_member(chats *chats, int chat_id, const char *name) {
 
 
 /*
+ * Gets the number of unread messages
+ * Returns the number of unread or -1 if fails
+ */
+int cha_get_unread(chats *chats, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	chat_info *chat_info;
+
+	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1;
+	}
+
+	return cha_GET_N_UNREAD(chat_info);
+}
+
+
+/*
  * Sets the number of unread messages
  * Returns 0 or -1 if fails
  */
@@ -392,6 +409,72 @@ int cha_update_unread(chats *chats, int chat_id, int n_messages) {
 	}
 
 	cha_SET_N_UNREAD(chat_info, unread);
+
+	return 0;
+}
+
+
+/*
+ * Gets the number of pending messages
+ * Returns the number of pending or -1 if fails
+ */
+int cha_get_pending(chats *chats, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	chat_info *chat_info;
+
+	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1;
+	}
+
+	return cha_GET_N_PENDING(chat_info);
+}
+
+
+/*
+ * Sets the number of pending messages
+ * Returns 0 or -1 if fails
+ */
+int cha_set_pending(chats *chats, int chat_id, int n_messages) {
+	DEBUG_TRACE_PRINT();
+	chat_info *chat_info;
+	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1;
+	}
+
+	if( n_messages < 0 ) {
+		DEBUG_FAILURE_PRINTF("Can not set unread messages to less than 0");
+		return -1;
+	}
+
+	cha_SET_N_PENDING(chat_info, n_messages);
+	return 0;
+}
+
+
+/*
+ * Updates the number of pending messages, the number of pending will be
+ * (current_pending + n_messages), n_messages can be a negative number
+ * Returns 0 or -1 if fails
+ */
+int cha_update_pending(chats *chats, int chat_id, int n_messages) {
+	DEBUG_TRACE_PRINT();
+	chat_info *chat_info;
+	int pending;
+
+	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1;
+	}
+
+	pending = cha_GET_N_PENDING(chat_info) + n_messages;
+	if( pending < 0 ) {
+		DEBUG_FAILURE_PRINTF("Can not set unread messages to less than 0");
+		return -1;
+	}
+
+	cha_SET_N_PENDING(chat_info, pending);
 
 	return 0;
 }
@@ -744,6 +827,8 @@ int cha_memberlst_del(chat_member_list *list, const char *name) {
 		}
 	}
 	list->list_lenght -= 5;
+	
+	return 0;
 }
 
 

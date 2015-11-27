@@ -29,6 +29,7 @@
 #include "friends.h"
 #include "chats.h"
 #include "network.h"
+#include "pending_chats.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -67,6 +68,7 @@ psd_ims_client *psd_new_client() {
 	client->friends = fri_new();
 	client->chats = cha_new();
 	client->network = net_new("url");
+	pen_init(&client->new_chats);
 
 	return client;
 }
@@ -80,6 +82,7 @@ void psd_free_client(psd_ims_client *client) {
 	fri_free(client->friends);
 	cha_free(client->chats);
 	net_free(client->network);	
+	pen_free(&client->new_chats);
 
 	free(client->user_name);
 	free(client->user_pass);
@@ -185,8 +188,39 @@ int psd_user_register(psd_ims_client *client, char *name, char *password, char *
  */
 int psd_recv_notifications(psd_ims_client *client) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return -1;
+	int i;
+	psdims__notifications *notifications;
+	int total_notifications = 0;
+
+	if( (notifications = net_recv_notifications(client->network, client->last_notif_timestamp)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not register the user");
+		return -1;
+	}
+
+	// new friend requests
+	for( i = 0 ; i < notifications->friend_request.__sizenelems ; i++ ) {
+		fri_add_rcv_request(client->friends, notifications->friend_request.user[i].name.string, notifications->friend_request.user[i].send_date);
+	}
+	total_notifications += i;
+	// deleted friends TODO: Delete the needed structs
+	for( i = 0 ; i < notifications->deleted_friends.__sizenelems ; i++ ) {
+		fri_del_friend(client->friends, notifications->deleted_friends.user[i].name.string);
+	}
+	// new chats
+	for( i = 0 ; i < notifications->new_chats.__sizenelems ; i++ ) {
+		pen_lst_add(&client->new_chats, notifications->new_chats.chat[i].chat_id);
+	}
+	// deleted chats
+	for( i = 0 ; i < notifications->deleted_chats.__sizenelems ; i++ ) {
+		cha_del_chat(client->chats, notifications->deleted_chats.chat[i].chat_id);
+	}
+	// chats with messages, Maybe the server could send he number of pending messages
+	for( i = 0 ; i < notifications->chats_with_messages.__sizenelems ; i++ ) {
+		cha_set_pending(client->chats, notifications->chats_with_messages.chat[i].chat_id, 1);
+	}
+	total_notifications += i;
+
+	return total_notifications;
 }
 
 
@@ -203,8 +237,15 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 	int *send_date;
 
 	int i;
+	int timestamp;
 
-	if( (list = net_recv_pending_messages(client->network, chat_id)) == NULL ) {
+	if (cha_get_pending(client->chats, chat_id) <= 0 ) {
+		return 0;
+	}
+
+	timestamp = cha_get_last_message_date(client->chats, chat_id);
+
+	if( (list = net_recv_pending_messages(client->network, chat_id, timestamp)) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not get the message list");
 		return -1;
 	}
@@ -227,7 +268,32 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 		return -1;
 	}
 
-	return 0;
+	cha_set_pending(client->chats, chat_id, 0);
+	cha_update_unread(client->chats, chat_id, list->__sizenelems);
+
+	return list->__sizenelems;
+}
+
+
+/*
+ * Receive the locally not registered chats
+ * Returns the number of created chats or -1 if fails
+ */
+int psd_recv_chats(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
+}
+
+
+/*
+ * Receive the locally not registered chats
+ * Returns the number of created chats or -1 if fails
+ */
+int psd_recv_friends(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
 }
 
 
@@ -238,7 +304,7 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 int psd_recv_new_chats(psd_ims_client *client) {
 	DEBUG_TRACE_PRINT();
 	DEBUG_FAILURE_PRINTF("Not implemented");
-	return 0;
+	return -1;
 }
 
 
@@ -344,6 +410,13 @@ void psd_print_chats(psd_ims_client *client) {
 	cha_print_chat_list(client->chats);
 }
 
+/*
+ * Prints all chat members line by line
+ */
+void psd_print_chat_members(psd_ims_client *client, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	cha_print_chat_members(client->chats, chat_id);
+}
 
 /*
  * Adds a new chat to client's chat list
@@ -481,6 +554,15 @@ int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *u
 void psd_print_friends(psd_ims_client *client) {
 	DEBUG_TRACE_PRINT();
 	fri_print_friend_list(client->friends);
+}
+
+
+/*
+ * Prints all friends requests line by line
+ */
+void psd_print_friend_requests(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	fri_print_rcv_request_list(client->friends);
 }
 
 

@@ -1,6 +1,6 @@
 MAIN_SRC=client.c
-SOURCES=chats.c friends.c messages.c persistence.c psd_ims_client.c network.c client_graphic.c
-HEADERS=chats.h friends.h messages.h persistence.h psd_ims_client.h network.h client_graphic.h
+SOURCES=chats.c friends.c messages.c persistence.c psd_ims_client.c network.c client_graphic.c pending_chats.c
+HEADERS=chats.h friends.h messages.h persistence.h psd_ims_client.h network.h client_graphic.h pending_chats.h
 
 COMMON_LIBS=*
 RPC_LIBS=soapC soapClient

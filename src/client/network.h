@@ -59,19 +59,26 @@ psdims__user_info *net_login(network *network, char *name, char *password);
  *
  *
  */
-psdims__notification_list *net_recv_notifications(network *network);
+psdims__notifications *net_recv_notifications(network *network, int timestamp);
 
 /*
  *
  *
  */
-psdims__message_list *net_recv_pending_messages(network *network, int chat_id);
+psdims__message_list *net_recv_pending_messages(network *network, int chat_id, int timestamp);
 
 /*
  *
  *
  */
-psdims__chat_list *net_recv_new_chats(network *network);
+psdims__chat_list *net_get_chat_list(network *network);
+
+/*
+ *
+ *
+ */
+psdims__user_list *net_get_friend_list(network *network);
+
 
 /*
  *

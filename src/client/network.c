@@ -42,6 +42,7 @@
  *
  */
 network *net_new(char *serverURL) {
+	DEBUG_TRACE_PRINT();
 	network *new_network;
 	if( (new_network = malloc( sizeof(network) )) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not allocate network estructure");
@@ -66,6 +67,7 @@ network *net_new(char *serverURL) {
  *
  */
 void net_free(network *network) {
+	DEBUG_TRACE_PRINT();
 	soap_end(&network->soap);
 	soap_done(&network->soap);
 
@@ -84,6 +86,7 @@ void net_free(network *network) {
  *
  */
 psdims__user_info *net_login(network *network, char *name, char *password) {
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
 	psdims__login_info login_info;
 	psdims__user_info *user_info;
@@ -129,18 +132,19 @@ psdims__user_info *net_login(network *network, char *name, char *password) {
  *
  *
  */
-psdims__notification_list *net_recv_notifications(network *network) {
+psdims__notifications *net_recv_notifications(network *network, int timestamp) {
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
-	psdims__notification_list *notification_list;
+	psdims__notifications *notification_list;
 	char *soap_error;
 
 
-	if ( (notification_list = malloc(sizeof(psdims__notification_list)) ) == NULL ) {
+	if ( (notification_list = malloc(sizeof(psdims__notifications)) ) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not allocate memory for notification list");
 		return NULL;
 	}
 
-	soap_response = soap_call_psdims__get_pending_notifications(&network->soap, network->serverURL, "", &network->login_info, notification_list);
+	soap_response = soap_call_psdims__get_pending_notifications(&network->soap, network->serverURL, "", &network->login_info, timestamp, notification_list);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
@@ -158,7 +162,8 @@ psdims__notification_list *net_recv_notifications(network *network) {
  *
  *
  */
-psdims__message_list *net_recv_pending_messages(network *network, int chat_id) {
+psdims__message_list *net_recv_pending_messages(network *network, int chat_id, int timestamp) {
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
 	psdims__message_list *message_list;
 	char *soap_error;
@@ -169,7 +174,7 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id) {
 		return NULL;
 	}
 
-	soap_response = soap_call_psdims__get_chat_messages(&network->soap, network->serverURL, "", &network->login_info, chat_id,0, message_list);
+	soap_response = soap_call_psdims__get_chat_messages(&network->soap, network->serverURL, "", &network->login_info, chat_id, timestamp, message_list);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
@@ -187,7 +192,8 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id) {
  *
  *
  */
-psdims__chat_list *net_recv_new_chats(network *network) {
+psdims__chat_list *net_get_chat_list(network *network) {
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
 	psdims__chat_list *chat_list;
 	char *soap_error;
@@ -216,16 +222,62 @@ psdims__chat_list *net_recv_new_chats(network *network) {
  *
  *
  */
+psdims__user_list *net_get_friend_list(network *network) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return NULL;
+}
+
+
+/*
+ *
+ *
+ */
 int net_user_register(network *network, char *name, char *password, char *information){
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
+	int errcode = 0;
+	char *soap_error;
 	psdims__register_info user_info;
 
 	user_info.name = name;
 	user_info.password = password;
 	user_info.information = information;
 
-	if( soap_call_psdims__user_register(&network->soap, network->serverURL, "", &user_info, &soap_response) != SOAP_OK ) {
-		DEBUG_FAILURE_PRINTF("Server request failed");
+	soap_response = soap_call_psdims__user_register(&network->soap, network->serverURL, "", &user_info, &errcode);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		return -1;
+	}
+
+	// Comprobar error del servidor
+	return 0;
+}
+
+
+/*
+ *
+ *
+ */
+int net_user_unregister(network *network, char *name, char *password){
+	DEBUG_TRACE_PRINT();
+	int soap_response = 0;
+	int errcode = 0;
+	char *soap_error;
+	psdims__login_info user_info;
+
+	user_info.name = name;
+	user_info.password = password;
+
+	soap_response = soap_call_psdims__user_unregister(&network->soap, network->serverURL, "", &user_info,  &errcode);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
 		return -1;
 	}
 
@@ -239,15 +291,22 @@ int net_user_register(network *network, char *name, char *password, char *inform
  *
  */
 int net_send_message(network *network, int chat_id, char *text, char *attach_path) {
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
+	int timestamp = 0;
+	char *soap_error;
 	psdims__message_info message_info;
 
 	message_info.user = NULL;
 	message_info.text = text;
 	// TODO Falta el archivo adjunto
 
-	if( soap_call_psdims__send_message(&network->soap, network->serverURL, "", &network->login_info, chat_id, &message_info, &soap_response) != SOAP_OK ) {
-		DEBUG_FAILURE_PRINTF("Server request failed");
+	soap_response = soap_call_psdims__send_message(&network->soap, network->serverURL, "", &network->login_info, chat_id, &message_info, &timestamp);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
 		return -1;
 	}
 
@@ -261,12 +320,17 @@ int net_send_message(network *network, int chat_id, char *text, char *attach_pat
  *
  */
 int net_send_friend_request(network *network, char *user) {
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
+	int timestamp = 0;
+	char *soap_error;
 
-	soap_call_psdims__send_friend_request(&network->soap, network->serverURL, "", &network->login_info, user, &soap_response);
-
+	soap_response = soap_call_psdims__send_friend_request(&network->soap, network->serverURL, "", &network->login_info, user, &timestamp);
 	if( soap_response != SOAP_OK ) {
-		DEBUG_FAILURE_PRINTF("Server request failed");
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
 		return -1;
 	}
 
@@ -280,11 +344,17 @@ int net_send_friend_request(network *network, char *user) {
  *
  */
 int net_send_request_accept(network *network, char *user) {
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
+	int timestamp;
+	char *soap_error;
 
-	soap_call_psdims__accept_request(&network->soap, network->serverURL, "", &network->login_info, user, &soap_response);
+	soap_response = soap_call_psdims__accept_request(&network->soap, network->serverURL, "", &network->login_info, user, &timestamp);
 	if( soap_response != SOAP_OK ) {
-		DEBUG_FAILURE_PRINTF("Server request failed");
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
 		return -1;
 	}
 
@@ -298,11 +368,18 @@ int net_send_request_accept(network *network, char *user) {
  *
  */
 int net_send_request_decline(network *network, char *user) {
+	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
+	int timestamp;
+	char *soap_error;
+	
 
-	soap_call_psdims__decline_request(&network->soap, network->serverURL, "", &network->login_info, user, &soap_response);
+	soap_response = soap_call_psdims__decline_request(&network->soap, network->serverURL, "", &network->login_info, user, &timestamp);
 	if( soap_response != SOAP_OK ) {
-		DEBUG_FAILURE_PRINTF("Server request failed");
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
 		return -1;
 	}
 
@@ -316,41 +393,49 @@ int net_send_request_decline(network *network, char *user) {
  *
  */
 void net_free_user() {
+	DEBUG_TRACE_PRINT();
 
 }
 
 
 void net_free_user_list() {
+	DEBUG_TRACE_PRINT();
 
 }
 
 
 void net_free_notification() {
+	DEBUG_TRACE_PRINT();
 
 }
 
 
 void net_free_notification_list() {
+	DEBUG_TRACE_PRINT();
 
 }
 
 
 void net_free_message() {
+	DEBUG_TRACE_PRINT();
 
 }
 
 
 void net_free_message_list() {
+	DEBUG_TRACE_PRINT();
 
 }
 
 
 void net_free_chat() {
+	DEBUG_TRACE_PRINT();
 
 }
 
 
 void net_free_chat_list() {
+	DEBUG_TRACE_PRINT();
 
 }
 

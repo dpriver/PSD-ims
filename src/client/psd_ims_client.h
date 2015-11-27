@@ -29,6 +29,7 @@
 #include "friends.h"
 #include "chats.h"
 #include "network.h"
+#include "pending_chats.h"
 
 typedef chat_node chat_list;
 typedef friend_node friend_list;
@@ -39,6 +40,8 @@ struct psd_ims_client {
 	char *user_pass;
 	char *user_info;
 	int last_connection;
+	int last_notif_timestamp;
+	pending_chat_list new_chats;
 	network *network;
 	friends *friends;
 	chat_list *chats;
@@ -103,6 +106,18 @@ int psd_recv_notifications(psd_ims_client *client);
 int psd_recv_pending_messages(psd_ims_client *client, int chat_id);
 
 /*
+ * Receive the user chats
+ * Returns the number of created chats or -1 if fails
+ */
+int psd_recv_chats(psd_ims_client *client);
+
+/*
+ * Receive the user friends
+ * Returns the number of created chats or -1 if fails
+ */
+int psd_recv_friends(psd_ims_client *client);
+
+/*
  * Receive the locally not registered chats
  * Returns the number of created chats or -1 if fails
  */
@@ -142,6 +157,10 @@ int psd_send_request_decline(psd_ims_client *client, char *user);
  */
 void psd_print_chats(psd_ims_client *client);
 
+/*
+ * Prints all chat members line by line
+ */
+void psd_print_chat_members(psd_ims_client *client, int chat_id);
 
 /*
  * Adds a new chat to client's chat list
@@ -207,6 +226,11 @@ int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *u
  * Prints all friends line by line
  */
 void psd_print_friends(psd_ims_client *client);
+
+/*
+ * Prints all friends requests line by line
+ */
+void psd_print_friend_requests(psd_ims_client *client);
 
 /*
  * Adds a new friend to client's friend list

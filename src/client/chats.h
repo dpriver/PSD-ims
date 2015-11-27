@@ -47,6 +47,7 @@ struct chat_info {
 	int id;
 	char *description;
 	int unread_messages;
+	int pending_messages;
 	chat_member *admin;
 	chat_member_list *members;
 	messages *messages;
@@ -78,8 +79,14 @@ typedef chat_list chats;
 #define cha_GET_N_UNREAD(chat_info) \
 		chat_info->unread_messages
 
+#define cha_GET_N_PENDING(chat_info) \
+		chat_info->pending_messages
+
 #define cha_SET_N_UNREAD(chat_info, n_messages) \
 		chat_info->unread_messages = n_messages
+
+#define cha_SET_N_PENDING(chat_info, n_messages) \
+		chat_info->pending_messages = n_messages
 
 #define cha_GET_MEMBER_NAME(chat_member) \
 		fri_GET_FRIEND_NAME(chat_member->info)
@@ -156,6 +163,12 @@ int cha_del_chat(chats *chats, int chat_id);
 int cha_del_member(chats *chats, int chat_id, const char *name);
 
 /*
+ * Gets the number of unread messages
+ * Returns the number of unread or -1 if fails
+ */
+int cha_get_unread(chats *chats, int chat_id);
+
+/*
  * Sets the number of unread messages
  * Returns 0 or -1 if fails
  */
@@ -167,6 +180,25 @@ int cha_set_unread(chats *chats, int chat_id, int n_messages);
  * Returns 0 or -1 if fails
  */
 int cha_update_unread(chats *chats, int chat_id, int n_messages);
+
+/*
+ * Gets the number of pending messages
+ * Returns the number of pending or -1 if fails
+ */
+int cha_get_pending(chats *chats, int chat_id);
+
+/*
+ * Sets the number of pending messages
+ * Returns 0 or -1 if fails
+ */
+int cha_set_pending(chats *chats, int chat_id, int n_messages);
+
+/*
+ * Updates the number of pending messages, the number of pending will be
+ * (current_pending + n_messages), n_messages can be a negative number
+ * Returns 0 or -1 if fails
+ */
+int cha_update_pending(chats *chats, int chat_id, int n_messages);
 
 /*
  * Switches the current admin with the chat member named "name"

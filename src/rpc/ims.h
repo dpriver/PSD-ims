@@ -36,14 +36,23 @@ typedef struct psdims__string {
 	char *string;
 } psdims__string;
 
+typedef struct psdims__notif_friend_info {
+	psdims__string name;
+	int send_date;
+} psdims__notif_friend_info;
+
 typedef struct psdims__notif_friend_list {
 	int __sizenelems;	
-	psdims__string *name;
+	psdims__notif_friend_info *user;
 } psdims__notif_friend_list;
+
+typedef struct psdims__notif_chat_info {
+	int chat_id;
+} psdims__notif_chat_info;
 
 typedef struct psdims__notif_chat_list {
 	int __sizenelems;
-	int *chat_id;
+	psdims__notif_chat_info *chat;
 } psdims__notif_chat_list;
 
 typedef struct psdims__notifications {
@@ -126,6 +135,9 @@ int psdims__get_friends(psdims__login_info *login, psdims__user_list *friends);
 
 // get chat list
 int psdims__get_chats(psdims__login_info *login, psdims__chat_list *chats);
+
+// get chat info
+int psdims__get_chat_info(psdims__login_info *login, psdims__chat_info *chat);
 
 // get messages from chat
 int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timestamp, psdims__message_list *messages);

@@ -28,7 +28,19 @@
 #include <stdlib.h>
 #include "psd_ims_client.h"
 
+#define MAX_USER_NAME_CHARS 20
+#define MAX_USER_PASS_CHARS 20
+#define MAX_USER_INFO_CHARS 100
+#define MAX_MESSAGE_CHARS 300
 
+#define SCAN_INPUT_STRING(string, index, max_chars) \
+	index = 0; \
+	while( (index < max_chars) && (string[index] = getchar()) != '\n' ); \
+	string[index] = '\0'
+
+
+#define FLUSH_INPUT(ch) \
+	while ( ((ch = getchar()) != '\n') && (ch != EOF) )
 
 typedef enum {DEFAULT, EXIT, LOGIN, USER_MAIN, USER_LIST, USER_SEND, USER_RECEIVE} menu_type;
 
@@ -43,39 +55,58 @@ void menu_header_show(const char *string) {
 
 void menu_footer_show() {
 	printf("\n");
-	printf("Opcion -> ");
+	printf(" Opcion -> ");
 }
 
 int get_user_input() {
 	char input;
+	char aux_char;
 	input = getchar();
-	if( input != '\n' ) {
-		while(getchar() != '\n'); // to flush stdin '\n'
-	}
+	FLUSH_INPUT(aux_char);
+
 	return ( (input >= '0') && (input <= '9'))?((int)input - '0'):(-1);
 }
 
-void save_state(psd_ims_client *client) {
+void wait_user() {
+	char aux_char;
+	printf("\n Press ENTER to continue...\n");
+	FLUSH_INPUT(aux_char);
+}
 
+void save_state(psd_ims_client *client) {
+	printf(" = Saving state =\n");
+	printf(" (NOT implemented)\n");
 }
 
 
 /* =========================================================================
- *  User send Menu
+ *  User receive Menu
  * =========================================================================*/
  
 int recv_notifications(psd_ims_client *client) {
+	printf("\n\n Retrieving notifications...\n");
+	if (psd_recv_notifications(client) != 0 ) {
+		printf(" Failed to retrieve the notifications\n");
+		wait_user();
+		return -1;	
+	}
 
+	printf(" Notifications obtained from server\n");
+	wait_user();
 	return 0;
 }
 
 int recv_pending_messages(psd_ims_client *client) {
-
+	//printf("\n\n Retrieving pending messages...\n");
+	printf(" (NOT implemented)\n");
+	wait_user();
 	return 0;
 }
 
 int recv_new_chats(psd_ims_client *client) {
-
+	//printf("\n\n Retrieving new chats...\n");
+	printf(" (NOT implemented)\n");
+	wait_user();
 	return 0;
 }
 
@@ -122,21 +153,91 @@ int menu_recv(psd_ims_client *client, menu_type *next_menu_ret) {
  * =========================================================================*/
 
 int send_message(psd_ims_client *client) {
+	char text[MAX_MESSAGE_CHARS];
+	char aux_char;
+	int chat_id;
+	int i;
+
+	printf("\n\n = Chats =\n");
+	psd_print_chats(client);
+
+	printf("\n Chat id: ");
+	scanf("%d", &chat_id);
+	FLUSH_INPUT(aux_char);
+	printf("\n Text: ");
+	SCAN_INPUT_STRING(text, i, MAX_MESSAGE_CHARS);
+
+	if( psd_send_message(client, chat_id, text, NULL) != 0 ) {
+		printf(" Failed to send the message\n");
+		wait_user();
+		return -1;
+	}
+
+	printf(" Message sended\n");
+	wait_user();
 
 	return 0;
 }
 
 int send_friend_request(psd_ims_client *client) {
+	char name[MAX_USER_NAME_CHARS];
+	char aux_char;
+
+	printf("\n\n User name: ");
+	scanf("%s", name);
+	FLUSH_INPUT(aux_char);
+
+	if( psd_send_friend_request(client, name) != 0 ) {
+		printf(" Failed the request friendship to '%s'\n", name);
+		wait_user();
+		return -1;
+	}
+
+	printf(" Sended a friend request to '%s'\n", name);
+	wait_user();
 
 	return 0;
 }
 
 int send_request_accept(psd_ims_client *client) {
+	char name[MAX_USER_NAME_CHARS];
+	char aux_char;
 
+	printf("\n\n = Friend requests =\n");
+	psd_print_friend_requests(client);
+	printf("\n User name: ");
+	scanf("%s", name);
+	FLUSH_INPUT(aux_char);	
+
+	if( psd_send_request_accept(client, name) != 0 ) {
+		printf(" Could not accept the friend request\n");
+		wait_user();
+		return -1;
+	}
+
+	printf(" Friend '%s' accepted\n", name);
+	wait_user();
 	return 0;
 }
 
 int send_request_decline(psd_ims_client *client) {
+	char name[MAX_USER_NAME_CHARS];
+	char aux_char;
+
+	printf("\n\n = Friend requests =\n");
+	psd_print_friend_requests(client);
+	printf("\n User name: ");
+	scanf("%s", name);
+	FLUSH_INPUT(aux_char);
+
+	if( psd_send_request_decline(client, name) != 0 ) {
+		printf(" Could not accept the friend request\n");
+		wait_user();
+		return -1;
+	}
+
+	printf(" User '%s' rejected as friend\n", name);
+	wait_user();
 
 	return 0;
 }
@@ -188,25 +289,40 @@ int menu_send(psd_ims_client *client, menu_type *next_menu_ret) {
  * =========================================================================*/
 
 void list_friends(psd_ims_client *client) {
-	// Listar amigos
+	printf("\n\n = Friends =\n");
+	psd_print_friends(client);
+	wait_user();
 }
 
 void list_chats(psd_ims_client *client) {
-	// Listar chats
+	printf("\n\n = Chats =\n");
+	psd_print_chats(client);
+	wait_user();
 }
 
 void list_chat_members(psd_ims_client *client) {
-	// listar chats
-	// pedir uno de los chats
-	// listar miembros de dicho chat
+	int chat_id;
+	char aux_char;
+
+	printf("\n\n = Chats =\n");
+	psd_print_chats(client);
+	printf("\n Select a chat id: ");
+	scanf("%d", &chat_id);
+	FLUSH_INPUT(aux_char);
+	psd_print_chat_members(client, chat_id);
+	wait_user();
 }
 
 void list_pending_notification(psd_ims_client *client) {
-	// listar notificaciones pendientes
+	printf("\n\n = Pending notifications =\n");
+	printf(" No notifications...(NOT implemented)\n");
+	wait_user();
 }
 
 void list_friend_requests(psd_ims_client *client) {
-	// listar peticiones de amistad
+	printf("\n\n = Friend requests =\n");
+	psd_print_friend_requests(client);
+	wait_user();
 }
 
 void screen_menu_list_show() {
@@ -309,18 +425,55 @@ int menu_user(psd_ims_client *client, menu_type *next_menu_ret) {
  *  Login Menu
  * =========================================================================*/
 
-int user_register() {
-	// Pedir el nombre de usuario
-	// pedir el password
-	// pedir la descripción
-	// intentar realizar el registro
+int user_register(psd_ims_client *client) {
+	char name[MAX_USER_NAME_CHARS];
+	char pass[MAX_USER_PASS_CHARS];
+	char info[MAX_USER_INFO_CHARS];
+	int i = 0;
+	char aux_char;
+
+	printf("\n\n User name: ");
+	scanf("%s", name);
+	FLUSH_INPUT(aux_char);
+	printf(" User password: ");
+	scanf("%s", pass);
+	FLUSH_INPUT(aux_char);
+	printf(" Describe yourself: ");
+	SCAN_INPUT_STRING(info, i, MAX_USER_INFO_CHARS);
+
+	if ( psd_user_register(client, name, pass, info) != 0 ) {
+		printf(" Register failed, maybe the name is already registered or the conection is failing\n");
+		wait_user();
+		return -1;
+	}
+
+	printf(" User '%s' correctly registered\n", name);
+	wait_user();
+
 	return 0;
 }
 
 int login(psd_ims_client *client) {
-	// Pedir el nombre de usuario
-	// pedir el password
-	// intentar recibir del server la información del usuario
+	char name[MAX_USER_NAME_CHARS];
+	char pass[MAX_USER_PASS_CHARS];
+	char aux_char;
+
+	printf("\n\n User name: ");
+	scanf("%s", name);
+	FLUSH_INPUT(aux_char);
+	printf(" User password: ");
+	scanf("%s", name);
+	FLUSH_INPUT(aux_char);
+
+	if ( psd_login(client, name, pass) != 0 ) {
+		printf(" Login failed, maybe the credentials are incorrect or the conection is failing\n");
+		wait_user();
+		return -1;
+	}
+
+	printf(" Logged in as '%s'\n", name);
+	wait_user();
+
 	return 0;
 }
 
@@ -344,15 +497,13 @@ int menu_login(psd_ims_client *client, menu_type *next_menu_ret) {
 		switch(option) {
 			case 0: break;   // salir
 			case 1:	
-				//user_register();
+				user_register(client);
 				break;
 			case 2: 
-				/*
 				if( login(client) == 0) {
 					next_menu = USER_MAIN;
 					option = 0;
 				}
-				*/
 				break;
 		}		
 	} while( option != 0 );
