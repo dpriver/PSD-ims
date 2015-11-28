@@ -152,6 +152,12 @@ int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, 
 // create new chat
 int psdims__create_chat(psdims__login_info *login, psdims__new_chat *new_chat, int &chat_id);
 
+// add member to chat
+int psdims__add_member(psdims__login_info *login, char *name, int chat_id, int *ERRCODE);
+
+// quit from chat
+int psdims__quit_from_chat(psdims__login_info *login, int chat_id, int *ERRCODE);;
+
 // Send message
 int psdims__send_message(psdims__login_info *login, int chat_id, psdims__message_info *message, int *timestamp);
 
