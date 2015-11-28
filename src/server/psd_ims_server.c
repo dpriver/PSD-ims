@@ -30,6 +30,7 @@
 #include <mysql.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "debug_def.h"
 
@@ -257,16 +258,10 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
 	strcpy(user->name,login->name);
    
 	DEBUG_INFO_PRINTF("Getting info of user:%s ", login->name);
-	user->information = malloc(200);
+	user->information = malloc(sizeof(char)*200);
 	get_user_info(server.persistence,get_user_id(server.persistence,login->name),user->information);
 
 	// Buscar el usuario mediante persistence
-		// [si se encuentra]
-			//user_info->name = malloc(sizeof(char)*10);
-			//user_info->information = malloc(sizeof(char)*50);
-			//strcpy(user_info->name, <name>);
-			//strcpy(user_info->information, <information>); 
-			//return SOAP_OK
 		//[SI no se encuentra]
 			//soap->user = (char*)malloc(sizeof(char)*200);
 			//strcpy((char *)soap->user, "Incorrect login credentials");
@@ -279,7 +274,7 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__user_list *friends){
+int psdims__get_friends(struct soap *soap,psdims__login_info *login, int timestamp, psdims__user_list *friends){
 	DEBUG_TRACE_PRINT();
 	int id;
 
@@ -293,13 +288,9 @@ int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__use
 	id=get_user_id(server.persistence,login->name);
 	
 
-  	if(get_list_friends(server.persistence,id,friends)!=0){
+  	if(get_list_friends(server.persistence,id,timestamp, friends)!=0){
 		return SOAP_USER_ERROR;
 	}
-	// Si el usuario y el user no existen, salir
-		// return SOAP_USER_ERROR
-	// obtener el id del usuario
-	// buscar todos los usuario que sean amigos de "id"
 
 	return SOAP_OK;
 }
@@ -309,7 +300,7 @@ int psdims__get_friends(struct soap *soap,psdims__login_info *login, psdims__use
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_list *chats){
+int psdims__get_chats(struct soap *soap,psdims__login_info *login, int timestamp, psdims__chat_list *chats){
 	DEBUG_TRACE_PRINT();
 	int id;
 
@@ -323,13 +314,9 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, psdims__chat_
 	id=get_user_id(server.persistence,login->name);
 	
 
-	if(get_list_chats(server.persistence,id,chats)!=0){
+	if(get_list_chats(server.persistence,id,timestamp,chats)!=0){
 		return SOAP_USER_ERROR;
 	}
-	// Si el usuario y el user no existen, salir
-		// return SOAP_USER_ERROR
-	// obtener el id del usuario
-	// buscar todos los chats en os que forme parte "id"
 
 	return SOAP_OK; 
 }
@@ -369,12 +356,6 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
 	if(get_list_messages(server.persistence,chat_id,timestamp,messages)!=0)
 		return SOAP_USER_ERROR;
 
-	// Si el usuario y el user no existen, salir
-		// return SOAP_USER_ERROR
-	// obtener el id del usuario
-	// buscar todos los mensajes del chat "chat_id" > tiemstamp
-
-	// Es necesario un mecanismo para obtener solo los mensajes pendientes del usuario
 	return SOAP_OK; 
 }
 
@@ -398,6 +379,45 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
+int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__new_chat *new_chat, int *chat_id) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+
+	*chat_id = -1;
+	return SOAP_USER_ERROR; 
+}
+
+
+/*
+ *
+ * Returns SOAP_OK or SOAP_USER_ERROR if fails
+ */
+int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name, int chat_id, int *ERRCODE) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+
+	*ERRCODE = 1;
+	return SOAP_USER_ERROR; 
+}
+
+
+/*
+ *
+ * Returns SOAP_OK or SOAP_USER_ERROR if fails
+ */
+int psdims__quit_from_chat(struct soap *soap, psdims__login_info *login, int chat_id, int *ERRCODE) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+
+	*ERRCODE = 1;
+	return SOAP_USER_ERROR; 
+}
+
+
+/*
+ *
+ * Returns SOAP_OK or SOAP_USER_ERROR if fails
+ */
 int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_id,  psdims__message_info *message, int *timestamp){
 	DEBUG_TRACE_PRINT();
 	int id_user;
@@ -410,20 +430,14 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 	}
 
 	id_user=get_user_id(server.persistence,login->name);
+	*timestamp = time(NULL);
 
 	if(exist_user_in_chat(server.persistence,id_user,chat_id)!=1)
 		return SOAP_USER_ERROR;
 	
-	if( send_messages(server.persistence,chat_id,message)!=0)
+	if( send_messages(server.persistence,chat_id, *timestamp, message)!=0)
 		return SOAP_USER_ERROR;
 
-	
-
-	// Si el usuario y el user no existen, salir
-		// return SOAP_USER_ERROR
-	// obtener el id del usuario
-	// Agregar el mensaje al chat indicado (TODO Falta enviar chat_id)
-	*timestamp = 1;
 	return SOAP_OK; 
 }
 
@@ -445,6 +459,7 @@ int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, cha
 
 	id_user=get_user_id(server.persistence,login->name);
 	id_request_name=get_user_id(server.persistence,request_name);
+	*timestamp = time(NULL);
 
 	if(exist_friendly(server.persistence,id_user,id_request_name)!=0){
 		DEBUG_FAILURE_PRINTF("Ya son amigos\n");
@@ -456,14 +471,9 @@ int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, cha
 		return SOAP_USER_ERROR;
 	}
 
-	if(send_request(server.persistence,id_user, id_request_name)!=0)
+	if(send_request(server.persistence,id_user, id_request_name, *timestamp)!=0)
 		return SOAP_USER_ERROR;
-	// Si el usuario y el user no existen, salir
-		// return SOAP_USER_ERROR
-	// obtener el id del usuario
-	// Comprobar que el nombre coincida con algún usuario y estos no sean ya amigos
-	// agregar la petición de amistad y la notificación para el otro usuario
-    *timestamp=1;
+
 	return SOAP_OK; 
 }
 
@@ -484,22 +494,16 @@ int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *re
 
 	id_user=get_user_id(server.persistence,login->name);
 	id_request_name=get_user_id(server.persistence,request_name);
+	*timestamp = time(NULL);
 
 	if(exist_request(server.persistence,id_user,id_request_name)==0){
 		DEBUG_FAILURE_PRINTF("No existe una petición de amistad\n");
 		return SOAP_USER_ERROR;
 	}
     
-    if(accept_friend_request(server.persistence,id_user,id_request_name)!=0)
+    if(accept_friend_request(server.persistence,id_user, id_request_name, *timestamp)!=0)
 		return SOAP_USER_ERROR;
 
-	// Si el usuario y el user no existen, salir
-		// return SOAP_USER_ERROR
-	// obtener el id del usuario
-	// Comprobar que el nombre coincida con algún usuario y haya una petición pendiente
-	// en la que el usuario sea el receptor
-	// borrar la peticion y agregarles como amigos
-	*timestamp=1;
 	return SOAP_OK; 
 }
 
@@ -508,7 +512,7 @@ int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *re
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__decline_request(struct soap *soap,psdims__login_info *login, char *request_name, int *timestamp){
+int psdims__decline_request(struct soap *soap, psdims__login_info *login, char *request_name, int *timestamp){
 	DEBUG_TRACE_PRINT();
 	int id_user,id_request_name;
 
@@ -529,13 +533,7 @@ int psdims__decline_request(struct soap *soap,psdims__login_info *login, char *r
 	if(decline_friend_request(server.persistence,id_user,id_request_name)!=0)
 		return SOAP_USER_ERROR;
 
-	// Si el usuario y el user no existen, salir
-		// return SOAP_USER_ERROR
-	// obtener el id del usuario
-	// Comprobar que el nombre coincida con algún usuario y haya una petición pendiente
-	// en la que el usuario sea el receptor
-	// borrar la petición
-	*timestamp=1;
+	*timestamp = time(NULL);
 	return SOAP_OK; 
 }
 

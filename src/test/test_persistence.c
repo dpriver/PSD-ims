@@ -6,7 +6,7 @@ void test_list_friends(persistence *persistence){
 	int i=0;
 	psdims__user_list *friends=malloc(sizeof(psdims__user_list));
 
-	get_list_friends(persistence,2,friends);
+	get_list_friends(persistence,2,0,friends);
 
 	while(i<friends->__sizenelems){
 		printf("%s ,  %s\n",friends->user[i].name,friends->user[i].information);
@@ -18,7 +18,7 @@ void test_list_chats(persistence *persistence){
 	int i=0,j;
 	psdims__chat_list *chats=malloc(sizeof(psdims__chat_list));
 
-	get_list_chats(persistence,2,chats);
+	get_list_chats(persistence,2,0, chats);
 
 	while(i<chats->__sizenelems){
 		printf("Number chat=> %d, Admin chat=> %s , Description=> %s \n",chats->chat_info[i].chat_id,chats->chat_info[i].admin,chats->chat_info[i].description);
@@ -61,7 +61,7 @@ void test_send_request(persistence *persistence,int id_user,int id_request_name)
 		exit(1);
 	}
 
-	send_request(persistence,id_user, id_request_name);
+	send_request(persistence,id_user, id_request_name,0);
 }
 
 void test_accept_request(persistence *persistence,int id_user,int id_request_name){
@@ -73,7 +73,7 @@ void test_accept_request(persistence *persistence,int id_user,int id_request_nam
 		exit(1);
 	}
     
-    accept_friend_request(persistence,id_user,id_request_name);
+    accept_friend_request(persistence,id_user,id_request_name,0);
 }
 
 void test_decline_request(persistence *persistence,int id_user,int id_request_name){

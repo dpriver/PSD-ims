@@ -65,21 +65,21 @@ int exist_user_in_chat(persistence* persistence,int user_id, int chat_id);
 
 int chat_exist(persistence* persistence, int chat_id);
 
-int get_list_friends(persistence* persistence,int user_id,psdims__user_list *friends);
+int get_list_friends(persistence* persistence,int user_id, int timestamp, psdims__user_list *friends);
 
-int get_member_list_chats(persistence* persistence,int chat_id,psdims__member_list *members);
+int get_member_list_chats(persistence* persistence,int chat_id, int timestamp, psdims__member_list *members);
 
 int get_list_messages(persistence* persistence,int chat_id,int timestamp,psdims__message_list *messages);
 
-int get_list_chats(persistence* persistence,int user_id,psdims__chat_list *chats);
+int get_list_chats(persistence* persistence,int user_id, int timestamp, psdims__chat_list *chats);
 
-int send_messages(persistence* persistence,int chat_id,psdims__message_info *message);
+int send_messages(persistence* persistence,int chat_id, int timestamp, psdims__message_info *message);
 
 int decline_friend_request(persistence* persistence, int user_id1, int user_id2);
 
-int accept_friend_request(persistence* persistence, int user_id1, int user_id2);
+int accept_friend_request(persistence* persistence, int user_id1, int user_id2, int timestamp);
 
-int send_request(persistence* persistence, int user_id1, int user_id2);
+int send_request(persistence* persistence, int user_id1, int user_id2, int timestamp);
 
 int exist_request(persistence* persistence,int user_id1, int user_id2);
 
@@ -87,11 +87,11 @@ int exist_friendly(persistence* persistence,int user_id1, int user_id2);
 
 int del_friends(persistence* persistence, int user_id1, int user_id2);
 
-int add_chat(persistence* persistence, int admin_id, char* description);
+int add_chat(persistence* persistence, int admin_id, char* description, int timestamp);
 
 int del_chat(persistence* persistence, int user_id);
 
-int add_user_chat(persistence* persistence, int user_id, int chat_id);
+int add_user_chat(persistence* persistence, int user_id, int chat_id, int timestamp);
 
 int del_user_chat(persistence* persistence, int user_id, int chat_id);
 

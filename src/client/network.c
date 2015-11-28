@@ -205,7 +205,7 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id, i
  *
  *
  */
-psdims__chat_list *net_get_chat_list(network *network) {
+psdims__chat_list *net_get_chat_list(network *network, int timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
 	psdims__chat_list *chat_list;
@@ -217,7 +217,7 @@ psdims__chat_list *net_get_chat_list(network *network) {
 		return NULL;
 	}
 
-	soap_response = soap_call_psdims__get_chats(&network->soap, network->serverURL, "", &network->login_info, chat_list);
+	soap_response = soap_call_psdims__get_chats(&network->soap, network->serverURL, "", &network->login_info, timestamp,  chat_list);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
@@ -235,7 +235,7 @@ psdims__chat_list *net_get_chat_list(network *network) {
  *
  *
  */
-psdims__user_list *net_get_friend_list(network *network) {
+psdims__user_list *net_get_friend_list(network *network, int timestamp) {
 	DEBUG_TRACE_PRINT();
 	DEBUG_FAILURE_PRINTF("Not implemented");
 	return NULL;
@@ -303,10 +303,9 @@ int net_user_unregister(network *network, char *name, char *password){
  *
  *
  */
-int net_send_message(network *network, int chat_id, char *text, char *attach_path) {
+int net_send_message(network *network, int chat_id, char *text, char *attach_path, int *timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
-	int timestamp = 0;
 	char *soap_error;
 	psdims__message_info message_info;
 
@@ -314,7 +313,7 @@ int net_send_message(network *network, int chat_id, char *text, char *attach_pat
 	message_info.text = text;
 	// TODO Falta el archivo adjunto
 
-	soap_response = soap_call_psdims__send_message(&network->soap, network->serverURL, "", &network->login_info, chat_id, &message_info, &timestamp);
+	soap_response = soap_call_psdims__send_message(&network->soap, network->serverURL, "", &network->login_info, chat_id, &message_info, timestamp);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
@@ -332,13 +331,12 @@ int net_send_message(network *network, int chat_id, char *text, char *attach_pat
  *
  *
  */
-int net_send_friend_request(network *network, char *user) {
+int net_send_friend_request(network *network, char *user, int *timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
-	int timestamp = 0;
 	char *soap_error;
 
-	soap_response = soap_call_psdims__send_friend_request(&network->soap, network->serverURL, "", &network->login_info, user, &timestamp);
+	soap_response = soap_call_psdims__send_friend_request(&network->soap, network->serverURL, "", &network->login_info, user, timestamp);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
@@ -356,13 +354,12 @@ int net_send_friend_request(network *network, char *user) {
  *
  *
  */
-int net_send_request_accept(network *network, char *user) {
+int net_send_request_accept(network *network, char *user, int *timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
-	int timestamp;
 	char *soap_error;
 
-	soap_response = soap_call_psdims__accept_request(&network->soap, network->serverURL, "", &network->login_info, user, &timestamp);
+	soap_response = soap_call_psdims__accept_request(&network->soap, network->serverURL, "", &network->login_info, user, timestamp);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);

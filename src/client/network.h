@@ -77,13 +77,13 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id, i
  *
  *
  */
-psdims__chat_list *net_get_chat_list(network *network);
+psdims__chat_list *net_get_chat_list(network *network, int timestamp);
 
 /*
  *
  *
  */
-psdims__user_list *net_get_friend_list(network *network);
+psdims__user_list *net_get_friend_list(network *network, int timestamp);
 
 
 /*
@@ -96,19 +96,19 @@ int net_user_register(network *network, char *name, char *password, char *inform
  *
  *
  */
-int net_send_message(network *network, int chat_id, char *text, char *attach_path);
+int net_send_message(network *network, int chat_id, char *text, char *attach_path, int *timestamp);
 
 /*
  *
  *
  */
-int net_send_friend_request(network *network, char *user);
+int net_send_friend_request(network *network, char *user, int *timestamp);
 
 /*
  *
  *
  */
-int net_send_request_accept(network *network, char *user);
+int net_send_request_accept(network *network, char *user, int *timestamp);
 
 /*
  *

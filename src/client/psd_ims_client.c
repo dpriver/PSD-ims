@@ -319,7 +319,7 @@ int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *atta
 
 	// TODO send message should return the send_date
 	// send_date = ///
-	if( net_send_message(client->network, chat_id, text, attach_path) != 0 ) {
+	if( net_send_message(client->network, chat_id, text, attach_path, &send_date) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not send the message");
 		return -1;
 	}
@@ -343,7 +343,7 @@ int psd_send_friend_request(psd_ims_client *client, char *user) {
 
 	// TODO send friend request should return the send_date
 	// send_date = ///
-	if ( net_send_friend_request(client->network, user) != 0 ) {
+	if ( net_send_friend_request(client->network, user, &send_date) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not send the friend request");	
 		return -1;
 	}
@@ -364,7 +364,9 @@ int psd_send_friend_request(psd_ims_client *client, char *user) {
 int psd_send_request_accept(psd_ims_client *client, char *user) {
 	DEBUG_TRACE_PRINT();
 
-	if ( net_send_request_accept(client->network, user) != 0 ) {
+	int send_date = 0;
+
+	if ( net_send_request_accept(client->network, user, &send_date) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not accept the friend request");	
 		return -1;
 	}

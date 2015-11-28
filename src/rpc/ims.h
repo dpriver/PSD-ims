@@ -135,10 +135,10 @@ int psdims__user_unregister(psdims__login_info *login, int *ERRCODE);
 int psdims__get_user(psdims__login_info *login, psdims__user_info *user);
 
 // get friend list
-int psdims__get_friends(psdims__login_info *login, psdims__user_list *friends);
+int psdims__get_friends(psdims__login_info *login, int timestamp, psdims__user_list *friends);
 
 // get chat list
-int psdims__get_chats(psdims__login_info *login, psdims__chat_list *chats);
+int psdims__get_chats(psdims__login_info *login, int timestamp, psdims__chat_list *chats);
 
 // get chat info
 int psdims__get_chat_info(psdims__login_info *login, int chat_id, psdims__chat_info *chat);
@@ -150,13 +150,13 @@ int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timest
 int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, psdims__notifications *notifications);
 
 // create new chat
-int psdims__create_chat(psdims__login_info *login, psdims__new_chat *new_chat, int &chat_id);
+int psdims__create_chat(psdims__login_info *login, psdims__new_chat *new_chat, int *chat_id);
 
 // add member to chat
 int psdims__add_member(psdims__login_info *login, char *name, int chat_id, int *ERRCODE);
 
 // quit from chat
-int psdims__quit_from_chat(psdims__login_info *login, int chat_id, int *ERRCODE);;
+int psdims__quit_from_chat(psdims__login_info *login, int chat_id, int *ERRCODE);
 
 // Send message
 int psdims__send_message(psdims__login_info *login, int chat_id, psdims__message_info *message, int *timestamp);
