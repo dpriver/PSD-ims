@@ -41,21 +41,17 @@
  *
  *
  */
-network *net_new(char *serverURL) {
+network *net_new() {
 	DEBUG_TRACE_PRINT();
 	network *new_network;
 	if( (new_network = malloc( sizeof(network) )) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not allocate network estructure");
 		return NULL;
 	}
-	if( (new_network->serverURL = malloc( sizeof(char)*(strlen(serverURL)+1) )) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not allocate network estructure");
-		free(new_network);
-		return NULL;
-	}
-	strcpy(new_network->serverURL,serverURL);
+
 	new_network->login_info.name = NULL;
 	new_network->login_info.password = NULL;	
+	new_network->serverURL = NULL;
 
 	soap_init(&new_network->soap);
 	return new_network;
@@ -131,7 +127,7 @@ psdims__user_info *net_login(network *network, char *name, char *password) {
 		DEBUG_FAILURE_PRINTF("Could not allocate memory for network user name");
 		return NULL;
 	}
-	if ( (login_info.password = malloc(strlen(name) + sizeof(char)) ) == NULL ) {
+	if ( (network->login_info.password = malloc(strlen(password) + sizeof(char)) ) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not allocate memory for network pass name");
 		free(network->login_info.name);
 		network->login_info.name = NULL;

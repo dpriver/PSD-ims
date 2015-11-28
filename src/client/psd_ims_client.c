@@ -60,7 +60,7 @@ psd_ims_client *psd_new_client() {
 
 	client->friends = fri_new();
 	client->chats = cha_new();
-	client->network = net_new("url");
+	client->network = net_new();
 	pen_init(&client->new_chats);
 
 	return client;

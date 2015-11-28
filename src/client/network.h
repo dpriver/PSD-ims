@@ -41,7 +41,7 @@ struct network {
  *
  *
  */
-network *net_new(char *serverURL);
+network *net_new();
 
 /*
  *

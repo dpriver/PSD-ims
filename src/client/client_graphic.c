@@ -462,7 +462,7 @@ int login(psd_ims_client *client) {
 	scanf("%s", name);
 	FLUSH_INPUT(aux_char);
 	printf(" User password: ");
-	scanf("%s", name);
+	scanf("%s", pass);
 	FLUSH_INPUT(aux_char);
 
 	if ( psd_login(client, name, pass) != 0 ) {
