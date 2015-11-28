@@ -32,7 +32,6 @@
 typedef enum psdims__notification_type { FRIEND_REQ, PENDING_MESS } psdims__notification_type;
 
 typedef struct psdims__string {
-	int __sizenelems;
 	char *string;
 } psdims__string;
 
@@ -62,6 +61,11 @@ typedef struct psdims__notifications {
 	psdims__notif_chat_list deleted_chats;
 	psdims__notif_chat_list chats_with_messages;
 } psdims__notifications;
+
+typedef struct psdims__new_chat {
+	char *description;
+	char *user;	
+} psdims__new_chat;
 
 typedef struct psdims__login_info {
 	char *name;
@@ -144,6 +148,9 @@ int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timest
 
 // get pending notifications
 int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, psdims__notifications *notifications);
+
+// create new chat
+int psdims__create_chat(psdims__login_info *login, psdims__new_chat *new_chat, int &chat_id);
 
 // Send message
 int psdims__send_message(psdims__login_info *login, int chat_id, psdims__message_info *message, int *timestamp);
