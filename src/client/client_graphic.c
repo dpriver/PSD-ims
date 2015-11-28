@@ -523,7 +523,8 @@ int graphic_client_run(psd_ims_client *client) {
 	menu_type ret_menu = DEFAULT;
 	menu_type next_menu = DEFAULT;
 
-	next_menu = (client != NULL)? USER_MAIN: LOGIN;
+	//next_menu = (client != NULL)? USER_MAIN: LOGIN;
+	next_menu = LOGIN;
 
 	do {	
 		switch(next_menu) {
