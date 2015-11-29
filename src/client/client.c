@@ -29,11 +29,11 @@
 
 #include "psd_ims_client.h"
 #include "client_graphic.h"
+#include "bool.h"
 
 #ifdef DEBUG
 #include "leak_detector_c.h"
 #endif
-
 
 
 int main( int argc, char **argv ) {
@@ -48,7 +48,7 @@ int main( int argc, char **argv ) {
 	psd_bind_network(client, argv[1]);
 
 	// TODO If posible, load info from local files
-		
+
 
 	// Run graphic client
 	graphic_client_run(client);

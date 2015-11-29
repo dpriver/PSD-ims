@@ -36,7 +36,7 @@ BIN_DIR=$(PROJECT_DIR)/bin
 #-------------------------------------------------------------
 CFLAGS=-I$(SRC_COMMON_DIR) -I$(SRC_RPC_DIR) -I$(GSOAP_INCLUDE)
 LDFLAGS=-L$(GSOAP_LIB)
-LDLIBS=-lgsoap $(SSL_LIBS)
+LDLIBS=-lgsoap $(SSL_LIBS) -pthread
 
 SSL_LIBS=-lssl -lcrypto
 SSL_FLAGS=-DWITH_OPENSSL

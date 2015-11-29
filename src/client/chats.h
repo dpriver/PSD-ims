@@ -48,6 +48,7 @@ struct chat_info {
 	char *description;
 	int unread_messages;
 	int pending_messages;
+	int member_timestamp;
 	chat_member *admin;
 	chat_member_list *members;
 	messages *messages;
@@ -199,6 +200,18 @@ int cha_set_pending(chats *chats, int chat_id, int n_messages);
  * Returns 0 or -1 if fails
  */
 int cha_update_pending(chats *chats, int chat_id, int n_messages);
+
+/*
+ * Sets the friends' timestamp
+ * Returns 0 or -1 if fails
+ */
+int cha_set_members_timestamp(chats *chats, int chat_id, int timestamp);
+
+/*
+ * Gets the friends' timestamp
+ * Returns 0 or -1 if fails
+ */
+int cha_get_members_timestamp(chats *chats, int chat_id);
 
 /*
  * Switches the current admin with the chat member named "name"

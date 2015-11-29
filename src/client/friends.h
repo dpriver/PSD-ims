@@ -62,6 +62,7 @@ struct friends {
 	friend_list *friend_list;
 	friend_request_list *sended_requests;
 	friend_request_list *received_requests;
+	int friends_timestamp;
 	int last_received_request_date;
 	int last_sended_request_date;
 	int n_received_requests;
@@ -117,6 +118,12 @@ void fri_print_snd_request_list(friends *friends);
 void fri_print_rcv_request_list(friends *friends);
 
 /*
+ * Gets the friend list timestamp
+ * Returns 0 or -1 if fails
+ */
+int fri_get_friends_timestamp(friends *friends);
+
+/*
  * gets the sended friend request with more recent send_date
  * Returns 0 or -1 if fails
  */
@@ -133,6 +140,12 @@ int fri_get_last_rcv_request_date(friends *friends);
  * Returns 0 or -1 if fails
  */
 int fri_add_friend(friends *friends, const char *name, const char *information);
+
+/*
+ * Sets the friend list timestamp
+ * Returns 0 or -1 if fails
+ */
+int fri_set_friends_timestamp(friends *friends, int timestamp);
 
 /*
  * Add a sended friend request with the provided info

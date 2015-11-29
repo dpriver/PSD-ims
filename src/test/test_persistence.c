@@ -2,6 +2,14 @@
 #include "persistence.h"
 #include "soapH.h"
 
+
+// To instanciate psdims__ structs the functions soap_malloc(<soap>, <size>) must be used
+// instead of malloc(<size>), si a soap struct is needed in order to use persistence.... 
+// a complete MESS
+
+// All this can not be used without an initialized soap struct
+
+/*
 void test_list_friends(persistence *persistence){
 	int i=0;
 	psdims__user_list *friends=malloc(sizeof(psdims__user_list));
@@ -88,6 +96,8 @@ void test_decline_request(persistence *persistence,int id_user,int id_request_na
     decline_friend_request(persistence,id_user,id_request_name);
 }
 
+*/
+
 int main(int argc, char **argv){
 	persistence *persistence=init_persistence(argv[1],argv[2]);	
 
@@ -101,8 +111,9 @@ int main(int argc, char **argv){
 
 	//test_accept_request(persistence,1,4);
 
-	test_decline_request(persistence,4,3);
+	//test_decline_request(persistence,4,3);
 
+	printf("Not implemented because persistence can not be used without soap...\n");
 	free_persistence(persistence);
 
 	return 0;

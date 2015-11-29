@@ -26,7 +26,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <pthread.h>
 #include "psd_ims_client.h"
+#include "bool.h"
+
+#include "debug_def.h"
 
 #define MAX_USER_NAME_CHARS 20
 #define MAX_USER_PASS_CHARS 20
@@ -44,6 +49,19 @@
 
 typedef enum {DEFAULT, EXIT, LOGIN, USER_MAIN, USER_LIST, USER_SEND, USER_RECEIVE} menu_type;
 
+
+boolean continue_fetching;
+pthread_mutex_t continue_fetching_mutex;
+boolean continue_graphic;
+pthread_mutex_t continue_graphic_mutex;
+
+pthread_t notifications_tid = -1;
+
+void stop_client(int sig);
+void *notifications_fetch(void *arg);
+
+int run_notifications_thread(psd_ims_client *client);
+int configure_signal_handling();
 
 
 void menu_header_show(const char *string) {
@@ -97,15 +115,72 @@ int recv_notifications(psd_ims_client *client) {
 }
 
 int recv_pending_messages(psd_ims_client *client) {
-	//printf("\n\n Retrieving pending messages...\n");
-	printf(" (NOT implemented)\n");
+	int n_messages;
+	char aux_char;
+	int chat_id;
+	int i;
+
+	printf("\n\n = Chats =\n");
+	psd_print_chats(client);
+
+	printf("\n Chat id: ");
+	scanf("%d", &chat_id);
+	FLUSH_INPUT(aux_char);
+
+
+	printf("\n\n Retrieving new messages of chat '%d'\n", chat_id);
+	if ( (n_messages = psd_recv_pending_messages(client, chat_id)) < 0 ) {
+		printf(" Failed to retrieve new messages");
+		wait_user();
+		return -1;
+	}
+	
+	if (n_messages == 0 ) {
+		printf(" No new messages to add\n");
+	}
+	else {
+		printf(" Added %d new messages\n", n_messages);
+	}
 	wait_user();
 	return 0;
 }
 
 int recv_new_chats(psd_ims_client *client) {
-	//printf("\n\n Retrieving new chats...\n");
-	printf(" (NOT implemented)\n");
+	int n_chats;
+
+	printf("\n\n Retrieving new chats...\n");
+	if ( (n_chats = psd_recv_chats(client)) < 0 ) {
+		printf(" Failed to retrieve new chats");
+		wait_user();
+		return -1;
+	}
+	
+	if (n_chats == 0 ) {
+		printf(" No new chats to add\n");
+	}
+	else {
+		printf(" Added %d new chats\n", n_chats);
+	}
+	wait_user();
+	return 0;
+}
+
+int recv_new_friends(psd_ims_client *client) {
+	int n_friends;
+
+	printf("\n\n Retrieving new chats...\n");
+	if ( (n_friends = psd_recv_friends(client)) < 0 ) {
+		printf(" Failed to retrieve new friends");
+		wait_user();
+		return -1;
+	}
+	
+	if (n_friends == 0 ) {
+		printf(" No new friends to add\n");
+	}
+	else {
+		printf(" Added %d new friends\n", n_friends);
+	}
 	wait_user();
 	return 0;
 }
@@ -140,7 +215,7 @@ int menu_recv(psd_ims_client *client, menu_type *next_menu_ret) {
 				recv_new_chats(client);
 				break;
 		}		
-	} while( option != 0 );
+	} while( option > 0 );
 	
 	next_menu_ret = DEFAULT;
 
@@ -276,7 +351,7 @@ int menu_send(psd_ims_client *client, menu_type *next_menu_ret) {
 				send_request_decline(client);
 				break;
 		}		
-	} while( option != 0 );
+	} while( option > 0 );
 	
 	next_menu_ret = DEFAULT;
 
@@ -362,7 +437,7 @@ int menu_list(psd_ims_client *client, menu_type *next_menu_ret) {
 				list_friend_requests(client);
 				break;
 		}		
-	} while( option != 0 );
+	} while( option > 0 );
 	
 	next_menu_ret = DEFAULT;
 
@@ -413,7 +488,7 @@ int menu_user(psd_ims_client *client, menu_type *next_menu_ret) {
 				option = 0;
 				break;
 		}		
-	} while( option != 0 );
+	} while( option > 0 );
 	
 	next_menu_ret = DEFAULT;
 
@@ -503,10 +578,12 @@ int menu_login(psd_ims_client *client, menu_type *next_menu_ret) {
 				if( login(client) == 0) {
 					next_menu = USER_MAIN;
 					option = 0;
+					configure_signal_handling();
+					//run_notifications_thread(client);
 				}
 				break;
 		}		
-	} while( option != 0 );
+	} while( option > 0 );
 	
 	next_menu_ret = DEFAULT;
 	return next_menu;
@@ -518,13 +595,16 @@ int menu_login(psd_ims_client *client, menu_type *next_menu_ret) {
  * =========================================================================*/
 
 
-
 int graphic_client_run(psd_ims_client *client) {
 	menu_type ret_menu = DEFAULT;
 	menu_type next_menu = DEFAULT;
+	boolean exit_graphic;
 
 	//next_menu = (client != NULL)? USER_MAIN: LOGIN;
 	next_menu = LOGIN;
+
+	pthread_mutex_init(&continue_graphic_mutex, NULL);
+	continue_graphic = TRUE;
 
 	do {	
 		switch(next_menu) {
@@ -535,5 +615,82 @@ int graphic_client_run(psd_ims_client *client) {
 			case USER_SEND:    next_menu = menu_send(client, &ret_menu); break;
 			case USER_RECEIVE: next_menu = menu_recv(client, &ret_menu); break;
 		}
-	} while(next_menu != EXIT);
+		pthread_mutex_lock(&continue_graphic_mutex);
+		exit_graphic = (!continue_graphic) || (next_menu == EXIT);
+		pthread_mutex_unlock(&continue_graphic_mutex);
+
+	} while(!exit_graphic);
+}
+
+
+int configure_signal_handling() {
+	if (signal(SIGINT, stop_client) == SIG_ERR) {
+		DEBUG_FAILURE_PRINTF("Could not attach SIGINT handler");
+		return -1;
+	}
+	if (signal(SIGTERM, stop_client) == SIG_ERR) {
+		DEBUG_FAILURE_PRINTF("Could not attach SIGTERM handler");
+		return -1;
+	}
+	if (signal(SIGABRT, stop_client) == SIG_ERR) {
+		DEBUG_FAILURE_PRINTF("Could not attach SIGABRT handler");
+		return -1;
+	}
+}
+
+int run_notifications_thread(psd_ims_client *client) {
+	// start the thread to get notifications
+	if (pthread_create(&notifications_tid, NULL, &notifications_fetch, client) != 0 ) {
+		printf("Could not create the notifications thread\n");
+		return 0;
+	}
+}
+
+void *notifications_fetch(void *arg) {
+	psd_ims_client *client;
+	sigset_t sig_blocked_mask;
+	sigset_t old_sig_mask;
+
+	client = (psd_ims_client *)arg;
+
+	continue_fetching = TRUE;
+	pthread_mutex_init(&continue_fetching_mutex, NULL);
+
+	while(1) {
+		sleep(1);
+		psd_recv_notifications(client);
+
+		pthread_mutex_lock(&continue_fetching_mutex);
+		if( !continue_fetching ) {
+			pthread_mutex_unlock(&continue_fetching_mutex);
+			DEBUG_INFO_PRINTF("Ending notifications service...");
+			break;
+		}
+		pthread_mutex_unlock(&continue_fetching_mutex);
+	}
+}
+
+
+void stop_client(int sig) {
+	DEBUG_INFO_PRINTF("Freeing client resources");
+
+	pthread_mutex_lock(&continue_fetching_mutex);
+	continue_fetching = FALSE;
+	pthread_mutex_unlock(&continue_fetching_mutex);
+
+	// wait for the thread to end
+	if( notifications_tid != -1) {
+		pthread_join(notifications_tid, NULL);
+	}
+
+	// Now the notification service is not running
+	
+	// Save the state
+	// To save the state, I should be sure that the system is stable
+	// but the process could be accesing a structure when the signal was thrown...
+	pthread_mutex_lock(&continue_graphic_mutex);
+	continue_graphic = FALSE;
+	pthread_mutex_unlock(&continue_graphic_mutex);
+	fclose(stdin);
+
 }

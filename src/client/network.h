@@ -28,10 +28,12 @@
 
 
 #include "soapH.h"
+#include "bool.h"
 //#include "psdims.nsmap"
 
 typedef struct network network;
 struct network {
+	boolean logged;
 	psdims__login_info login_info;
 	char *serverURL;
 	struct soap soap;
@@ -121,17 +123,17 @@ int net_send_request_decline(network *network, char *user);
  *
  *
  */
-void net_free_user();
+void net_free_user(psdims__user_info *user);
 
 void net_free_user_list();
 
 void net_free_notification();
 
-void net_free_notification_list();
+void net_free_notification_list(psdims__notifications *notifications);
 
 void net_free_message();
 
-void net_free_message_list();
+void net_free_message_list(psdims__message_list *messages);
 
 void net_free_chat();
 

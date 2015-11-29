@@ -65,13 +65,13 @@ int exist_user_in_chat(persistence* persistence,int user_id, int chat_id);
 
 int chat_exist(persistence* persistence, int chat_id);
 
-int get_list_friends(persistence* persistence,int user_id, int timestamp, psdims__user_list *friends);
+int get_list_friends(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__user_list *friends);
 
-int get_member_list_chats(persistence* persistence,int chat_id, int timestamp, psdims__member_list *members);
+int get_member_list_chats(persistence* persistence,int chat_id, int timestamp, struct soap *soap, psdims__member_list *members);
 
-int get_list_messages(persistence* persistence,int chat_id,int timestamp,psdims__message_list *messages);
+int get_list_messages(persistence* persistence,int chat_id,int timestamp, struct soap *soap, psdims__message_list *messages);
 
-int get_list_chats(persistence* persistence,int user_id, int timestamp, psdims__chat_list *chats);
+int get_list_chats(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__chat_list *chats);
 
 int send_messages(persistence* persistence,int chat_id, int timestamp, psdims__message_info *message);
 

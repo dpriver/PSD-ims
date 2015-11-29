@@ -27,6 +27,7 @@
 #include "psdims.nsmap"
 #include "network.h"
 #include "psd_ims_client.h"
+#include "bool.h"
 
 #include <stdlib.h>
 
@@ -35,6 +36,77 @@
 #ifdef DEBUG
 #include "leak_detector_c.h"
 #endif
+
+
+/*
+ *
+ *
+ */
+void _net_unlink_user(struct soap *soap, psdims__user_info *user) {
+	soap_unlink(soap, user->name);
+	soap_unlink(soap, user->information);
+}
+
+
+void _net_unlink_user_list() {
+
+}
+
+
+void _net_unlink_notification() {
+
+}
+
+
+void _net_unlink_notification_list(struct soap *soap, psdims__notifications *notifications) {
+	int i;
+	for( i = 0 ; i < notifications->friend_request.__sizenelems ; i++) {
+		soap_unlink(soap, notifications->friend_request.user[i].name.string);
+	}
+	soap_unlink(soap, notifications->friend_request.user);
+	for( i = 0 ; i < notifications->deleted_friends.__sizenelems ; i++) {
+		soap_unlink(soap, notifications->deleted_friends.user[i].name.string);
+	}
+	soap_unlink(soap, notifications->deleted_friends.user);
+	soap_unlink(soap, notifications->new_chats.chat);
+	soap_unlink(soap, notifications->deleted_chats.chat);
+	soap_unlink(soap, notifications->chats_with_messages.chat);
+}
+
+
+void _net_unlink_message() {
+
+}
+
+
+void _net_unlink_message_list(struct soap *soap, psdims__message_list *messages) {
+	int i;
+	for( i = 0 ; i < messages->__sizenelems ; i++ ) {
+		soap_unlink(soap, messages->messages[i].user);
+		soap_unlink(soap, messages->messages[i].text);
+	}
+	soap_unlink(soap, messages->messages);
+}
+
+
+void _net_unlink_chat() {
+
+}
+
+
+void _net_unlink_chat_list(struct soap *soap, psdims__chat_list *chats) {
+	int i, j;
+	for( i = 0 ; i < chats->__sizenelems ; i++ ) {
+		for( j = 0 ; j < chats->chat_info[i].members->__sizenelems ; j++ ) {
+			soap_unlink(soap, chats->chat_info[i].members->name[j].string);
+		}
+		soap_unlink(soap, chats->chat_info[i].members->name);
+		soap_unlink(soap, chats->chat_info[i].members);
+		soap_unlink(soap, chats->chat_info[i].description);
+		soap_unlink(soap, chats->chat_info[i].admin);
+	}
+	soap_unlink(soap, chats->chat_info);
+}
 
 
 /*
@@ -52,6 +124,7 @@ network *net_new() {
 	new_network->login_info.name = NULL;
 	new_network->login_info.password = NULL;	
 	new_network->serverURL = NULL;
+	new_network->logged = FALSE;
 
 	soap_init(&new_network->soap);
 	return new_network;
@@ -136,6 +209,9 @@ psdims__user_info *net_login(network *network, char *name, char *password) {
 
 	strcpy(network->login_info.name, name);
 	strcpy(network->login_info.password, password);
+	network->logged = TRUE;
+
+	_net_unlink_user(&network->soap, user_info);
 
 	return user_info;
 }
@@ -151,12 +227,17 @@ psdims__notifications *net_recv_notifications(network *network, int timestamp) {
 	psdims__notifications *notification_list;
 	char *soap_error;
 
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return NULL;
+	}
 
 	if ( (notification_list = malloc(sizeof(psdims__notifications)) ) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not allocate memory for notification list");
 		return NULL;
 	}
 
+	DEBUG_INFO_PRINTF("Calling the server");
 	soap_response = soap_call_psdims__get_pending_notifications(&network->soap, network->serverURL, "", &network->login_info, timestamp, notification_list);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
@@ -166,6 +247,8 @@ psdims__notifications *net_recv_notifications(network *network, int timestamp) {
 		free(notification_list);
 		return NULL;
 	}
+
+	_net_unlink_notification_list(&network->soap, notification_list);
 
 	return notification_list;
 }
@@ -181,6 +264,10 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id, i
 	psdims__message_list *message_list;
 	char *soap_error;
 
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return NULL;
+	}
 
 	if ( (message_list = malloc(sizeof(psdims__message_list)) ) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not allocate memory for message list");
@@ -197,6 +284,8 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id, i
 		return NULL;
 	}
 
+	_net_unlink_message_list(&network->soap, message_list);
+
 	return message_list;
 }
 
@@ -211,6 +300,10 @@ psdims__chat_list *net_get_chat_list(network *network, int timestamp) {
 	psdims__chat_list *chat_list;
 	char *soap_error;
 
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return NULL;
+	}
 
 	if ( (chat_list = malloc(sizeof(psdims__chat_list)) ) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not allocate memory for chat list");
@@ -226,6 +319,8 @@ psdims__chat_list *net_get_chat_list(network *network, int timestamp) {
 		free(chat_list);
 		return NULL;
 	}
+
+	_net_unlink_chat_list(&network->soap, chat_list);
 
 	return chat_list;
 }
@@ -309,6 +404,11 @@ int net_send_message(network *network, int chat_id, char *text, char *attach_pat
 	char *soap_error;
 	psdims__message_info message_info;
 
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return -1;
+	}
+
 	message_info.user = NULL;
 	message_info.text = text;
 	// TODO Falta el archivo adjunto
@@ -336,6 +436,11 @@ int net_send_friend_request(network *network, char *user, int *timestamp) {
 	int soap_response = 0;
 	char *soap_error;
 
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return -1;
+	}
+
 	soap_response = soap_call_psdims__send_friend_request(&network->soap, network->serverURL, "", &network->login_info, user, timestamp);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
@@ -358,6 +463,11 @@ int net_send_request_accept(network *network, char *user, int *timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
 	char *soap_error;
+
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return -1;
+	}
 
 	soap_response = soap_call_psdims__accept_request(&network->soap, network->serverURL, "", &network->login_info, user, timestamp);
 	if( soap_response != SOAP_OK ) {
@@ -383,6 +493,10 @@ int net_send_request_decline(network *network, char *user) {
 	int timestamp;
 	char *soap_error;
 	
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return -1;
+	}
 
 	soap_response = soap_call_psdims__decline_request(&network->soap, network->serverURL, "", &network->login_info, user, &timestamp);
 	if( soap_response != SOAP_OK ) {
@@ -402,9 +516,11 @@ int net_send_request_decline(network *network, char *user) {
  *
  *
  */
-void net_free_user() {
+void net_free_user(psdims__user_info *user) {
 	DEBUG_TRACE_PRINT();
-
+	free(user->name);
+	free(user->information);
+	free(user);
 }
 
 
@@ -420,9 +536,22 @@ void net_free_notification() {
 }
 
 
-void net_free_notification_list() {
+void net_free_notification_list(psdims__notifications *notifications) {
 	DEBUG_TRACE_PRINT();
+	int i;
+	for( i = 0 ; i < notifications->friend_request.__sizenelems ; i++) {
+		free(notifications->friend_request.user[i].name.string);
+	}
+	free(notifications->friend_request.user);
+	for( i = 0 ; i < notifications->deleted_friends.__sizenelems ; i++) {
+		free(notifications->deleted_friends.user[i].name.string);
+	}
+	free(notifications->deleted_friends.user);
+	free(notifications->new_chats.chat);
+	free(notifications->deleted_chats.chat);
+	free(notifications->chats_with_messages.chat);
 
+	free(notifications);
 }
 
 
@@ -432,9 +561,13 @@ void net_free_message() {
 }
 
 
-void net_free_message_list() {
-	DEBUG_TRACE_PRINT();
-
+void net_free_message_list(psdims__message_list *messages) {
+	int i;
+	for( i = 0 ; i < messages->__sizenelems ; i++ ) {
+		free(messages->messages[i].user);
+		free(messages->messages[i].text);
+	}
+	free(messages->messages);
 }
 
 
@@ -444,9 +577,20 @@ void net_free_chat() {
 }
 
 
-void net_free_chat_list() {
+void net_free_chat_list(psdims__chat_list *chats) {
 	DEBUG_TRACE_PRINT();
-
+	int i, j;
+	for( i = 0 ; i < chats->__sizenelems ; i++ ) {
+		for( j = 0 ; j < chats->chat_info[i].members->__sizenelems ; j++ ) {
+			free(chats->chat_info[i].members->name[j].string);
+		}
+		free(chats->chat_info[i].members->name);
+		free(chats->chat_info[i].members);
+		free(chats->chat_info[i].description);
+		free(chats->chat_info[i].admin);
+	}
+	free(chats->chat_info);
+	free(chats);
 }
 
 

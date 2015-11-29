@@ -191,6 +191,15 @@ void fri_print_rcv_request_list(friends *friends) {
 
 
 /*
+ * Gets the friend list timestamp
+ * Returns 0 or -1 if fails
+ */
+int fri_get_friends_timestamp(friends *friends) {
+	return friends->friends_timestamp;
+}
+
+
+/*
  * gets the sended friend request with more recent send_date
  * Returns the send_date or 0 it the list is empty
  */
@@ -228,6 +237,21 @@ int fri_add_friend(friends *friends, const char *name, const char *information) 
 		return -1;
 	}
 
+	return 0;
+}
+
+
+/*
+ * Sets the friend list timestamp
+ * Returns 0 or -1 if fails
+ */
+int fri_set_friends_timestamp(friends *friends, int timestamp) {
+	DEBUG_TRACE_PRINT();
+	if ( timestamp < friends->friends_timestamp ) {
+		return -1;
+	}
+
+	friends->friends_timestamp = timestamp;
 	return 0;
 }
 

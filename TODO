@@ -1,20 +1,18 @@
 TODO
 ==========================
 
-gsoap "send" functions should return the timestamp "send_date" 
 
-1. File support
-2. SSL support
+- File support
+- SSL support
 
 Client
 ----------
-1. Client command mode implementation
-2. Persistence
+- Client command mode implementation
+- Persistence
 
 
 Server
 ----------
-1. psd_ims_server functionality
-2. Persistente
-3. Catch CTRL-C signal
-4. Threaded server
+- Implement timestamps in persistence
+- Catch CTRL-C signal
+- Threaded server

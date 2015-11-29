@@ -30,6 +30,8 @@
 #include "chats.h"
 #include "network.h"
 #include "pending_chats.h"
+#include <pthread.h>
+
 
 typedef chat_node chat_list;
 typedef friend_node friend_list;
@@ -45,6 +47,10 @@ struct psd_ims_client {
 	network *network;
 	friends *friends;
 	chat_list *chats;
+	pthread_mutex_t new_chats_mutex;
+	pthread_mutex_t chats_mutex;
+	pthread_mutex_t network_mutex;
+	pthread_mutex_t friends_mutex;
 };
 
 
@@ -197,6 +203,11 @@ int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *us
  * Returns 0 or -1 if fails
  */
 int psd_add_messages(psd_ims_client *client, int chat_id, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages);
+
+/*
+ * Get the number of pending messages
+ */
+int psd_get_n_pending_messages(psd_ims_client *client, int chat_id);
 
 /*
  * Clears the chat pending messages counter

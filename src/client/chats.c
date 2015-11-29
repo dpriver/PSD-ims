@@ -481,6 +481,42 @@ int cha_update_pending(chats *chats, int chat_id, int n_messages) {
 
 
 /*
+ * Sets the friends' timestamp
+ * Returns 0 or -1 if fails
+ */
+int cha_set_members_timestamp(chats *chats, int chat_id, int timestamp) {
+	DEBUG_TRACE_PRINT();
+	chat_node *node;
+	
+	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1; // can not find chat
+	}
+
+	node->info->member_timestamp = timestamp;
+
+	return 0;
+}
+
+
+/*
+ * Gets the friends' timestamp
+ * Returns 0 or -1 if fails
+ */
+int cha_get_members_timestamp(chats *chats, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	chat_node *node;
+	
+	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not find chat");
+		return -1; // can not find chat
+	}
+
+	return node->info->member_timestamp;
+}
+
+
+/*
  * Switches the current admin with the chat member named "name"
  * that means that the previous admin becomes a normal member
  * Returns 0 or -1 if fails

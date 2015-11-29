@@ -254,11 +254,10 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
  	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
 		return SOAP_USER_ERROR;
 	}
-	user->name = malloc(sizeof(char)*50);
-	strcpy(user->name,login->name);
-   
-	DEBUG_INFO_PRINTF("Getting info of user:%s ", login->name);
-	user->information = malloc(sizeof(char)*200);
+	user->name = soap_malloc(soap, strlen(login->name) + sizeof(char));
+	user->information = soap_malloc(soap, sizeof(char)*200);
+
+	strcpy(user->name,login->name);  
 	get_user_info(server.persistence,get_user_id(server.persistence,login->name),user->information);
 
 	// Buscar el usuario mediante persistence
@@ -288,7 +287,7 @@ int psdims__get_friends(struct soap *soap,psdims__login_info *login, int timesta
 	id=get_user_id(server.persistence,login->name);
 	
 
-  	if(get_list_friends(server.persistence,id,timestamp, friends)!=0){
+  	if(get_list_friends(server.persistence,id,timestamp, soap, friends)!=0){
 		return SOAP_USER_ERROR;
 	}
 
@@ -314,7 +313,7 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, int timestamp
 	id=get_user_id(server.persistence,login->name);
 	
 
-	if(get_list_chats(server.persistence,id,timestamp,chats)!=0){
+	if(get_list_chats(server.persistence,id,timestamp,soap, chats)!=0){
 		return SOAP_USER_ERROR;
 	}
 
@@ -353,7 +352,7 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
 	if(exist_user_in_chat(server.persistence,id_user,chat_id)!=1)
 		return SOAP_USER_ERROR;
 
-	if(get_list_messages(server.persistence,chat_id,timestamp,messages)!=0)
+	if(get_list_messages(server.persistence,chat_id,timestamp, soap, messages)!=0)
 		return SOAP_USER_ERROR;
 
 	return SOAP_OK; 
