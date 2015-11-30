@@ -60,6 +60,7 @@ typedef struct psdims__notifications {
 	psdims__notif_chat_list new_chats;
 	psdims__notif_chat_list deleted_chats;
 	psdims__notif_chat_list chats_with_messages;
+	int last_timestamp;
 } psdims__notifications;
 
 typedef struct psdims__new_chat {
@@ -87,6 +88,7 @@ typedef struct psdims__user_info {
 typedef struct psdims__user_list {
 	int __sizenelems;
 	psdims__user_info *user;
+	int last_timestamp;
 } psdims__user_list;
 
 
@@ -100,12 +102,14 @@ typedef struct psdims__message_info {
 typedef struct psdims__message_list {
 	int __sizenelems;
 	psdims__message_info *messages;
+	int last_timestamp;
 } psdims__message_list;
 
 // Chats and chat members
 typedef struct psdims__member_list {
 	int __sizenelems;
 	psdims__string *name;
+	int last_timestamp;
 } psdims__member_list;
 
 typedef struct psdims__chat_info {
@@ -118,6 +122,7 @@ typedef struct psdims__chat_info {
 typedef struct psdims__chat_list {
 	int __sizenelems;
 	psdims__chat_info *chat_info;
+	int last_timestamp;
 } psdims__chat_list;
 
 

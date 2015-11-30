@@ -28,9 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef DEBUG_TRACE
-	#undef DEBUG_TRACE
-#endif
 
 #include "debug_def.h"
 

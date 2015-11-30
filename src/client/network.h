@@ -67,6 +67,12 @@ psdims__user_info *net_login(network *network, char *name, char *password);
  *
  *
  */
+void net_logout(network *network);
+
+/*
+ *
+ *
+ */
 psdims__notifications *net_recv_notifications(network *network, int timestamp);
 
 /*
@@ -137,7 +143,7 @@ void net_free_message_list(psdims__message_list *messages);
 
 void net_free_chat();
 
-void net_free_chat_list();
+void net_free_chat_list(psdims__chat_list *chats);
 
 
 

@@ -191,6 +191,7 @@ void screen_menu_recv_show() {
 	printf(" 1. Recibir notificaciones pendientes\n");
 	printf(" 2. Recibir mensajes pendientes\n");
 	printf(" 3. Recibir nuevos chats\n");
+	printf(" 4. Recibir nuevos amigos\n");
 	printf("\n 0. Salir\n");
 	menu_footer_show();
 }
@@ -214,6 +215,8 @@ int menu_recv(psd_ims_client *client, menu_type *next_menu_ret) {
 			case 3: // go to receive menu
 				recv_new_chats(client);
 				break;
+			case 4: // go to receive friends
+				recv_new_friends(client);
 		}		
 	} while( option > 0 );
 	
@@ -484,6 +487,7 @@ int menu_user(psd_ims_client *client, menu_type *next_menu_ret) {
 				break;
 			case 4: // go to login menu
 				save_state(client);
+				psd_logout(client);
 				next_menu = LOGIN;
 				option = 0;
 				break;

@@ -42,6 +42,7 @@ int main (int argc, char **argv) {
 	chat_info *aux_chat;
 	friend_info *aux_friend;
 	friend_info *aux_friend_list[5];
+	char *friend_names[5];
 
 	atexit(report_mem_leak);
 
@@ -64,22 +65,39 @@ int main (int argc, char **argv) {
 	aux_friend_list[2] = fri_find_friend(friends, "pepito");
 	aux_friend_list[3] = fri_find_friend(friends, "Qewdqew");
 
+	friend_names[0] = malloc(sizeof(char) + strlen("Juanito"));
+	friend_names[1] = malloc(sizeof(char) + strlen("Manolito"));
+	friend_names[2] = malloc(sizeof(char) + strlen("pepito"));
+	friend_names[3] = malloc(sizeof(char) + strlen("Qewdqew"));
+
+	strcpy(friend_names[0], "Juanito");
+	strcpy(friend_names[1], "Manolito");
+	strcpy(friend_names[2], "pepito");
+	strcpy(friend_names[3], "Qewdqew");
+
 	printf("= Adding chats =====\n");
 
-	if( cha_add_chat(chats, 0, "Chat con mi colega Manolito", NULL, &aux_friend_list[1], 1) == -1 ) {
+	if( cha_add_chat(chats, 0, "Chat con mi colega Manolito", NULL, &aux_friend_list[1],"pepe", &friend_names[1], 1) == -1 ) {
 		printf("Could not add chat\n");
 	}
-	if( cha_add_chat(chats, 1, "Chat con mi colega pepito", NULL, &aux_friend_list[2], 1) == -1 ) {
+	if( cha_add_chat(chats, 1, "Chat con mi colega pepito", NULL, &aux_friend_list[2],"pepe", &friend_names[2], 1) == -1 ) {
 		printf("Could not add chat\n");
 	}
-	if( cha_add_chat(chats, 2, "Chat con mis colegas Juanito y Manolito", aux_friend_list[0], &aux_friend_list[1], 1) == -1 ) {
+	if( cha_add_chat(chats, 2, "Chat con mis colegas Juanito y Manolito", aux_friend_list[0],  &aux_friend_list[1], friend_names[0], &friend_names[1], 1) == -1 ) {
 		printf("Could not add chat\n");
 	}
 	print_chats(chats);
+
+	free(friend_names[0]);
+	free(friend_names[1]);
+	free(friend_names[2]);
+	free(friend_names[3]);
 	
 	cha_free(chats);
 	fri_free(friends);
 	
+
+
 }
 
 void print_chats(chat_list *list) {

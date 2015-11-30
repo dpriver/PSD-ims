@@ -48,8 +48,12 @@ void _net_unlink_user(struct soap *soap, psdims__user_info *user) {
 }
 
 
-void _net_unlink_user_list() {
-
+void _net_unlink_user_list(struct soap *soap, psdims__user_list *user) {
+	int i;
+	for( i = 0 ; i < user->__sizenelems ; i++ ) {
+		_net_unlink_user(soap, &user->user[i]);
+	}
+	soap_unlink(soap, user->user);
 }
 
 
@@ -217,6 +221,13 @@ psdims__user_info *net_login(network *network, char *name, char *password) {
 }
 
 
+void net_logout(network *network) {
+	network->logged = FALSE;
+	free(network->login_info.name);
+	free(network->login_info.password);
+}
+
+
 /*
  *
  *
@@ -332,8 +343,33 @@ psdims__chat_list *net_get_chat_list(network *network, int timestamp) {
  */
 psdims__user_list *net_get_friend_list(network *network, int timestamp) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return NULL;
+	int soap_response = 0;
+	psdims__user_list *user_list;
+	char *soap_error;
+
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return NULL;
+	}
+
+	if ( (user_list = malloc(sizeof(psdims__user_list)) ) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory for chat list");
+		return NULL;
+	}
+
+	soap_response = soap_call_psdims__get_friends(&network->soap, network->serverURL, "", &network->login_info, timestamp,  user_list);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		free(user_list);
+		return NULL;
+	}
+
+	_net_unlink_user_list(&network->soap, user_list);
+
+	return user_list;
 }
 
 

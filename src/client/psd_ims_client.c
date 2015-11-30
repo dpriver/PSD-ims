@@ -192,6 +192,15 @@ int psd_login(psd_ims_client *client, char *name, char *password) {
 
 
 /*
+ * Loggs out
+ */
+void psd_logout(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	net_logout(client->network);
+}
+
+
+/*
  * Register the user in the system
  * Returns 0 or -1 if fails
  */
@@ -281,6 +290,7 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 	char **attach_path;
 	int *send_date;
 
+	int n_messages;
 	int i;
 	int timestamp;
 
@@ -313,6 +323,7 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 		send_date[i] = list->messages[i].send_date;
 	}
 
+	n_messages = list->__sizenelems;
 	net_free_message_list(list);
 
 	pthread_mutex_lock(&client->chats_mutex);
@@ -326,7 +337,127 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 	cha_update_unread(client->chats, chat_id, list->__sizenelems);
 	pthread_mutex_unlock(&client->chats_mutex);
 
-	return list->__sizenelems;
+	return n_messages;
+}
+
+
+/*
+ * Receive the chat list
+ * Returns 0 or -1 if fails
+ */
+int psd_recv_chats(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	int i, j;
+	int n_chats;
+	psdims__chat_list *chats;
+	friend_info *admin;
+	friend_info **members;
+	char **member_names;
+
+	pthread_mutex_lock(&client->network_mutex);
+	if( (chats = net_get_chat_list(client->network, client->chats_timestamp)) == NULL ) {
+		pthread_mutex_unlock(&client->network_mutex);
+		DEBUG_FAILURE_PRINTF("Could not receive the chat list");
+		return -1;
+	}
+	pthread_mutex_unlock(&client->network_mutex);
+
+	for( i = 0 ; i < chats->__sizenelems ; i++ ) {
+		DEBUG_INFO_PRINTF("Chat number: %d", i);
+		// Alloc member list
+		if ( (members = malloc(sizeof(friend_info *)*chats->chat_info[i].members->__sizenelems)) == NULL ) {
+			DEBUG_FAILURE_PRINTF("Could not allocate memory for temp member list");
+			return -1;
+		}
+		if ( (member_names = malloc(sizeof(char *)*chats->chat_info[i].members->__sizenelems)) == NULL ) {
+			DEBUG_FAILURE_PRINTF("Could not allocate memory for temp member list");
+			return -1;
+		}
+
+		pthread_mutex_lock(&client->friends_mutex);
+		admin = fri_find_friend(client->friends, chats->chat_info[i].admin );
+	
+		//DEBUG_INFO_PRINTF("Number of friends: %d", chats->chat_info[i].members->__sizenelems);
+		for ( j = 0 ; j < chats->chat_info[i].members->__sizenelems ; j ++ ) {
+			//DEBUG_INFO_PRINTF("Looking for friend: %s", chats->chat_info[i].members->name[j].string);
+			members[j] = fri_find_friend(client->friends, chats->chat_info[i].members->name[j].string);
+			member_names[j] = chats->chat_info[i].members->name[j].string;
+		}
+		pthread_mutex_unlock(&client->friends_mutex);
+		
+		DEBUG_INFO_PRINTF("Chat: %d, %s", chats->chat_info[i].chat_id, chats->chat_info[i].description);
+
+		pthread_mutex_lock(&client->chats_mutex);
+		if ( cha_add_chat(client->chats, chats->chat_info[i].chat_id, chats->chat_info[i].description, admin, members, chats->chat_info[i].admin, member_names, chats->chat_info[i].members->__sizenelems) != 0 ) {
+			pthread_mutex_unlock(&client->chats_mutex);
+			DEBUG_FAILURE_PRINTF("Could not add chat");
+			return -1;
+		}
+	
+		pthread_mutex_unlock(&client->chats_mutex);
+
+		// Free member list
+		free(members);
+		free(member_names);
+	}
+	
+	pthread_mutex_lock(&client->chats_mutex);
+	client->chats_timestamp = chats->last_timestamp;
+	pthread_mutex_unlock(&client->chats_mutex);
+	
+	n_chats = chats->__sizenelems;
+	net_free_chat_list(chats);
+
+	return n_chats;
+}
+
+
+/*
+ * Receive the friend list
+ * Returns 0 or -1 if fails
+ */
+int psd_recv_friends(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	int n_friends;
+	psdims__user_list *friends;
+
+	int i;
+
+	pthread_mutex_lock(&client->network_mutex);
+	if( (friends = net_get_friend_list(client->network, client->friends_timestamp)) == NULL ) {
+		pthread_mutex_unlock(&client->network_mutex);
+		DEBUG_FAILURE_PRINTF("Could not receive the chat list");
+		return -1;
+	}
+	pthread_mutex_unlock(&client->network_mutex);
+
+	pthread_mutex_lock(&client->friends_mutex);
+	for( i = 0 ; i < friends->__sizenelems; i ++ ) {
+		if( fri_add_friend(client->friends, friends->user[i].name, friends->user[i].information) == -1 ) {
+			DEBUG_FAILURE_PRINTF("Could not add friend");
+			break;
+		}	
+	}
+	if ( i < friends->__sizenelems ) {
+		for( i = i-1 ; i >= 0 ; i-- ) {
+			if (fri_del_friend(client->friends, friends->user[i].name) == -1 ) {
+				DEBUG_FAILURE_PRINTF("CRITICAL: could not restore, the friend list is probably inconsistent");
+				pthread_mutex_lock(&client->friends_mutex);
+				return -1;
+			}
+		}
+	}
+	pthread_mutex_unlock(&client->friends_mutex);
+
+	pthread_mutex_lock(&client->friends_mutex);
+	client->friends_timestamp = friends->last_timestamp;
+	pthread_mutex_unlock(&client->friends_mutex);
+
+	n_friends = friends->__sizenelems;
+
+	net_free_user_list(friends);
+
+	return n_friends;
 }
 
 
@@ -334,7 +465,7 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
  * Receive the locally not registered chats
  * Returns the number of created chats or -1 if fails
  */
-int psd_recv_chats(psd_ims_client *client) {
+int psd_update_chats(psd_ims_client *client) {
 	DEBUG_TRACE_PRINT();
 	DEBUG_FAILURE_PRINTF("Not implemented");
 	return -1;
@@ -345,7 +476,7 @@ int psd_recv_chats(psd_ims_client *client) {
  * Receive the locally not registered chats
  * Returns the number of created chats or -1 if fails
  */
-int psd_recv_friends(psd_ims_client *client) {
+int psd_update_friends(psd_ims_client *client) {
 	DEBUG_TRACE_PRINT();
 	DEBUG_FAILURE_PRINTF("Not implemented");
 	return -1;
@@ -529,7 +660,7 @@ int psd_add_chat(psd_ims_client *client, int id, const char *description, const 
 	pthread_mutex_unlock(&client->friends_mutex);
 
 	pthread_mutex_lock(&client->chats_mutex);
-	if( cha_add_chat(client->chats, id, description, aux_admin, aux_friend_list, n_members) == -1 ) {
+	if( cha_add_chat(client->chats, id, description, aux_admin, aux_friend_list, admin, members, n_members) == -1 ) {
 		pthread_mutex_unlock(&client->chats_mutex);
 		free(aux_friend_list);
 		return -1;
@@ -574,7 +705,7 @@ int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user
 	pthread_mutex_unlock(&client->friends_mutex);
 
 	pthread_mutex_lock(&client->chats_mutex);
-	if ( cha_add_member(client->chats, chat_id, friend_info) == -1 ) {
+	if ( cha_add_member(client->chats, chat_id, friend_info, user_name) == -1 ) {
 		pthread_mutex_unlock(&client->chats_mutex);
 		return -1; // could not add member to chat
 	}
@@ -667,23 +798,6 @@ int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_
 
 	pthread_mutex_lock(&client->chats_mutex);
 	ret_value = cha_change_admin(client->chats, chat_id, user_name);
-	pthread_mutex_unlock(&client->chats_mutex);
-
-	return ret_value;
-}
-
-
-/*
- * Promotes the member named "user_name" to chat admin
- * The previous admin is NOT introduced as a chat member
- * Returns 0 or -1 if fails
- */
-int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *user_name) {
-	DEBUG_TRACE_PRINT();
-	int ret_value;
-
-	pthread_mutex_lock(&client->chats_mutex);
-	ret_value = cha_promote_to_admin(client->chats, chat_id, user_name);
 	pthread_mutex_unlock(&client->chats_mutex);
 
 	return ret_value;

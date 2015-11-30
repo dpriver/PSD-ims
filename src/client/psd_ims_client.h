@@ -38,15 +38,21 @@ typedef friend_node friend_list;
 
 typedef struct psd_ims_client psd_ims_client;
 struct psd_ims_client {
+	// user info
 	char *user_name;
 	char *user_pass;
 	char *user_info;
+	// timestamps
 	int last_connection;
 	int last_notif_timestamp;
+	int friends_timestamp;
+	int chats_timestamp;
+	// lists
 	pending_chat_list new_chats;
 	network *network;
 	friends *friends;
 	chat_list *chats;
+	// lists mutexes
 	pthread_mutex_t new_chats_mutex;
 	pthread_mutex_t chats_mutex;
 	pthread_mutex_t network_mutex;
@@ -99,6 +105,12 @@ int psd_bind_network(psd_ims_client *client, char *serverURL);
 int psd_login(psd_ims_client *client, char *name, char *password);
 
 /*
+ * Loggs out
+ * Returns 0 or -1 if fails
+ */
+void psd_logout(psd_ims_client *client);
+
+/*
  * Register the user in the system
  * Returns 0 or -1 if fails
  */
@@ -124,7 +136,7 @@ int psd_recv_chats(psd_ims_client *client);
 
 /*
  * Receive the user friends
- * Returns the number of created chats or -1 if fails
+ * Returns the number of added friends or -1 if fails
  */
 int psd_recv_friends(psd_ims_client *client);
 
@@ -226,12 +238,6 @@ int psd_update_pending_messages(psd_ims_client *client, int chat_id, int n_messa
  */
 int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_name);
 
-/*
- * Promotes the member named "user_name" to chat admin
- * The previous admin is NOT introduced as a chat member
- * Returns 0 or -1 if fails
- */
-int psd_promote_to_chat_admin(psd_ims_client *client, int chat_id, const char *user_name);
 
 
 /* =========================================================================

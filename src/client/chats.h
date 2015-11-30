@@ -32,12 +32,13 @@
 
 typedef struct chat_member chat_member;
 struct chat_member {
+	char *name;
 	friend_info *info;
 };
 
 typedef struct chat_member_list chat_member_list;
 struct chat_member_list {
-	chat_member *members;
+	chat_member **members;
 	int n_members;
 	int list_lenght;
 };
@@ -131,7 +132,7 @@ int cha_get_last_message_date(chats *chats, int chat_id);
  * Creates a new chat in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], int n_members);
+int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], const char *admin_name, char *member_names[], int n_members);
 
 /*
  * Adds the message in the chat
@@ -149,7 +150,7 @@ int cha_add_messages(chats *chats, int chat_id, char *sender[], char *text[], in
  * Creates a new chat member in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int cha_add_member(chats *chats, int chat_id, friend_info *member);
+int cha_add_member(chats *chats, int chat_id, friend_info *member, const char *name);
 
 /*
  * Deletes chat from the list
@@ -219,13 +220,6 @@ int cha_get_members_timestamp(chats *chats, int chat_id);
  * Returns 0 or -1 if fails
  */
 int cha_change_admin(chats *chats, int chat_id, const char *name);
-
-/*
- * Promotes the member named "name" to chat admin
- * The previous admin is NOT introduced as a chat member
- * Returns 0 or -1 if fails
- */
-int cha_promote_to_admin(chats *chats, int chat_id, const char *name);
 
 
 /* =========================================================================
@@ -349,7 +343,7 @@ chat_member *cha_memberlst_find(chat_member_list *list, const char *user_name);
  * Allocates a new chat member struct
  * Returns a pointer to the structure or NULL if fails
  */
-chat_member *cha_memberinfo_new(friend_info *friend_info);
+chat_member *cha_memberinfo_new(friend_info *friend_info, const char *name);
 
 /*
  * Frees the chat member
