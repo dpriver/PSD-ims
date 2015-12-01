@@ -434,6 +434,34 @@ int net_user_unregister(network *network, char *name, char *password){
  *
  *
  */
+int net_create_chat(network *network, char *description, char *member, int *chat_id) {
+	DEBUG_TRACE_PRINT();
+	int soap_response = 0;
+	int errcode = 0;
+	char *soap_error;
+	psdims__new_chat new_chat;
+
+	new_chat.description = description;
+	new_chat.member = member;
+
+	soap_response = soap_call_psdims__create_chat(&network->soap, network->serverURL, "", &network->login_info, &new_chat, chat_id);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		return -1;
+	}
+
+	// Comprobar error del servidor
+	return 0;
+}
+
+
+/*
+ *
+ *
+ */
 int net_send_message(network *network, int chat_id, char *text, char *attach_path, int *timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
@@ -445,7 +473,7 @@ int net_send_message(network *network, int chat_id, char *text, char *attach_pat
 		return -1;
 	}
 
-	message_info.user = NULL;
+	message_info.user = network->login_info.name;
 	message_info.text = text;
 	// TODO Falta el archivo adjunto
 

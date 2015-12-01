@@ -279,10 +279,10 @@ int psd_recv_notifications(psd_ims_client *client) {
 
 
 /*
- * Receive the pending messages
+ * Receive the chat's messages (the "pending" counter is sets to 0
  * Returns the number of received messages or -1 if fails
  */
-int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
+int psd_recv_messages(psd_ims_client *client, int chat_id) {
 	DEBUG_TRACE_PRINT();
 	psdims__message_list *list;
 	char **sender;
@@ -293,10 +293,6 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 	int n_messages;
 	int i;
 	int timestamp;
-
-	if (cha_get_pending(client->chats, chat_id) <= 0 ) {
-		return 0;
-	}
 
 	pthread_mutex_lock(&client->chats_mutex);
 	timestamp = cha_get_last_message_date(client->chats, chat_id);
@@ -338,6 +334,24 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 	pthread_mutex_unlock(&client->chats_mutex);
 
 	return n_messages;
+}
+
+
+/*
+ * Receive the chat's messages only if there are "pending messages"
+ * Returns the number of received messages or -1 if fails
+ */
+int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
+	DEBUG_TRACE_PRINT();
+
+	pthread_mutex_lock(&client->chats_mutex);
+	if (cha_get_pending(client->chats, chat_id) <= 0 ) {
+		pthread_mutex_unlock(&client->chats_mutex);
+		return 0;
+	}
+	pthread_mutex_unlock(&client-> chats_mutex);
+
+	return psd_recv_messages(client, chat_id);
 }
 
 
@@ -491,6 +505,36 @@ int psd_recv_new_chats(psd_ims_client *client) {
 	DEBUG_TRACE_PRINT();
 	DEBUG_FAILURE_PRINTF("Not implemented");
 	return -1;
+}
+
+
+/*
+ * Creates a new chat
+ * Returns 0 or -1 if fails
+ */
+int psd_create_chat(psd_ims_client *client, char *description, char *member) {
+
+	int chat_id;
+	int n_members;
+
+	// I could check if "member" is a friend of the user
+
+	pthread_mutex_lock(&client->network_mutex);
+	if( net_create_chat(client->network, description, member, &chat_id) != 0 ) {
+		pthread_mutex_unlock(&client->network_mutex);
+		DEBUG_FAILURE_PRINTF("Could not create the chat");
+		return -1;
+	}
+	pthread_mutex_unlock(&client->network_mutex);
+
+	n_members = (member == NULL)? 0: 1;
+
+	if ( psd_add_chat(client, chat_id, description, client->user_name, &member, n_members) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not create the chat locally, but it has been sended to the server");
+		return -1;
+	}
+
+	return 0;
 }
 
 

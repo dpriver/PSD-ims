@@ -147,6 +147,12 @@ int psd_recv_friends(psd_ims_client *client);
 int psd_recv_new_chats(psd_ims_client *client);
 
 /*
+ * Creates a new chat
+ * Returns 0 or -1 if fails
+ */
+int psd_create_chat(psd_ims_client *client, char *description, char *member);
+
+/*
  * Send a message to the chat "chat_id"
  * Returns 0 or -1 if fails
  */

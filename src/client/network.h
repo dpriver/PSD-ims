@@ -104,6 +104,18 @@ int net_user_register(network *network, char *name, char *password, char *inform
  *
  *
  */
+int net_user_unregister(network *network, char *name, char *password);
+
+/*
+ *
+ *
+ */
+int net_create_chat(network *network, char *description, char *member, int *chat_id);
+
+/*
+ *
+ *
+ */
 int net_send_message(network *network, int chat_id, char *text, char *attach_path, int *timestamp);
 
 /*

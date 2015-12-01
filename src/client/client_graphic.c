@@ -129,7 +129,7 @@ int recv_pending_messages(psd_ims_client *client) {
 
 
 	printf("\n\n Retrieving new messages of chat '%d'\n", chat_id);
-	if ( (n_messages = psd_recv_pending_messages(client, chat_id)) < 0 ) {
+	if ( (n_messages = psd_recv_messages(client, chat_id)) < 0 ) {
 		printf(" Failed to retrieve new messages");
 		wait_user();
 		return -1;
@@ -168,7 +168,7 @@ int recv_new_chats(psd_ims_client *client) {
 int recv_new_friends(psd_ims_client *client) {
 	int n_friends;
 
-	printf("\n\n Retrieving new chats...\n");
+	printf("\n\n Retrieving new friends...\n");
 	if ( (n_friends = psd_recv_friends(client)) < 0 ) {
 		printf(" Failed to retrieve new friends");
 		wait_user();

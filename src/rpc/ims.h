@@ -65,7 +65,7 @@ typedef struct psdims__notifications {
 
 typedef struct psdims__new_chat {
 	char *description;
-	char *user;	
+	char *member;	
 } psdims__new_chat;
 
 typedef struct psdims__login_info {
