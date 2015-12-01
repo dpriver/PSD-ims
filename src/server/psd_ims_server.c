@@ -347,6 +347,9 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
 		return SOAP_USER_ERROR;
 	}
 
+	if(chat_exist(server.persistence,chat_id)!=1)
+		return SOAP_USER_ERROR;
+
 	id_user=get_user_id(server.persistence,login->name);
 
 	if(exist_user_in_chat(server.persistence,id_user,chat_id)!=1)
@@ -380,10 +383,23 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
  */
 int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__new_chat *new_chat, int *chat_id) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
+	
+	int id_user;
 
-	*chat_id = -1;
-	return SOAP_USER_ERROR; 
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	id_user=get_user_id(server.persistence,login->name);
+
+	//Falta devolver chat_id,esta implementado pero no copia
+	if(add_chat(server.persistence, id_user, "",0,0)!=0)
+		return SOAP_USER_ERROR;
+
+	return SOAP_OK; 
 }
 
 
@@ -393,10 +409,30 @@ int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__ne
  */
 int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name, int chat_id, int *ERRCODE) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
+	
+	int id_user;
 
-	*ERRCODE = 1;
-	return SOAP_USER_ERROR; 
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	if(chat_exist(server.persistence,chat_id)!=1)
+		return SOAP_USER_ERROR;
+
+	id_user=get_user_id(server.persistence,login->name);
+
+    if(exist_user_in_chat(server.persistence,id_user,chat_id)==1){
+		printf("Ya existe el usuario en el chat\n");
+		return SOAP_USER_ERROR;
+	}
+
+	if(add_user_chat(server.persistence,id_user,chat_id,0)!=0)
+		return SOAP_USER_ERROR;
+
+	return SOAP_OK;  
 }
 
 
@@ -406,10 +442,42 @@ int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name,
  */
 int psdims__quit_from_chat(struct soap *soap, psdims__login_info *login, int chat_id, int *ERRCODE) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
+	
+	int id_user,first_user;
 
-	*ERRCODE = 1;
-	return SOAP_USER_ERROR; 
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	if(chat_exist(server.persistence,chat_id)!=1)
+		return SOAP_USER_ERROR;
+
+	id_user=get_user_id(server.persistence,login->name);
+
+	if(exist_user_in_chat(server.persistence,id_user,chat_id)!=1)
+		return SOAP_USER_ERROR;
+
+	if(del_user_chat(server.persistence,id_user,chat_id)!=0)	
+		return SOAP_USER_ERROR;
+
+	if(still_users_in_chat(server.persistence,chat_id)==1){
+		if(is_admin(server.persistence,id_user,chat_id)==1){
+			if((first_user=get_first_users_in_chat(server.persistence,chat_id))==1)
+				return SOAP_USER_ERROR;
+			if(change_admin(server.persistence,first_user,chat_id)==1)
+				return SOAP_USER_ERROR;
+		}
+	}
+	else{
+		if(del_chat(server.persistence,chat_id)!=0)	
+			return SOAP_USER_ERROR;
+	}
+
+
+	return SOAP_OK;  
 }
 
 

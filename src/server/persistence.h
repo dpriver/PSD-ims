@@ -87,13 +87,22 @@ int exist_friendly(persistence* persistence,int user_id1, int user_id2);
 
 int del_friends(persistence* persistence, int user_id1, int user_id2);
 
-int add_chat(persistence* persistence, int admin_id, char* description, int timestamp);
+int add_chat(persistence* persistence, int admin_id, char* description, int timestamp,int chat_id);
 
 int del_chat(persistence* persistence, int user_id);
 
 int add_user_chat(persistence* persistence, int user_id, int chat_id, int timestamp);
 
 int del_user_chat(persistence* persistence, int user_id, int chat_id);
+
+int change_admin(persistence* persistence, int user_id, int chat_id);
+
+int is_admin(persistence* persistence, int user_id, int chat_id);
+
+int still_users_in_chat(persistence* persistence,int chat_id);
+
+int get_first_users_in_chat(persistence* persistence,int chat_id);
+
 
 
 #endif /* __PERSISTENCE */

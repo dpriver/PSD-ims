@@ -97,6 +97,54 @@ void test_decline_request(persistence *persistence,int id_user,int id_request_na
 }
 
 */
+void test_quit_from_chat(persistence *persistence,int id_user,int chat_id){
+	int first_user;
+
+	if(chat_exist(persistence,chat_id)!=1)
+		exit(-1);
+
+	if(exist_user_in_chat(persistence,id_user,chat_id)!=1)
+		exit(-1);
+
+	if(del_user_chat(persistence,id_user,chat_id)!=0)	
+		exit(-1);
+
+	if(still_users_in_chat(persistence,chat_id)==1){
+		if(is_admin(persistence,id_user,chat_id)==1){
+			if((first_user=get_first_users_in_chat(persistence,chat_id))==1)
+				exit(-1);
+			if(change_admin(persistence,first_user,chat_id)==1)
+				exit(-1);
+		}
+	}
+	else{
+		if(del_chat(persistence,chat_id)!=0)	
+			exit(-1);
+	}
+}
+
+void test_add_member_chat(persistence *persistence,int id_user,int chat_id){
+	int first_user;
+
+	if(chat_exist(persistence,chat_id)!=1)
+		return exit(-1);
+
+    if(exist_user_in_chat(persistence,id_user,chat_id)==1){
+		printf("Ya existe el usuario en el chat");
+		exit(-1);
+	}
+
+	if(add_user_chat(persistence,id_user,chat_id,0)!=0)
+		exit(-1);
+}
+
+void test_add_chat(persistence *persistence,int admin_id){
+	int id_user;
+
+	if(add_chat(persistence, admin_id, "Descripción de prueba",0,0)!=0)
+		exit(-1);
+
+}
 
 int main(int argc, char **argv){
 	persistence *persistence=init_persistence(argv[1],argv[2]);	
@@ -113,7 +161,12 @@ int main(int argc, char **argv){
 
 	//test_decline_request(persistence,4,3);
 
-	printf("Not implemented because persistence can not be used without soap...\n");
+	//test_quit_from_chat(persistence,3,3);
+	
+	//test_add_member_chat(persistence,4,2);
+
+	test_add_chat(persistence,4);
+
 	free_persistence(persistence);
 
 	return 0;
