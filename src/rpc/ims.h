@@ -22,7 +22,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ********************************************************************************/
-
+#import "soap12.h"
+#import "xop.h"
+#import "xmime5.h"
 //gsoap psdims service name: psdims
 //gsoap psdims service style: rpc
 //gsoap psdims service location: http://localhost:10000
@@ -30,6 +32,12 @@
 //gsoap psdims service namespace: urn:psdims
 
 typedef enum psdims__notification_type { FRIEND_REQ, PENDING_MESS } psdims__notification_type;
+
+
+typedef struct psdims__file {
+	_xop__Include xop__Include;
+	@char *xmime5__contentType;
+} psdims__file;
 
 typedef struct psdims__string {
 	char *string;
@@ -150,6 +158,9 @@ int psdims__get_chat_info(psdims__login_info *login, int chat_id, psdims__chat_i
 
 // get messages from chat
 int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timestamp, psdims__message_list *messages);
+
+//get file
+//int psdims__get_file(psdims__login_info *login, char *file_id, psdims__file *file);
 
 // get pending notifications
 int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, psdims__notifications *notifications);

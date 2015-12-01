@@ -22,6 +22,8 @@ OBJ_DIR=$(PROJECT_DIR)/build/$(SUBPROJECT)
 #-------------------------------------------------------------
 # Configuration
 #-------------------------------------------------------------
+GSOAP_IMPORTS=gsoap/import
+
 CFLAGS=-I$(GSOAP_INCLUDE)
 LDFLAGS=-L$(GSOAP_LIB)
 LDLIBS=-lgsoap $(SSL_LIBS)
@@ -35,7 +37,7 @@ all: $(CLIENT_COBJS) $(SERVER_COBJS)
 
 generate:
 	@echo $(ECHO_FLAGS) "\tSOAP" client server
-	@soapcpp2 -c -d$(SRC_DIR)/ $(RPC_INTERFACE) 
+	@soapcpp2 -c -d$(SRC_DIR)/ -Igsoap/import:gsoap/custom:. $(RPC_INTERFACE)
 
 $(OBJ_DIR)/%.o : %.c | $(OBJ_DIR)
 	@echo $(ECHO_FLAGS) "\tCC" $@
