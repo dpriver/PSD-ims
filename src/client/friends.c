@@ -469,7 +469,7 @@ friend_info *fri_lst_find(friend_list *list, const char *name) {
 	DEBUG_TRACE_PRINT();
 	friend_node *friend_node;
 	friend_node = _friends_find_node(list, name);	
-	return friend_node->info;
+	return (friend_node != NULL)? friend_node->info : NULL;
 }
 
 

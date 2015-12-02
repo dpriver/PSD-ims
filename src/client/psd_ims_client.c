@@ -197,6 +197,25 @@ int psd_login(psd_ims_client *client, char *name, char *password) {
 void psd_logout(psd_ims_client *client) {
 	DEBUG_TRACE_PRINT();
 	net_logout(client->network);
+
+	free(client->user_name);
+	free(client->user_pass);
+
+	client->user_name = NULL;
+	client->user_pass = NULL;
+	client->last_connection = 0; //TODO change this
+	client->last_notif_timestamp = 0;
+
+	// Free structures
+	fri_free(client->friends);
+	cha_free(client->chats);
+	pen_free(&client->new_chats);
+
+	// Create structures again
+	client->friends = fri_new();
+	client->chats = cha_new();
+	pen_init(&client->new_chats);
+
 }
 
 
@@ -309,7 +328,7 @@ int psd_recv_messages(psd_ims_client *client, int chat_id) {
 	sender = (char**)malloc(sizeof(char*)*list->__sizenelems);
 	text = (char**)malloc(sizeof(char*)*list->__sizenelems);
 	attach_path = (char**)malloc(sizeof(char*)*list->__sizenelems);
-	send_date = (int*)malloc(sizeof(char)*list->__sizenelems);
+	send_date = (int*)malloc(sizeof(int)*list->__sizenelems);
 
 
 	for( i = 0; i < list->__sizenelems; i++) {
@@ -352,6 +371,61 @@ int psd_recv_pending_messages(psd_ims_client *client, int chat_id) {
 	pthread_mutex_unlock(&client-> chats_mutex);
 
 	return psd_recv_messages(client, chat_id);
+}
+
+
+/*
+ * Receive the chat's messages
+ * Returns the number of received messages or -1 if fails
+ */
+int psd_recv_all_messages(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	chats *chat_iterator = client->chats;
+	int chat_id;
+
+	pthread_mutex_lock(&client->chats_mutex);
+	chat_iterator = cha_get_next_id(chat_iterator, &chat_id);
+	pthread_mutex_unlock(&client->chats_mutex);
+	while( chat_id > 0 ) {
+		if(psd_recv_messages(client, chat_id) < 0 ) {
+			DEBUG_FAILURE_PRINTF("Could not get the chat %d messages", chat_id);
+			continue;
+		}
+		pthread_mutex_lock(&client->chats_mutex);
+		chat_iterator = cha_get_next_id(chat_iterator, &chat_id);
+		pthread_mutex_unlock(&client->chats_mutex);
+	}
+
+	return 0;
+}
+
+
+/*
+ * Receive the chat's messages only if there are "pending messages"
+ * Returns the number of received messages or -1 if fails
+ */
+int psd_recv_all_pending_messages(psd_ims_client *client) {
+	DEBUG_TRACE_PRINT();
+	chats *chat_iterator = client->chats;
+	int chat_id;
+
+	pthread_mutex_lock(&client->chats_mutex);
+	chat_iterator = cha_get_next_id(chat_iterator, &chat_id);
+	pthread_mutex_unlock(&client->chats_mutex);
+	while( chat_id > 0 ) {
+		if (cha_get_pending(client->chats, chat_id) <= 0 ) {
+			continue;
+		}
+		if(psd_recv_messages(client, chat_id) < 0 ) {
+			DEBUG_FAILURE_PRINTF("Could not get the chat %d messages", chat_id);
+			continue;
+		}
+		pthread_mutex_lock(&client->chats_mutex);
+		chat_iterator = cha_get_next_id(chat_iterator, &chat_id);
+		pthread_mutex_unlock(&client->chats_mutex);
+	}
+
+	return 0;
 }
 
 
@@ -670,6 +744,18 @@ void psd_print_chat_members(psd_ims_client *client, int chat_id) {
 	cha_print_chat_members(client->chats, chat_id);
 	pthread_mutex_unlock(&client->chats_mutex);
 }
+
+
+/*
+ * Prints all chat messages line by line
+ */
+void psd_print_chat_messages(psd_ims_client *client, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	pthread_mutex_lock(&client->chats_mutex);
+	cha_print_chat_messages(client->chats, chat_id);
+	pthread_mutex_unlock(&client->chats_mutex);
+}
+
 
 /*
  * Adds a new chat to client's chat list

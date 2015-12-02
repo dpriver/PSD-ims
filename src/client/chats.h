@@ -123,6 +123,16 @@ void cha_print_chat_list(chats *chats);
 void cha_print_chat_members(chats *chats, int chat_id);
 
 /*
+ * Prints all chat messages line by line
+ */
+void cha_print_chat_messages(chats *chats, int chat_id);
+
+/*
+ * Returns the next node (iterator) and its id
+ */
+chats *cha_get_next_id(chats *chats, int *chat_id);
+
+/*
  * Gets the chat's last message send-date
  * Returns the send date or 0 if the list is empty
  */

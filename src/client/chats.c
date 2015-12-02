@@ -83,11 +83,11 @@ chat_node *_chats_find_node(chat_list *list, int chat_id) {
 
 	aux_node = list->next;
 	while ( aux_node != list ) {
-		if ( aux_node->info->id == chat_id )
+		if ( aux_node->info->id == chat_id ) {
 			return aux_node;
+		}
 		aux_node = aux_node->next;
 	}
-
 	return NULL;
 }
 
@@ -161,10 +161,41 @@ void cha_print_chat_members(chats *chats, int chat_id) {
 
 
 /*
+ * Prints all chat messages line by line
+ */
+void cha_print_chat_messages(chats *chats, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	chat_node *node;
+	DEBUG_INFO_PRINTF("Print messages of chat %d", chat_id);
+	if( (node = _chats_find_node(chats, chat_id)) != NULL ) {
+		mes_print_message_list(node->info->messages); 
+	}
+}
+
+
+/*
+ * Returns the next node (iterator) and its id
+ */
+chats *cha_get_next_id(chats *chats, int *chat_id) {
+	DEBUG_TRACE_PRINT();
+	chat_node *next_node = chats->next;
+
+
+	if( next_node->info == NULL ) {
+		*chat_id = -1;
+		return chats;
+	}
+
+	*chat_id = next_node->info->id;
+	return next_node;
+}
+
+/*
  * Gets the chat's last message send-date
  * Returns the send date or 0 if the list is empty
  */
 int cha_get_last_message_date(chats *chats, int chat_id) {
+	DEBUG_TRACE_PRINT();
 	chat_info *chat_info;
 	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not find chat");
@@ -240,6 +271,7 @@ int cha_add_message(chats *chats, int chat_id, const char *sender, const char *t
 	DEBUG_TRACE_PRINT();
 	chat_info *chat_info;
 
+	
 	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not find chat");
 		return -1;
@@ -270,6 +302,7 @@ int cha_add_messages(chats *chats, int chat_id, char *sender[], char *text[], in
 	}
 
 	for( i=0; i< n_messages; i++ ) {
+		DEBUG_INFO_PRINTF("Adding %s %s %d", sender[i], text[i], send_date[i]);
 		if( mes_add_message(chat_info->messages, sender[i], text[i], send_date[i], attach_path[i]) != 0 ) {
 			DEBUG_FAILURE_PRINTF("Could not add the message");
 			mes_del_last_messages(chat_info->messages, i); // (i+1) messages (-1) the last failed
@@ -629,7 +662,7 @@ chat_info *cha_lst_find(chat_list *list, int chat_id) {
 	DEBUG_TRACE_PRINT();
 	chat_node *chat_node;
 	chat_node = _chats_find_node(list, chat_id);	
-	return chat_node->info;
+	return (chat_node != NULL)? chat_node->info : NULL;
 }
 
 

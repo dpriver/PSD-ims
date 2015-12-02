@@ -40,8 +40,8 @@
 
 #define SCAN_INPUT_STRING(string, index, max_chars) \
 	index = 0; \
-	while( (index < max_chars) && (string[index] = getchar()) != '\n' ); \
-	string[index] = '\0'
+	while( (index < max_chars) && ((string[index++] = getchar()) != '\n') ); \
+	string[index-1] = '\0'
 
 
 #define FLUSH_INPUT(ch) \
@@ -57,6 +57,7 @@ pthread_mutex_t continue_graphic_mutex;
 
 pthread_t notifications_tid = -1;
 
+void retrieve_user_data(psd_ims_client *client);
 void stop_client(int sig);
 void *notifications_fetch(void *arg);
 
@@ -100,7 +101,8 @@ void save_state(psd_ims_client *client) {
 /* =========================================================================
  *  User receive Menu
  * =========================================================================*/
- 
+
+
 int recv_notifications(psd_ims_client *client) {
 	printf("\n\n Retrieving notifications...\n");
 	if (psd_recv_notifications(client) != 0 ) {
@@ -244,6 +246,8 @@ int send_message(psd_ims_client *client) {
 	FLUSH_INPUT(aux_char);
 	printf("\n Text: ");
 	SCAN_INPUT_STRING(text, i, MAX_MESSAGE_CHARS);
+
+	printf("Send message %s\n", text);
 
 	if( psd_send_message(client, chat_id, text, NULL) != 0 ) {
 		printf(" Failed to send the message\n");
@@ -391,6 +395,19 @@ void list_chat_members(psd_ims_client *client) {
 	wait_user();
 }
 
+void list_chat_messages(psd_ims_client *client) {
+	int chat_id;
+	char aux_char;
+
+	printf("\n\n = Chats =\n");
+	psd_print_chats(client);
+	printf("\n Select a chat id: ");
+	scanf("%d", &chat_id);
+	FLUSH_INPUT(aux_char);
+	psd_print_chat_messages(client, chat_id);
+	wait_user();
+}
+
 void list_pending_notification(psd_ims_client *client) {
 	printf("\n\n = Pending notifications =\n");
 	printf(" No notifications...(NOT implemented)\n");
@@ -408,8 +425,9 @@ void screen_menu_list_show() {
 	printf(" 1. Listar amigos\n");
 	printf(" 2. Listar chats\n");
 	printf(" 3. Listar miembros de un chat\n");
-	printf(" 4. Listar notificaciones pendientes\n");
-	printf(" 5. Listar peticiones de amistad\n");
+	printf(" 4. Listar mensajes de un chat\n");
+	printf(" 5. Listar notificaciones pendientes\n");
+	printf(" 6. Listar peticiones de amistad\n");
 	printf("\n 0. Salir\n");
 	menu_footer_show();
 }
@@ -424,19 +442,22 @@ int menu_list(psd_ims_client *client, menu_type *next_menu_ret) {
 		option = get_user_input() ;
 		switch(option) {
 			case 0: break;   // salir
-			case 1:	// go to listing menu
+			case 1:
 				list_friends(client);
 				break;
-			case 2: // go to send menu
+			case 2:
 				list_chats(client);
 				break;
-			case 3: // go to receive menu
+			case 3:
 				list_chat_members(client);
 				break;
 			case 4:
-				list_pending_notification(client);
+				list_chat_messages(client);
 				break;
 			case 5:
+				list_pending_notification(client);
+				break;
+			case 6:
 				list_friend_requests(client);
 				break;
 		}		
@@ -551,6 +572,10 @@ int login(psd_ims_client *client) {
 	}
 
 	printf(" Logged in as '%s'\n", name);
+	printf(" Retrieving user data...");	
+	retrieve_user_data(client);
+
+	printf(" Done\n");
 	wait_user();
 
 	return 0;
@@ -624,6 +649,27 @@ int graphic_client_run(psd_ims_client *client) {
 		pthread_mutex_unlock(&continue_graphic_mutex);
 
 	} while(!exit_graphic);
+}
+
+
+void retrieve_user_data(psd_ims_client *client) {
+	if ( psd_recv_friends(client) < 0 ) {
+		printf(" Failed to retrieve new friends");
+		wait_user();
+		return;
+	}
+
+	if ( psd_recv_chats(client) < 0 ) {
+		printf(" Failed to retrieve new chats");
+		wait_user();
+		return;
+	}
+
+	if ( psd_recv_all_messages(client) < 0 ) {
+		printf(" Failed to retrieve the chats messages");
+		wait_user();
+		return;
+	}
 }
 
 

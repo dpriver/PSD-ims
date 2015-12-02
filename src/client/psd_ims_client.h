@@ -129,6 +129,18 @@ int psd_recv_notifications(psd_ims_client *client);
 int psd_recv_pending_messages(psd_ims_client *client, int chat_id);
 
 /*
+ * Receive the chat's messages
+ * Returns the number of received messages or -1 if fails
+ */
+int psd_recv_all_messages(psd_ims_client *client);
+
+/*
+ * Receive the chat's messages only if there are "pending messages"
+ * Returns the number of received messages or -1 if fails
+ */
+int psd_recv_all_pending_messages(psd_ims_client *client);
+
+/*
  * Receive the user chats
  * Returns the number of created chats or -1 if fails
  */
@@ -190,6 +202,11 @@ void psd_print_chats(psd_ims_client *client);
  * Prints all chat members line by line
  */
 void psd_print_chat_members(psd_ims_client *client, int chat_id);
+
+/*
+ * Prints all chat messages line by line
+ */
+void psd_print_chat_messages(psd_ims_client *client, int chat_id);
 
 /*
  * Adds a new chat to client's chat list
