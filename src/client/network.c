@@ -462,6 +462,54 @@ int net_create_chat(network *network, char *description, char *member, int *chat
  *
  *
  */
+int net_add_user_to_chat(network *network, char *member, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	int soap_response = 0;
+	int errcode = 0;
+	char *soap_error;
+
+	soap_response = soap_call_psdims__add_member(&network->soap, network->serverURL, "", &network->login_info, member, chat_id, &errcode);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		return -1;
+	}
+
+	// Comprobar error del servidor
+	return 0;
+}
+
+
+/*
+ *
+ *
+ */
+int net_quit_from_chat(network *network, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	int soap_response = 0;
+	int errcode = 0;
+	char *soap_error;
+
+	soap_response = soap_call_psdims__quit_from_chat(&network->soap, network->serverURL, "", &network->login_info, chat_id, &errcode);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		return -1;
+	}
+
+	// Comprobar error del servidor
+	return 0;
+}
+
+
+/*
+ *
+ *
+ */
 int net_send_message(network *network, int chat_id, char *text, char *attach_path, int *timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;

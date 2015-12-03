@@ -584,7 +584,7 @@ int psd_recv_new_chats(psd_ims_client *client) {
 
 /*
  * Creates a new chat
- * Returns 0 or -1 if fails
+ * Returns the chat id or -1 if fails
  */
 int psd_create_chat(psd_ims_client *client, char *description, char *member) {
 
@@ -605,6 +605,52 @@ int psd_create_chat(psd_ims_client *client, char *description, char *member) {
 
 	if ( psd_add_chat(client, chat_id, description, client->user_name, &member, n_members) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not create the chat locally, but it has been sended to the server");
+		return -1;
+	}
+
+	return chat_id;
+}
+
+
+/*
+ *
+ *
+ */
+int psd_add_member_to_chat(psd_ims_client *client, char *member, int chat_id) {
+	DEBUG_TRACE_PRINT();
+
+	pthread_mutex_lock(&client->network_mutex);
+	if( net_add_user_to_chat(client->network, member, chat_id) != 0 ) {
+		pthread_mutex_unlock(&client->network_mutex);
+		DEBUG_FAILURE_PRINTF("Could not add the member to the chat");
+		return -1;
+	}
+	
+	if( psd_add_friend_to_chat(client, chat_id, member) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not add the friend locally, but he is registered in it");
+		return -1;
+	}
+
+	return 0;
+}
+
+
+/*
+ *
+ *
+ */
+int psd_quit_from_chat(psd_ims_client *client, int chat_id) {
+	DEBUG_TRACE_PRINT();
+
+	pthread_mutex_lock(&client->network_mutex);
+	if( net_quit_from_chat(client->network, chat_id) != 0 ) {
+		pthread_mutex_unlock(&client->network_mutex);
+		DEBUG_FAILURE_PRINTF("Could not quit from chat");
+		return -1;
+	}
+	
+	if( psd_del_chat(client, chat_id) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not remove the chat locally, but you are not longer in it");
 		return -1;
 	}
 

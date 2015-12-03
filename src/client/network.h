@@ -116,6 +116,18 @@ int net_create_chat(network *network, char *description, char *member, int *chat
  *
  *
  */
+int net_add_user_to_chat(network *network, char *member, int chat_id);
+
+/*
+ *
+ *
+ */
+int net_quit_from_chat(network *network, int chat_id);
+
+/*
+ *
+ *
+ */
 int net_send_message(network *network, int chat_id, char *text, char *attach_path, int *timestamp);
 
 /*

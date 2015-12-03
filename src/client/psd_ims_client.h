@@ -165,6 +165,18 @@ int psd_recv_new_chats(psd_ims_client *client);
 int psd_create_chat(psd_ims_client *client, char *description, char *member);
 
 /*
+ *
+ *
+ */
+int psd_add_member_to_chat(psd_ims_client *client, char *member, int chat_id);
+
+/*
+ *
+ *
+ */
+int psd_quit_from_chat(psd_ims_client *client, int chat_id);
+
+/*
  * Send a message to the chat "chat_id"
  * Returns 0 or -1 if fails
  */

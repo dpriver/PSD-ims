@@ -36,6 +36,7 @@
 #define MAX_USER_NAME_CHARS 20
 #define MAX_USER_PASS_CHARS 20
 #define MAX_USER_INFO_CHARS 100
+#define MAX_DESCRIPTION_CHARS 100
 #define MAX_MESSAGE_CHARS 300
 
 #define SCAN_INPUT_STRING(string, index, max_chars) \
@@ -232,6 +233,59 @@ int menu_recv(psd_ims_client *client, menu_type *next_menu_ret) {
  *  User send Menu
  * =========================================================================*/
 
+int create_chat(psd_ims_client *client) {
+	char description[MAX_DESCRIPTION_CHARS];
+	char member[MAX_USER_NAME_CHARS];
+	int i;
+	int chat_id;
+
+	printf("\n description: ");
+	SCAN_INPUT_STRING(description, i, MAX_DESCRIPTION_CHARS);
+	printf("\n member: ");
+	SCAN_INPUT_STRING(member, i, MAX_USER_NAME_CHARS);
+
+	if( (chat_id = psd_create_chat(client, description, member)) < 0 ) {
+		printf(" Failed to create the chat\n");
+		wait_user();
+		return -1;
+	}
+	
+	if( psd_add_member_to_chat(client, member, chat_id) != 0 ) {
+		printf(" Failed to create the chat\n");
+		wait_user();
+		return -1;
+	}
+
+	printf(" Chat with %s created\n", member);
+	return 0;
+}
+
+int add_friend_to_chat(psd_ims_client *client) {
+	char member[MAX_USER_NAME_CHARS];
+	char aux_char;
+	int chat_id;
+	int i;
+
+	printf("\n\n = Chats =\n");
+	psd_print_chats(client);
+	printf("\n chat id: ");
+	scanf("%d", &chat_id);
+	FLUSH_INPUT(aux_char);
+
+	printf("\n\n = Friends =\n");
+	psd_print_friends(client);
+	printf("\n member: ");
+	SCAN_INPUT_STRING(member, i, MAX_USER_NAME_CHARS);
+
+
+	if( psd_add_member_to_chat(client, member, chat_id) != 0 ) {
+		printf(" Failed to create the chat\n");
+		wait_user();
+		return -1;
+	}
+	return 0;
+}
+
 int send_message(psd_ims_client *client) {
 	char text[MAX_MESSAGE_CHARS];
 	char aux_char;
@@ -327,10 +381,12 @@ int send_request_decline(psd_ims_client *client) {
 
 void screen_menu_send_show() {
 	menu_header_show("PSD IMS - Send menu");
-	printf(" 1. Enviar mensaje\n");
-	printf(" 2. Enviar peticion de amistad\n");
-	printf(" 3. Aceptar peticion de amistad\n");
-	printf(" 4. Rechazar peticion de amistad\n");
+	printf(" 1. Create chat\n");
+	printf(" 2. Add friend to chat\n");
+	printf(" 3. Enviar mensaje\n");
+	printf(" 4. Enviar peticion de amistad\n");
+	printf(" 5. Aceptar peticion de amistad\n");
+	printf(" 6. Rechazar peticion de amistad\n");
 	printf("\n 0. Salir\n");
 	menu_footer_show();
 }
@@ -345,16 +401,22 @@ int menu_send(psd_ims_client *client, menu_type *next_menu_ret) {
 		option = get_user_input() ;
 		switch(option) {
 			case 0: break;   // salir
-			case 1:	// go to listing menu
+			case 1:
+				 create_chat(client);
+					break;
+			case 2:
+				add_friend_to_chat(client);
+				break;
+			case 3:	// go to listing menu
 				send_message(client);
 				break;
-			case 2: // go to send menu
+			case 4: // go to send menu
 				send_friend_request(client);
 				break;
-			case 3: // go to receive menu
+			case 5: // go to receive menu
 				send_request_accept(client);
 				break;
-			case 4:
+			case 6:
 				send_request_decline(client);
 				break;
 		}		
