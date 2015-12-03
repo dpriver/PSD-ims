@@ -430,6 +430,48 @@ int psd_recv_all_pending_messages(psd_ims_client *client) {
 
 
 /*
+ *
+ *
+ */
+int psd_recv_message_attachment(psd_ims_client *client, int chat_id, int msg_timestamp) {
+	psdims__file *file;
+	char file_path[MAX_FILE_PATH_CHARS];
+	FILE *fd;
+
+	pthread_mutex_lock(&client->network_mutex);
+	if( (file = net_get_attachment(client->network, chat_id, msg_timestamp)) == NULL ) {
+		pthread_mutex_unlock(&client->network_mutex);
+		DEBUG_FAILURE_PRINTF("Could not receive the chat list");
+		return -1;
+	}
+	pthread_mutex_unlock(&client->network_mutex);
+	
+	// Create the file path
+	if( sprintf(file_path, "%s/_%d%d", ATTACH_FILES_DIR, chat_id, msg_timestamp) < 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not create the file path");
+		return -1;
+	}
+
+	// Write the file in the disk
+	if( (fd = fopen(file_path, "w")) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not create the file");
+		return -1;
+	}
+	if( fwrite(file->xop__Include.__ptr, file->xop__Include.__size, 1, fd) != 1 ) {
+		DEBUG_FAILURE_PRINTF("Could not save the received file");
+		fclose(fd);
+		return -1;
+	}
+
+	fclose(fd);
+
+	net_free_file(file);
+
+	return 0;
+}
+
+
+/*
  * Receive the chat list
  * Returns 0 or -1 if fails
  */
@@ -662,25 +704,68 @@ int psd_quit_from_chat(psd_ims_client *client, int chat_id) {
  * Send a message to the chat "chat_id"
  * Returns 0 or -1 if fails
  */
-int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *attach_path) {
+int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *file_path, char *MIME_type, char *file_info) {
 	DEBUG_TRACE_PRINT();
 	int send_date = 0;
+	char path_buff[MAX_FILE_PATH_CHARS];
+	char file_buff[MAX_FILE_CHARS];
+	char * file_buff_aux;
+	char * file_attach_path = NULL;
+	int have_attach = 0;
+	FILE *fd;
+	int readed_blocks = 0;
+	int total_blocks = 0;
+
+	if( file_path != NULL ) {
+		have_attach = 1;
+		file_attach_path = path_buff;
+		if( (fd = fopen(file_path, "r")) == NULL ) {
+			DEBUG_FAILURE_PRINTF("Could not read the file");
+			return -1;
+		}
+
+		file_buff_aux = file_buff;
+		do {
+			readed_blocks = fread(file_buff_aux++, 1, 1, fd);
+			total_blocks += readed_blocks;
+		} while( (readed_blocks == 1) && (total_blocks < MAX_FILE_CHARS) );
+
+		fclose(fd);
+	}
 
 	pthread_mutex_lock(&client->network_mutex);
-	if( net_send_message(client->network, chat_id, text, attach_path, &send_date) != 0 ) {
+	if( net_send_message(client->network, chat_id, text, have_attach, &send_date) != 0 ) {
 		pthread_mutex_unlock(&client->network_mutex);
 		DEBUG_FAILURE_PRINTF("Could not send the message");
 		return -1;
 	}
 	pthread_mutex_unlock(&client->network_mutex);
 
+	if( file_path != NULL ) {
+			// Create the file path (before this point, send_date was undetermined)
+		if( sprintf(path_buff, "%s/_%d%d", ATTACH_FILES_DIR, chat_id, send_date) < 0 ) {
+			DEBUG_FAILURE_PRINTF("Could not create the file path");
+			return -1;
+		}
+	}
+
 	pthread_mutex_lock(&client->chats_mutex);
-	if ( cha_add_message(client->chats, chat_id, NULL, text, send_date, attach_path) != 0 ) {
+	if ( cha_add_message(client->chats, chat_id, NULL, text, send_date, file_attach_path) != 0 ) {
 		pthread_mutex_unlock(&client->chats_mutex);
 		DEBUG_FAILURE_PRINTF("Could not add the message, but it has been sended");
 		return -1;
 	}
 	pthread_mutex_unlock(&client->chats_mutex);
+
+	if( file_path != NULL ) {
+		pthread_mutex_lock(&client->network_mutex);
+		if( net_send_attachment(client->network, chat_id, send_date, MIME_type, file_buff, sizeof(char)*total_blocks, file_info) != 0 ) {
+			pthread_mutex_unlock(&client->network_mutex);
+			DEBUG_FAILURE_PRINTF("Could not send the message");
+			return -1;
+		}
+		pthread_mutex_unlock(&client->network_mutex);
+	}
 
 	return 0;
 }

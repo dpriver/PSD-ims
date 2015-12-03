@@ -85,6 +85,12 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id, i
  *
  *
  */
+psdims__file *net_get_attachment(network *network, int chat_id, int msg_timestamp);
+
+/*
+ *
+ *
+ */
 psdims__chat_list *net_get_chat_list(network *network, int timestamp);
 
 /*
@@ -128,7 +134,13 @@ int net_quit_from_chat(network *network, int chat_id);
  *
  *
  */
-int net_send_message(network *network, int chat_id, char *text, char *attach_path, int *timestamp);
+int net_send_message(network *network, int chat_id, char *text, int have_attach, int *timestamp);
+
+/*
+ *
+ *
+ */
+int net_send_attachment(network *network, int chat_id, int msg_timestamp, char *MIME_type, unsigned char *ptr, int size, char *info);
 
 /*
  *

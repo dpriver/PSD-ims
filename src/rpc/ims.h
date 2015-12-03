@@ -104,6 +104,7 @@ typedef struct psdims__user_list {
 typedef struct psdims__message_info {
 	char *user;
 	char *text;
+	int have_attach;
 	int send_date;
 } psdims__message_info;
 
@@ -159,8 +160,8 @@ int psdims__get_chat_info(psdims__login_info *login, int chat_id, psdims__chat_i
 // get messages from chat
 int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timestamp, psdims__message_list *messages);
 
-//get file
-//int psdims__get_file(psdims__login_info *login, char *file_id, psdims__file *file);
+// Get the file attached to msd_id
+int psdims__get_attachment(psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file);
 
 // get pending notifications
 int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, psdims__notifications *notifications);
@@ -176,6 +177,9 @@ int psdims__quit_from_chat(psdims__login_info *login, int chat_id, int *ERRCODE)
 
 // Send message
 int psdims__send_message(psdims__login_info *login, int chat_id, psdims__message_info *message, int *timestamp);
+
+// Send a file to attach msd_id
+int psdims__send_attachment(psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file, int *ERRCODE);
 
 // enviar solicitud de amistad a usuario
 int psdims__send_friend_request(psdims__login_info *login, char* request_name, int *timestamp);

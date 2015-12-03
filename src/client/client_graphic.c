@@ -303,7 +303,7 @@ int send_message(psd_ims_client *client) {
 
 	printf("Send message %s\n", text);
 
-	if( psd_send_message(client, chat_id, text, NULL) != 0 ) {
+	if( psd_send_message(client, chat_id, text, NULL, NULL, NULL) != 0 ) {
 		printf(" Failed to send the message\n");
 		wait_user();
 		return -1;

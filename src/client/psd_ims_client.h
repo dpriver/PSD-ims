@@ -26,6 +26,10 @@
 #ifndef __PSD_IMS_CLIENT
 #define __PSD_IMS_CLIENT
 
+#define MAX_FILE_PATH_CHARS 100
+#define MAX_FILE_CHARS 10000
+#define ATTACH_FILES_DIR "attached_files"
+
 #include "friends.h"
 #include "chats.h"
 #include "network.h"
@@ -180,7 +184,7 @@ int psd_quit_from_chat(psd_ims_client *client, int chat_id);
  * Send a message to the chat "chat_id"
  * Returns 0 or -1 if fails
  */
-int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *attach_path);
+int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *file_path, char *MIME_type, char *file_info);
 
 /*
  * Send a friend request to "user"

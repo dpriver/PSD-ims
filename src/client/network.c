@@ -38,6 +38,15 @@
 #endif
 
 
+void _net_unlink_file(struct soap *soap, psdims__file *file) {
+	soap_unlink(soap, file->xop__Include.__ptr);
+	soap_unlink(soap, file->xop__Include.id);
+	soap_unlink(soap, file->xop__Include.type);
+	soap_unlink(soap, file->xop__Include.options);
+
+	soap_unlink(soap, file->xmime5__contentType);
+}
+
 /*
  *
  *
@@ -305,6 +314,42 @@ psdims__message_list *net_recv_pending_messages(network *network, int chat_id, i
  *
  *
  */
+psdims__file *net_get_attachment(network *network, int chat_id, int msg_timestamp) {
+	DEBUG_TRACE_PRINT();
+	int soap_response = 0;
+	psdims__file *file;
+	char *soap_error;
+
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return NULL;
+	}
+
+	if ( (file = malloc(sizeof(psdims__file)) ) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory for the file");
+		return NULL;
+	}
+
+	soap_response = soap_call_psdims__get_attachment(&network->soap, network->serverURL, "", &network->login_info, chat_id, msg_timestamp, file);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		free(file);
+		return NULL;
+	}
+
+	_net_unlink_file(&network->soap, file);
+
+	return file;
+}
+
+
+/*
+ *
+ *
+ */
 psdims__chat_list *net_get_chat_list(network *network, int timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
@@ -510,7 +555,7 @@ int net_quit_from_chat(network *network, int chat_id) {
  *
  *
  */
-int net_send_message(network *network, int chat_id, char *text, char *attach_path, int *timestamp) {
+int net_send_message(network *network, int chat_id, char *text, int have_attach, int *timestamp) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
 	char *soap_error;
@@ -523,7 +568,7 @@ int net_send_message(network *network, int chat_id, char *text, char *attach_pat
 
 	message_info.user = network->login_info.name;
 	message_info.text = text;
-	// TODO Falta el archivo adjunto
+	message_info.have_attach = 1;
 
 	soap_response = soap_call_psdims__send_message(&network->soap, network->serverURL, "", &network->login_info, chat_id, &message_info, timestamp);
 	if( soap_response != SOAP_OK ) {
@@ -535,6 +580,42 @@ int net_send_message(network *network, int chat_id, char *text, char *attach_pat
 	}
 
 	// Comprobar error del servidor
+	return 0;
+}
+
+
+/*
+ *
+ *
+ */
+int net_send_attachment(network *network, int chat_id, int msg_timestamp, char *MIME_type, unsigned char *ptr, int size, char *info) {
+	DEBUG_TRACE_PRINT();
+	int soap_response = 0;
+	psdims__file file;
+	int errcode = 0;
+	char *soap_error;
+
+	if( !network->logged ) {
+		DEBUG_FAILURE_PRINTF("Not logged");
+		return -1;
+	}
+
+	file.xop__Include.__ptr = ptr;
+	file.xop__Include.__size = size;
+	file.xop__Include.id = NULL;
+	file.xop__Include.type = MIME_type;
+	file.xop__Include.options = info;
+	file.xmime5__contentType = MIME_type;
+
+	soap_response = soap_call_psdims__send_attachment(&network->soap, network->serverURL, "", &network->login_info, chat_id, msg_timestamp, &file, &errcode);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -621,6 +702,18 @@ int net_send_request_decline(network *network, char *user) {
 
 	// Comprobar error del servidor
 	return 0;
+}
+
+
+void net_free_file(psdims__file *file) {
+	DEBUG_TRACE_PRINT();
+	free(file->xop__Include.__ptr);
+	free(file->xop__Include.id);
+	free(file->xop__Include.type);
+	free(file->xop__Include.options);
+
+	free(file->xmime5__contentType);
+	free(file);
 }
 
 
