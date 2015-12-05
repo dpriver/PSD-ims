@@ -362,6 +362,14 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
 }
 
 
+// Get the file attached to msd_id
+int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return SOAP_USER_ERROR;
+}
+
+
 /*
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
@@ -383,8 +391,9 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
  */
 int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__new_chat *new_chat, int *chat_id) {
 	DEBUG_TRACE_PRINT();
-	
+	int timestamp;
 	int id_user;
+	timestamp = time(NULL);
 
 	if(user_exist(server.persistence,login->name)!=1)
 		return SOAP_USER_ERROR;
@@ -395,8 +404,7 @@ int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__ne
 
 	id_user=get_user_id(server.persistence,login->name);
 
-	//Falta devolver chat_id,esta implementado pero no copia
-	if(add_chat(server.persistence, id_user, "",0,0)!=0)
+	if(add_chat(server.persistence, id_user, new_chat->description, timestamp, chat_id)!=0)
 		return SOAP_USER_ERROR;
 
 	return SOAP_OK; 
@@ -422,7 +430,7 @@ int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name,
 	if(chat_exist(server.persistence,chat_id)!=1)
 		return SOAP_USER_ERROR;
 
-	id_user=get_user_id(server.persistence,login->name);
+	id_user=get_user_id(server.persistence,name);
 
     if(exist_user_in_chat(server.persistence,id_user,chat_id)==1){
 		printf("Ya existe el usuario en el chat\n");
@@ -506,6 +514,14 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 		return SOAP_USER_ERROR;
 
 	return SOAP_OK; 
+}
+
+
+// Send a file to attach msd_id
+int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file, int *ERRCODE) {
+	DEBUG_TRACE_PRINT();
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return SOAP_USER_ERROR;
 }
 
 

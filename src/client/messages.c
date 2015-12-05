@@ -106,7 +106,8 @@ void mes_print_message_list(messages *messages) {
 	DEBUG_TRACE_PRINT();
 	int i;
 	for( i = 0; i < messages->n_messages ; i++) {
-		printf("%s: %s \n", (mes_GET_SENDER(messages->list[i]) != NULL)? mes_GET_SENDER(messages->list[i]): "Yo" , mes_GET_TEXT(messages->list[i]));
+		printf("[%d]%s: %s \n", mes_GET_SEND_DATE(messages->list[i]), (mes_GET_SENDER(messages->list[i]
+) != NULL)? mes_GET_SENDER(messages->list[i]): "Yo" , mes_GET_TEXT(messages->list[i]));
 	}
 }
 

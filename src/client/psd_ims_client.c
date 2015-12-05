@@ -332,7 +332,7 @@ int psd_recv_messages(psd_ims_client *client, int chat_id) {
 
 
 	for( i = 0; i < list->__sizenelems; i++) {
-		sender[i] = list->messages[i].user;
+		sender[i] = (strcmp(list->messages[i].user, client->user_name) == 0)? NULL : list->messages[i].user;
 		text[i] = list->messages[i].text;
 		attach_path[i] = NULL;	
 		send_date[i] = list->messages[i].send_date;

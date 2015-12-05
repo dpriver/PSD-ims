@@ -64,7 +64,6 @@ int get_chat_info(persistence* persistence, int chat_id,char* buff);
 int exist_user_in_chat(persistence* persistence,int user_id, int chat_id);
 
 int chat_exist(persistence* persistence, int chat_id);
-
 int get_list_friends(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__user_list *friends);
 
 int get_member_list_chats(persistence* persistence,int chat_id, int timestamp, struct soap *soap, psdims__member_list *members);
@@ -87,7 +86,7 @@ int exist_friendly(persistence* persistence,int user_id1, int user_id2);
 
 int del_friends(persistence* persistence, int user_id1, int user_id2);
 
-int add_chat(persistence* persistence, int admin_id, char* description, int timestamp,int chat_id);
+int add_chat(persistence* persistence, int admin_id, char* description, int timestamp,int *chat_id);
 
 int del_chat(persistence* persistence, int user_id);
 
