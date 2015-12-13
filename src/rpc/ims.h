@@ -64,9 +64,6 @@ typedef struct psdims__notif_chat_list {
 
 typedef struct psdims__notifications {
 	psdims__notif_friend_list friend_request;
-	psdims__notif_friend_list deleted_friends;
-	psdims__notif_chat_list new_chats;
-	psdims__notif_chat_list deleted_chats;
 	psdims__notif_chat_list chats_with_messages;
 	int last_timestamp;
 } psdims__notifications;

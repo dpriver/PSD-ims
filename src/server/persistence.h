@@ -102,7 +102,7 @@ int still_users_in_chat(persistence* persistence,int chat_id);
 
 int get_first_users_in_chat(persistence* persistence,int chat_id);
 
-
+int get_all_chat_info(persistence* persistence,int chat_id, struct soap *soap, psdims__chat_info *chat);
 
 #endif /* __PERSISTENCE */
 

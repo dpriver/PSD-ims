@@ -327,8 +327,24 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, int timestamp
  */
 int psdims__get_chat_info(struct soap *soap, psdims__login_info *login, int chat_id, psdims__chat_info *chat) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return SOAP_USER_ERROR;
+	int id_user;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	if(chat_exist(server.persistence,chat_id)!=1)
+		return SOAP_USER_ERROR;
+
+	id_user=get_user_id(server.persistence,login->name);
+
+	if(get_all_chat_info(server.persistence,chat_id,soap,chat)!=1)
+		return SOAP_USER_ERROR;
+
+	return SOAP_OK; 
 }
 
 
