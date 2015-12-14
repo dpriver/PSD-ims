@@ -262,7 +262,9 @@ int psd_recv_notifications(psd_ims_client *client) {
 	for( i = 0 ; i < notifications->friend_request.__sizenelems ; i++ ) {
 		fri_add_rcv_request(client->friends, notifications->friend_request.user[i].name.string, notifications->friend_request.user[i].send_date);
 	}
+	pthread_mutex_unlock(&client->friends_mutex);
 	total_notifications += i;
+/*
 	// deleted friends TODO: Delete the needed structs
 	DEBUG_INFO_PRINTF("Deleting friends");
 	for( i = 0 ; i < notifications->deleted_friends.__sizenelems ; i++ ) {
@@ -282,6 +284,8 @@ int psd_recv_notifications(psd_ims_client *client) {
 	for( i = 0 ; i < notifications->deleted_chats.__sizenelems ; i++ ) {
 		cha_del_chat(client->chats, notifications->deleted_chats.chat[i].chat_id);
 	}
+*/
+	pthread_mutex_lock(&client->chats_mutex);
 	// chats with messages, Maybe the server could send he number of pending messages
 	DEBUG_INFO_PRINTF("Adding new messages to chats");
 	for( i = 0 ; i < notifications->chats_with_messages.__sizenelems ; i++ ) {

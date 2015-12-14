@@ -77,12 +77,14 @@ void _net_unlink_notification_list(struct soap *soap, psdims__notifications *not
 		soap_unlink(soap, notifications->friend_request.user[i].name.string);
 	}
 	soap_unlink(soap, notifications->friend_request.user);
+/*
 	for( i = 0 ; i < notifications->deleted_friends.__sizenelems ; i++) {
 		soap_unlink(soap, notifications->deleted_friends.user[i].name.string);
 	}
 	soap_unlink(soap, notifications->deleted_friends.user);
 	soap_unlink(soap, notifications->new_chats.chat);
 	soap_unlink(soap, notifications->deleted_chats.chat);
+*/
 	soap_unlink(soap, notifications->chats_with_messages.chat);
 }
 
@@ -748,12 +750,14 @@ void net_free_notification_list(psdims__notifications *notifications) {
 		free(notifications->friend_request.user[i].name.string);
 	}
 	free(notifications->friend_request.user);
+/*
 	for( i = 0 ; i < notifications->deleted_friends.__sizenelems ; i++) {
 		free(notifications->deleted_friends.user[i].name.string);
 	}
 	free(notifications->deleted_friends.user);
 	free(notifications->new_chats.chat);
 	free(notifications->deleted_chats.chat);
+*/
 	free(notifications->chats_with_messages.chat);
 
 	free(notifications);
