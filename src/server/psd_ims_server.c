@@ -31,6 +31,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <pwd.h>
+
 
 #include "debug_def.h"
 
@@ -381,8 +391,170 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
 // Get the file attached to msd_id
 int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file) {
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return SOAP_USER_ERROR;
+	int id_user;
+	int i=0;
+	int fd_read;
+	int existe=0;
+
+	char *path = malloc(50);
+	char *file_path= malloc(30);
+	char *name_file= malloc(30);
+	char *buffer = malloc(210);
+
+	struct dirent **namelist;
+	struct stat info;
+    struct dirent *info_dir;
+	struct passwd * name;
+    DIR  *directorio;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	if(chat_exist(server.persistence,chat_id)!=1)
+		return SOAP_USER_ERROR;
+
+	id_user=get_user_id(server.persistence,login->name);
+	
+	if(get_file(server.persistence,id_user,chat_id,path,msg_timestamp)==-1)
+		return SOAP_USER_ERROR;
+
+	strcat(file_path,"~/Documentos/psd_ims/files/");	
+
+	if(((directorio=opendir(path))==NULL) || ((info_dir = readdir(directorio))==NULL)){
+        perror("");
+        exit(2);
+    }
+
+	while(info_dir!= NULL && !existe){
+		 if(lstat(info_dir->d_name,&info)){
+                perror("");
+                exit(-1);
+            }
+         else{
+			 if((name=getpwuid(info.st_uid))==NULL){
+                perror("");
+                exit(1);
+                }
+				strcat(file_path,info_dir->d_name);
+                if(strcmp(file_path,path)==0){
+					existe=1;
+				}
+				strcpy(file_path,"../files/");	
+			}
+		 info_dir = readdir(directorio);
+	}
+
+	if(!existe){
+		printf("No existe el archivo\n");
+		return -1;
+	}
+	
+	if((fd_read=open(path,O_RDONLY))==-1){
+		    perror("Error en la apertura del archivo");
+		    exit(2);
+	}
+
+		
+	while(read(fd_read,buffer,200)>0){
+		strcat(file->xop__Include.__ptr,buffer);
+    }
+
+return SOAP_OK;
+}
+
+
+// Send a file to attach msd_id
+int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file, int *ERRCODE) {
+	DEBUG_TRACE_PRINT();
+
+	int id_user;
+	int i=0;
+    int n;
+	int existe=0;
+	int fd_write;
+
+	char *path = malloc(50);
+	char *name_file= malloc(30);
+	char *buffer = malloc(50);
+
+	struct dirent **namelist;
+	struct stat info;
+    struct dirent *info_dir;
+	struct passwd * name;
+    DIR  *directorio;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	if(chat_exist(server.persistence,chat_id)!=1)
+		return SOAP_USER_ERROR;
+
+	id_user=get_user_id(server.persistence,login->name);
+	
+	strcat(path,"../files/");	
+	strcat(name_file,"fichero_prueba");
+
+	if(((directorio=opendir(path))==NULL) || ((info_dir = readdir(directorio))==NULL)){
+        perror("");
+        exit(2);
+    }
+
+	while(info_dir!= NULL && !existe){
+		 if(lstat(info_dir->d_name,&info)){
+                perror("");
+                exit(-1);
+            }
+         else{
+			 if((name=getpwuid(info.st_uid))==NULL){
+                perror("");
+                exit(1);
+                }
+                if(strcmp(info_dir->d_name,name_file)==0){
+					existe=1;
+				}
+			}
+		 info_dir = readdir(directorio);
+	}
+
+	strcat(path,name_file);
+
+	if(!existe){
+		fd_write = creat(path, 0644);
+	}
+	
+	if((fd_write=open(path,O_WRONLY))==-1){
+		    perror("Error en la apertura del archivo");
+		    exit(2);
+	}
+
+	if(existe){		
+		lseek(fd_write,0,SEEK_END);
+	}
+	else{
+		//SE SOBREESCRIBE
+	}
+
+	while(i<file->xop__Include.__size){
+       write(fd_write,&file->xop__Include.__ptr,200);
+	   file->xop__Include.__ptr+=200;
+	   i+=200;
+    }
+
+	strcpy(path,"~/Documentos/psd_ims/files/");	
+	strcat(path,name_file);
+
+	if(set_file(server.persistence,id_user,chat_id,path,msg_timestamp)==-1)
+		return SOAP_USER_ERROR;
+
+return SOAP_OK;
 }
 
 
@@ -530,14 +702,6 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 		return SOAP_USER_ERROR;
 
 	return SOAP_OK; 
-}
-
-
-// Send a file to attach msd_id
-int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file, int *ERRCODE) {
-	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	return SOAP_USER_ERROR;
 }
 
 

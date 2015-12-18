@@ -104,5 +104,9 @@ int get_first_users_in_chat(persistence* persistence,int chat_id);
 
 int get_all_chat_info(persistence* persistence,int chat_id, struct soap *soap, psdims__chat_info *chat);
 
+int set_file(persistence* persistence, int user_id, int chat_id,char* path, int timestamp);
+
+int get_file(persistence* persistence, int user_id, int chat_id,char* path, int timestamp);
+
 #endif /* __PERSISTENCE */
 
