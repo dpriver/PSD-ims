@@ -404,7 +404,6 @@ int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int cha
 	struct dirent **namelist;
 	struct stat info;
     struct dirent *info_dir;
-	struct passwd * name;
     DIR  *directorio;
 
 	if(user_exist(server.persistence,login->name)!=1)
@@ -419,10 +418,10 @@ int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int cha
 
 	id_user=get_user_id(server.persistence,login->name);
 	
-	if(get_file(server.persistence,id_user,chat_id,path,msg_timestamp)==-1)
+	if(get_file(server.persistence,id_user,chat_id,name_file,msg_timestamp)==-1)
 		return SOAP_USER_ERROR;
 
-	strcat(file_path,"~/Documentos/psd_ims/files/");	
+	strcat(path,"../files/");	
 
 	if(((directorio=opendir(path))==NULL) || ((info_dir = readdir(directorio))==NULL)){
         perror("");
@@ -435,15 +434,9 @@ int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int cha
                 exit(-1);
             }
          else{
-			 if((name=getpwuid(info.st_uid))==NULL){
-                perror("");
-                exit(1);
-                }
-				strcat(file_path,info_dir->d_name);
-                if(strcmp(file_path,path)==0){
+                if(strcmp(info_dir->d_name,name_file)==0){
 					existe=1;
-				}
-				strcpy(file_path,"../files/");	
+				}	
 			}
 		 info_dir = readdir(directorio);
 	}
@@ -453,6 +446,8 @@ int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int cha
 		return -1;
 	}
 	
+	strcat(path,name_file);
+
 	if((fd_read=open(path,O_RDONLY))==-1){
 		    perror("Error en la apertura del archivo");
 		    exit(2);
@@ -462,6 +457,15 @@ int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int cha
 	while(read(fd_read,buffer,200)>0){
 		strcat(file->xop__Include.__ptr,buffer);
     }
+
+	free(path);
+	free(file_path);
+	free(name_file);
+	free(buffer);
+
+	free(namelist);
+    free(info_dir);
+    free(directorio);
 
 return SOAP_OK;
 }
@@ -484,7 +488,6 @@ int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int ch
 	struct dirent **namelist;
 	struct stat info;
     struct dirent *info_dir;
-	struct passwd * name;
     DIR  *directorio;
 
 	if(user_exist(server.persistence,login->name)!=1)
@@ -513,10 +516,6 @@ int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int ch
                 exit(-1);
             }
          else{
-			 if((name=getpwuid(info.st_uid))==NULL){
-                perror("");
-                exit(1);
-                }
                 if(strcmp(info_dir->d_name,name_file)==0){
 					existe=1;
 				}
@@ -548,11 +547,16 @@ int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int ch
 	   i+=200;
     }
 
-	strcpy(path,"~/Documentos/psd_ims/files/");	
-	strcat(path,name_file);
-
-	if(set_file(server.persistence,id_user,chat_id,path,msg_timestamp)==-1)
+	if(set_file(server.persistence,id_user,chat_id,name_file,msg_timestamp)==-1)
 		return SOAP_USER_ERROR;
+
+	free(path);
+	free(name_file);
+	free(buffer);
+
+	free(namelist);
+    free(info_dir);
+    free(directorio);	
 
 return SOAP_OK;
 }
