@@ -568,12 +568,22 @@ return SOAP_OK;
  */
 int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *login, int timestamp, psdims__notifications *notifications){
 	DEBUG_TRACE_PRINT();
-	DEBUG_FAILURE_PRINTF("Not implemented");
-	// Si el usuario y el user no existen, salir
-		// return SOAP_USER_ERROR
-	// obtener el id del usuario
-	// buscar todas las notificationes pendientes del usuario "id"
-	return SOAP_USER_ERROR; 
+	int id_user;
+
+	if(user_exist(server.persistence,login->name)!=1)
+		return SOAP_USER_ERROR;
+
+ 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+		return SOAP_USER_ERROR;
+	}
+
+	id_user=get_user_id(server.persistence,login->name);
+
+	if(get_notifications(server.persistence,id_user,timestamp,soap,notifications)<0){
+		return SOAP_USER_ERROR;
+	}
+
+	return SOAP_OK; 
 }
 
 

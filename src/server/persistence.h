@@ -64,6 +64,7 @@ int get_chat_info(persistence* persistence, int chat_id,char* buff);
 int exist_user_in_chat(persistence* persistence,int user_id, int chat_id);
 
 int chat_exist(persistence* persistence, int chat_id);
+
 int get_list_friends(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__user_list *friends);
 
 int get_member_list_chats(persistence* persistence,int chat_id, int timestamp, struct soap *soap, psdims__member_list *members);
@@ -107,6 +108,8 @@ int get_all_chat_info(persistence* persistence,int chat_id, struct soap *soap, p
 int set_file(persistence* persistence, int user_id, int chat_id,char* path, int timestamp);
 
 int get_file(persistence* persistence, int user_id, int chat_id,char* path, int timestamp);
+
+int get_notifications(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__notifications *notifications);
 
 #endif /* __PERSISTENCE */
 

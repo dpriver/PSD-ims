@@ -146,6 +146,30 @@ void test_add_chat(persistence *persistence,int admin_id){
 
 }
 
+void test_notifacitions(persistence *persistence,int user_id){	
+	int i=0,j=0;
+
+	struct soap *soap = malloc(sizeof(struct soap));
+	psdims__notifications *notifications = malloc(sizeof(psdims__notifications));
+
+	get_notifications(persistence,user_id,0,soap,notifications);
+
+	printf("------List friends request-------\n");
+
+	for(i;i<notifications->friend_request.__sizenelems;i++){
+		printf("Friend request- %s  ",notifications->friend_request.user[i].name.string);
+		printf("Send date- %d\n",notifications->friend_request.user[i].send_date);
+	}	
+
+	printf("------List messages request-------\n");
+
+	for(j;j<notifications->chats_with_messages.__sizenelems;j++){
+		printf("Chat with messages %d\n",notifications->chats_with_messages.chat[j].chat_id);
+	}	
+
+	printf("Timestamp %d\n",notifications->last_timestamp);	
+}
+
 int main(int argc, char **argv){
 	persistence *persistence=init_persistence(argv[1],argv[2]);	
 
@@ -165,9 +189,11 @@ int main(int argc, char **argv){
 	
 	//test_add_member_chat(persistence,4,2);
 
-	test_add_chat(persistence,4);
+	//test_add_chat(persistence,4);
 
-	free_persistence(persistence);
+	//free_persistence(persistence);
+
+	test_notifacitions(persistence,3);
 
 	return 0;
 }
