@@ -45,16 +45,20 @@ struct linked_list {
 	int (*item_value_comp)(void *item, void *value);	// function to comp an item with a value
 };
 
+/* Definition of the list iterator */
+typedef list_node list_iterator;
 
 /* =========================================================================
  *  List access macros
  * =========================================================================*/
 
+#define list_item(list_node_ptr)		(list_node_ptr->item)
 #define list_num_elems(list_ptr) 		(list->n_elems)
 #define list_max_elems(list_ptr) 		(list->max_elems)
 #define list_info(list_ptr) 			(list->list_info)
-
-
+#define list_iterator(list_ptr)			((list->ghost_item->next != list->ghost_item) ? (list_iterator)list->ghost_item->next : NULL)
+#define list_iterator_next(list_ptr, list_iterator_ptr)	((list_iterator_ptr->next != list->ghost_item) ? list_iterator_ptr = list_iterator_ptr->next : NULL);
+#define list_iterator_prev(list_ptr, list_iterator_ptr)	((list_iterator_ptr->prev != list->ghost_item) ? list_iterator_ptr = list_iterator_ptr->prev : NULL);
 
 /* =========================================================================
  *  List functions
