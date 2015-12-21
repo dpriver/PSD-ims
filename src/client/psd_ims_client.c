@@ -254,6 +254,7 @@ int psd_recv_notifications(psd_ims_client *client) {
 		DEBUG_FAILURE_PRINTF("Could not receive the notifications");
 		return -1;
 	}
+	client->last_notif_timestamp = notifications->last_timestamp;
 	pthread_mutex_unlock(&client->network_mutex);
 
 	// new friend requests
@@ -286,7 +287,7 @@ int psd_recv_notifications(psd_ims_client *client) {
 	}
 */
 	pthread_mutex_lock(&client->chats_mutex);
-	// chats with messages, Maybe the server could send he number of pending messages
+	// chats with messages, Maybe the server could send the number of pending messages
 	DEBUG_INFO_PRINTF("Adding new messages to chats");
 	for( i = 0 ; i < notifications->chats_with_messages.__sizenelems ; i++ ) {
 		cha_set_pending(client->chats, notifications->chats_with_messages.chat[i].chat_id, 1);

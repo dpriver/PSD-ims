@@ -26,6 +26,9 @@
 #ifndef __GENERIC_LIST
 #define __GENERIC_LIST
 
+
+#define MAX_FRIENDS 200
+
 typedef struct list_node list_node;
 struct list_node {
 	void *item;

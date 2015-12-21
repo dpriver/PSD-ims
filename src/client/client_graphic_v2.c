@@ -392,10 +392,12 @@ void screen_main_show(psd_ims_client *client) {
 void menu_main(psd_ims_client *client, boolean *global_exit) {
 	boolean exit = false;
 	boolean cont;
+	int ret;
 
 	do {
 		screen_main_show(client);
-		get_user_input(input_buffer, MAX_INPUT_CHARS);
+		ret = get_user_input(input_buffer, MAX_INPUT_CHARS);
+		if (ret < 0) return;
 		if (input_buffer[0] == COMMAND_CHAR) {
 			switch(input_buffer[1]) {
 				case 'e':
