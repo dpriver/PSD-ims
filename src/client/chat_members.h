@@ -23,104 +23,109 @@
  *
  ********************************************************************************/
 
-#ifndef __FRIENDS
-#define __FRIENDS
+#ifndef __CHAT_MEMBERS
+#define __CHAT_MEMBERS
 
 #include "list.h"
+#include "friends.h"
 
 
-typedef struct friend_info friend_info;
-struct friend_info{
+typedef struct member_info member_info;
+struct member_info{
 	char *name;
-	char *information;
+	friend_info *info;
 };
 
-typedef struct friend_list_info friend_list_info;
-struct friend_list_info {
+typedef struct member_list_info member_list_info;
+struct member_list_info {
 	int timestamp;
 };
 
-typedef list friends;
-typedef list_iterator fri_iterator;
+typedef list chat_members;
+typedef list_iterator member_iterator;
 
 /* =========================================================================
  *  Structs access
  * =========================================================================*/
 
-#define fri_get_name(friend_info) \
-		(friend_info->name)
+#define member_name(member_info) \
+		(member_info->name)
 
-#define fri_get_information(friend_info) \
-		(friend_info->information)
+#define member_is_friend(member_info) \
+		( (member_info->information != NULL)? (TRUE) : (FALSE) )
 
-#define fri_get_num_friends(friends) \
-		list_num_elems(friends)	
+#define member_friend_info(member_info) \
+		fri_get_info(member_info->info)
 
-#define fri_get_timestamp(friends, friends_timestamp) \
+
+#define member_num_members(members) \
+		list_num_elems(members)	
+
+#define member_get_timestamp(members, member_timestamp) \
 	do{ \
-		friend_list_info *aux; \
-		aux = list_info(friends); \
-		friends_timestamp = aux->timestamp; \
+		member_list_info *aux; \
+		aux = list_info(members); \
+		member_timestamp = aux->timestamp; \
 	}while(0)
 
-#define fri_set_timestamp(friends, friends_timestamp) \
+#define member_set_timestamp(members, member_timestamp) \
 	do{ \
-		friend_list_info *aux; \
-		aux = list_info(friends); \
-		aux->timestamp = friends_timestamp; \
+		member_list_info *aux; \
+		aux = list_info(members); \
+		aux->timestamp = member_timestamp; \
 	}while(0)
 
 
 /* =========================================================================
- *  Friends iterator
+ *  Messages iterator
  * =========================================================================*/
-#define fri_get_friends_iterator(list) \
-		(fri_iterator*)list_iterator(list)
+#define member_get_members_iterator(list) \
+		(member_iterator*)list_iterator(list)
 
-#define fri_iterator_next(list, iterator) \
-		(fri_iterator*)list_iterator_next(list, iterator)
+#define member_iterator_next(list, iterator) \
+		(member_iterator*)list_iterator_next(list, iterator)
 
-#define fri_get_info(iterator) \
-		(friend_info*)list_iterator_info(iterator)
-
+#define member_get_info(iterator) \
+		(member_info*)list_iterator_info(iterator)
+		
 
 /* =========================================================================
  *  Friend struct API
  * =========================================================================*/
 
 /*
- * Allocates a new friend list
+ * Allocates a new member list
  * Returns a pointer to the list or NULL if fails
  */
-friends *fri_new(int max);
+friends *members_new(int max);
 
 /*
- * Frees the friend list
+ * Frees the member list
  */
-void fri_free(friends *friends);
+void members_free(chat_members *members);
 
 /*
- * Prints all friends line by line
+ * Prints all members line by line
  */
-void fri_print_friend_list(friends *friends);
+void members_print_friend_list(chat_members *members);
 
 /*
- * Creates a new friend_node in the list with the provided info
+ * Creates a new chat member in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int fri_add_friend(friends *friends, const char *name, const char *information);
+int members_add_member(chat_members *members, const char *name, friend_info *info);
 
 /*
  * Removes and frees the first node that matches the provided "name"
  * Returns 0 or -1 if "name" does not exist in the list
  */
-int fri_del_friend(friends *friends, const char *name);
+int members_del_members(chat_members *members, const char *name);
 
 /*
  * Finds the chat whos id is chat_id
  * Returns a pointer to the chat_info of NULL if fails
  */
-friend_info *fri_find_friend(friends *friends, const char *name);
+member_info *member_find_member(chat_members *members, const char *name);
 
 
-#endif /* __FRIENDS */
+#endif /* __CHAT_MEMBERS */

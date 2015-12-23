@@ -23,9 +23,12 @@
  *
  ********************************************************************************/
 
+#include "bool.h"
+#include "list.h"
 #include "chats.h"
 #include "friends.h"
 #include "messages.h"
+#include "chat_members.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -38,80 +41,23 @@
 #endif
 
 
-void _chats_free_member(chat_member *member) {
-	DEBUG_TRACE_PRINT();
-	// As chat_member is just a wrapper for a friend_info pointer,
-	// this function have nothing more to do
-	// free(member);
+#define sizeofstring(string) \
+	(strlen(string) + sizeof(char))
+
+void list_info_free(void *info) {
+	free(info);
 }
 
-void _chats_free_member_list(chat_member_list *list) {
-	DEBUG_TRACE_PRINT();
-	int i;
-	for (i = 0 ; i < list->n_members ; i++) {
-		_chats_free_member(list->members[i]);
-	}
-	free(list->members);
-	free(list);
+void chat_free(void *member) {
+
 }
 
-void _chats_free_node(chat_node *node) {
-	DEBUG_TRACE_PRINT();
-	if (node->info != NULL) {
-		free(node->info->description);
-		free(node->info->admin);
-		mes_free(node->info->messages);
-		_chats_free_member_list(node->info->members);
-		free(node->info);
-	}
-	free(node);
+int chat_id_comp(const void *chat, const void *id) {
+	return ((chat_info*)chat)->id - *(int*)id;
 }
 
-void _chats_delete_node(chat_node *node) {	
-	DEBUG_TRACE_PRINT();
-	// link list
-	node->prev->next = node->next;
-	node->next->prev = node->prev;
-
-	// free node
-	_chats_free_node(node);
-}
-
-chat_node *_chats_find_node(chat_list *list, int chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_node *aux_node;
-
-	aux_node = list->next;
-	while ( aux_node != list ) {
-		if ( aux_node->info->id == chat_id ) {
-			return aux_node;
-		}
-		aux_node = aux_node->next;
-	}
-	return NULL;
-}
-
-void _chats_free_info(chat_info *info) {
-	DEBUG_TRACE_PRINT();
-	if (info != NULL) {
-		free(info->description);
-		_chats_free_member(info->admin);
-		_chats_free_member_list(info->members);
-		free(info);
-	}
-}
-
-int _chats_find_member(chat_member_list *list, const char *name) {
-	DEBUG_TRACE_PRINT();
-	int i;
-	for(i = 0 ; i < list->n_members ; i++) {
-		if( strcmp(name, fri_GET_FRIEND_NAME(list->members[i]->info)) == 0 ) {
-			return i;
-		}
-	}
-
-	DEBUG_FAILURE_PRINTF("Could not find chat member:%s", name);
-	return -1;
+int chat_comp(const void *chat1, const void *chat2) {
+	return ((chat_info*)chat1)->id - ((chat_info*)chat2)->id;
 }
 
 
@@ -123,9 +69,26 @@ int _chats_find_member(chat_member_list *list, const char *name) {
  * Allocates a new chat list
  * Returns a pointer to the list or NULL if fails
  */
-chats *cha_new() {
+chats *cha_new(int max) {
 	DEBUG_TRACE_PRINT();
-	return cha_lst_new();
+	chats *chats_new;
+	chat_list_info *list_info;
+	
+	if ( (list_info = malloc(sizeof(chat_list_info))) == NULL ) {
+		return NULL;
+	}
+	
+	list_info->timestamp = 0;
+	
+	if ( (chats_new = list_new(list_info, max, list_info_free, chat_free)) == NULL ) {
+		list_info_free(list_info);
+		return NULL;
+	}
+	
+	chats_new->item_value_comp = chat_id_comp;
+	chats_new->item_comp = chat_comp;
+	
+	return chats_new;
 }
 
 
@@ -134,75 +97,8 @@ chats *cha_new() {
  */
 void cha_free(chats *chats) {
 	DEBUG_TRACE_PRINT();
-	cha_lst_free(chats);
-}
 
-
-/*
- * Prints all chats line by line
- */
-void cha_print_chat_list(chats *chats) {
-	DEBUG_TRACE_PRINT();
-	cha_lst_print(chats);
-}
-
-
-/*
- * Prints all chat members line by line
- */
-void cha_print_chat_members(chats *chats, int chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_node *node;
-	DEBUG_INFO_PRINTF("Print members of chat %d", chat_id);
-	if( (node = _chats_find_node(chats, chat_id)) != NULL ) {
-		cha_memberlst_print(node->info->members); 
-	}
-}
-
-
-/*
- * Prints all chat messages line by line
- */
-void cha_print_chat_messages(chats *chats, int chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_node *node;
-	DEBUG_INFO_PRINTF("Print messages of chat %d", chat_id);
-	if( (node = _chats_find_node(chats, chat_id)) != NULL ) {
-		mes_print_message_list(node->info->messages); 
-	}
-}
-
-
-/*
- * Returns the next node (iterator) and its id
- */
-chats *cha_get_next_id(chats *chats, int *chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_node *next_node = chats->next;
-
-
-	if( next_node->info == NULL ) {
-		*chat_id = -1;
-		return chats;
-	}
-
-	*chat_id = next_node->info->id;
-	return next_node;
-}
-
-/*
- * Gets the chat's last message send-date
- * Returns the send date or 0 if the list is empty
- */
-int cha_get_last_message_date(chats *chats, int chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_info *chat_info;
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	return mes_get_last_message_date(chat_info->messages);
+	list_free(chats);
 }
 
 
@@ -210,55 +106,57 @@ int cha_get_last_message_date(chats *chats, int chat_id) {
  * Creates a new chat in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], const char *admin_name, char *member_names[], int n_members) {
+int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], char *member_names[], int n_members, int max_members, int max_messages) {
 
 	DEBUG_TRACE_PRINT();
-	int i;
 	chat_info *info;
-	chat_member *aux_member;
-	chat_member *aux_admin;
-	chat_member_list *aux_member_list;
-
-	if( (aux_admin = cha_memberinfo_new(admin, admin_name)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not create admin info");
-		return -1; // can not create admin info
-	}
-	if( (aux_member_list = cha_memberlst_new()) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not create member list");
-		return -1; // can not create member list
-	}
-
-	for( i = 0; i < n_members ; i++ ) {
-		if( (aux_member = cha_memberinfo_new(members[i], member_names[i])) == NULL ) {
-			DEBUG_FAILURE_PRINTF("Could not create member info");
-			return -1; // can not create member
-		}
-		if( cha_memberlst_add(aux_member_list, aux_member) == -1 ) {
-			DEBUG_FAILURE_PRINTF("Could not add member to chat");
-			return -1; // can not add member to chat
-		}
-	}
-
-	// create chat info
-	if( (info = cha_info_new(chat_id, description, aux_admin, aux_member_list)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not create chat info");
-		return -1; // can not create chat info
-	}
-
-	if( (info->messages = mes_new()) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not create message list");
+	int i;
+	
+	if ( (info = malloc(sizeof(chat_info))) == NULL ) {
 		return -1;
 	}
 
-	DEBUG_INFO_PRINTF("Created chat %d with %d members", info->id, info->members->n_members);
+	if ( (info->description = malloc(sizeofstring(description))) == NULL ) {
+		free(info);
+		return -1;
+	}
+	
+	if ( (info->members = members_new(max_members)) == NULL ) {
+		free(info->description);
+		free(info);
+		return -1;
+	}
+	
+	if ( (info->messages = mes_new(max_messages)) == NULL ) {
+		members_free(info->members);
+		free(info->description);
+		free(info);
+		return -1;
+	}
+	info->id = chat_id;
+	info->unread_messages = 0;
+	info->pending_messages = 0;
+	info->admin = admin;
+	strcpy(info->description, description);
+
+	for( i = 0; i < n_members ; i++ ) {
+		if ( members_add_member(info->members, member_names[i], members[i]) != 0 ) {
+			DEBUG_FAILURE_PRINTF("Could not add member");
+			mes_free(info->messages);
+			members_free(info->members);
+			free(info->description);
+			free(info);
+			return -1;
+		}
+	}
 
 	// add chat_info
-	if( cha_lst_add(chats, info) == -1 ) {
+	if( list_add_item(chats, info) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not add chat");
+		chat_free(info);
 		return -1; // can not add chat
 	}
 
-	DEBUG_INFO_PRINTF("Succesfully created chat %d with %d members", info->id, info->members->n_members);
 	return 0;
 }
 
@@ -267,21 +165,16 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
  * Adds the message in the chat
  * Returns 0 or -1 if fails
  */
-int cha_add_message(chats *chats, int chat_id, const char *sender, const char *text, int send_date, const char *attach_path) {
+int cha_add_message(chat_info *chat, const char *sender, const char *text, int send_timestamp, const char *attach_path, boolean unread) {
 	DEBUG_TRACE_PRINT();
-	chat_info *chat_info;
 
-	
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	if( mes_add_message(chat_info->messages, sender, text, send_date, attach_path) != 0 ) {
+	if( mes_add_message(chat->messages, sender, text, send_timestamp, attach_path) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not add the message");
-		mes_del_last_messages(chat_info->messages, 1); // (i+1) messages (-1) the last failed
 		return -1;
 	}
+
+	if(unread)
+		chat->unread_messages++;
 
 	return 0;
 }
@@ -291,24 +184,22 @@ int cha_add_message(chats *chats, int chat_id, const char *sender, const char *t
  * Adds the messages in the chat
  * Returns 0 or -1 if fails
  */
-int cha_add_messages(chats *chats, int chat_id, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages) {
+int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_timestamp[], char *attach_path[], int n_messages, boolean unread) {
 	DEBUG_TRACE_PRINT();
 	
 	int i;
-	chat_info *chat_info;
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
 
 	for( i=0; i< n_messages; i++ ) {
-		DEBUG_INFO_PRINTF("Adding %s %s %d", sender[i], text[i], send_date[i]);
-		if( mes_add_message(chat_info->messages, sender[i], text[i], send_date[i], attach_path[i]) != 0 ) {
+		DEBUG_INFO_PRINTF("Adding %s %s %d", sender[i], text[i], send_timestamp[i]);
+		if( mes_add_message(chat->messages, sender[i], text[i], send_timestamp[i], attach_path[i]) != 0 ) {
 			DEBUG_FAILURE_PRINTF("Could not add the message");
-			mes_del_last_messages(chat_info->messages, i); // (i+1) messages (-1) the last failed
+			mes_del_last_messages(chat->messages, i); // (i+1) messages (-1) the last failed
 			return -1;
 		}
 	}
+
+	if(unread)
+		chat->unread_messages += n_messages;
 
 	return 0;
 }
@@ -318,24 +209,11 @@ int cha_add_messages(chats *chats, int chat_id, char *sender[], char *text[], in
  * Creates a new chat member in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int cha_add_member(chats *chats, int chat_id, friend_info *member, const char *member_name) {
+int cha_add_member(chat_info *chat, friend_info *member, const char *member_name) {
 	DEBUG_TRACE_PRINT();
 
-	chat_node *node;
-	chat_member *aux_member;	
-
-	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat node");
-		return -1;
-	}
-
-	if( (aux_member = cha_memberinfo_new(member, member_name)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not create chat member");
-		return -1; // can not create member
-	}
-	if( cha_memberlst_add(node->info->members, aux_member) == -1 ) {
+	if( members_add_member(chat->members, member_name, member) == -1 ) {
 		DEBUG_FAILURE_PRINTF("Could not add member to chat");
-		cha_memberinfo_free(aux_member);
 		return -1; // can not add member to chat
 	}
 
@@ -349,7 +227,15 @@ int cha_add_member(chats *chats, int chat_id, friend_info *member, const char *m
  */
 int cha_del_chat(chats *chats, int chat_id) {
 	DEBUG_TRACE_PRINT();
-	return cha_lst_del(chats, chat_id);
+	list_node *node;
+	node = list_find_node(chats, &chat_id);
+	if (node == NULL) {
+		DEBUG_FAILURE_PRINTF("Chat does not exists in list");
+		return -1;
+	}
+	
+	list_delete_node(chats, node);
+	return 0;
 }
 
 
@@ -359,187 +245,26 @@ int cha_del_chat(chats *chats, int chat_id) {
  */
 int cha_del_member(chats *chats, int chat_id, const char *name) {
 	DEBUG_TRACE_PRINT();
-	chat_node *node;
+		
+	chat_info *chat_info;
 	
-	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
+	if( (chat_info = cha_find_chat(chats, chat_id)) == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1; // can not find chat
+		return -1;
 	}
 
-	if( cha_memberlst_del(node->info->members, name) == -1 ) {
-		DEBUG_FAILURE_PRINTF("Could not delete member from chat");
-		return -1; // can not delete member from chat
+	if( members_del_member(chat_info->members, name) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not remove member from chat");
+		return -1;
 	}
 
 	return 0;
 }
 
 
-/*
- * Gets the number of unread messages
- * Returns the number of unread or -1 if fails
- */
-int cha_get_unread(chats *chats, int chat_id) {
+chat_info *cha_find_chat(chats *chats, int chat_id) {
 	DEBUG_TRACE_PRINT();
-	chat_info *chat_info;
-
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	return cha_GET_N_UNREAD(chat_info);
-}
-
-
-/*
- * Sets the number of unread messages
- * Returns 0 or -1 if fails
- */
-int cha_set_unread(chats *chats, int chat_id, int n_messages) {
-	DEBUG_TRACE_PRINT();
-	chat_info *chat_info;
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	if( n_messages < 0 ) {
-		DEBUG_FAILURE_PRINTF("Can not set unread messages to less than 0");
-		return -1;
-	}
-
-	cha_SET_N_UNREAD(chat_info, n_messages);
-	return 0;
-}
-
-
-/*
- * Updates the number of unread messages, the number of unread will be
- * (current_unread + n_messages), n_messages can be a negative number
- * Returns 0 or -1 if fails
- */
-int cha_update_unread(chats *chats, int chat_id, int n_messages) {
-	DEBUG_TRACE_PRINT();
-	chat_info *chat_info;
-	int unread;
-
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	unread = cha_GET_N_UNREAD(chat_info) + n_messages;
-	if( unread < 0 ) {
-		DEBUG_FAILURE_PRINTF("Can not set unread messages to less than 0");
-		return -1;
-	}
-
-	cha_SET_N_UNREAD(chat_info, unread);
-
-	return 0;
-}
-
-
-/*
- * Gets the number of pending messages
- * Returns the number of pending or -1 if fails
- */
-int cha_get_pending(chats *chats, int chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_info *chat_info;
-
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	return cha_GET_N_PENDING(chat_info);
-}
-
-
-/*
- * Sets the number of pending messages
- * Returns 0 or -1 if fails
- */
-int cha_set_pending(chats *chats, int chat_id, int n_messages) {
-	DEBUG_TRACE_PRINT();
-	chat_info *chat_info;
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	if( n_messages < 0 ) {
-		DEBUG_FAILURE_PRINTF("Can not set unread messages to less than 0");
-		return -1;
-	}
-
-	cha_SET_N_PENDING(chat_info, n_messages);
-	return 0;
-}
-
-
-/*
- * Updates the number of pending messages, the number of pending will be
- * (current_pending + n_messages), n_messages can be a negative number
- * Returns 0 or -1 if fails
- */
-int cha_update_pending(chats *chats, int chat_id, int n_messages) {
-	DEBUG_TRACE_PRINT();
-	chat_info *chat_info;
-	int pending;
-
-	if( (chat_info = cha_lst_find(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	pending = cha_GET_N_PENDING(chat_info) + n_messages;
-	if( pending < 0 ) {
-		DEBUG_FAILURE_PRINTF("Can not set unread messages to less than 0");
-		return -1;
-	}
-
-	cha_SET_N_PENDING(chat_info, pending);
-
-	return 0;
-}
-
-
-/*
- * Sets the friends' timestamp
- * Returns 0 or -1 if fails
- */
-int cha_set_members_timestamp(chats *chats, int chat_id, int timestamp) {
-	DEBUG_TRACE_PRINT();
-	chat_node *node;
-	
-	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1; // can not find chat
-	}
-
-	node->info->member_timestamp = timestamp;
-
-	return 0;
-}
-
-
-/*
- * Gets the friends' timestamp
- * Returns 0 or -1 if fails
- */
-int cha_get_members_timestamp(chats *chats, int chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_node *node;
-	
-	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1; // can not find chat
-	}
-
-	return node->info->member_timestamp;
+	return list_find_item(chats , &chat_id);
 }
 
 
@@ -550,347 +275,7 @@ int cha_get_members_timestamp(chats *chats, int chat_id) {
  */
 int cha_change_admin(chats *chats, int chat_id, const char *name) {
 	DEBUG_TRACE_PRINT();
-	chat_node *node;
-	
-	if( (node = _chats_find_node(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1; // can not find chat
-	}
 
-	if( cha_info_change_admin(node->info, name) == -1 ) {
-		DEBUG_FAILURE_PRINTF("Could not change admin");
-		return -1; // can not change admin
-	}
 
 	return 0;
 }
-
-
-/* =========================================================================
- *  Chat list
- * =========================================================================*/
-
-/*
- * Allocates a new chat list
- * Returns a pointer to the list phantom node or NULL if fails
- */
-chat_list *cha_lst_new() {
-	DEBUG_TRACE_PRINT();
-	chat_node *new_list;
-
-	if ( new_list = malloc( sizeof(chat_node) ) ) {
-		new_list->info = NULL;
-		new_list->next = new_list;
-		new_list->prev = new_list;
-	}
-
-	return new_list;
-}
-
-
-/*
- * Frees the chat list
- */
-void cha_lst_free(chat_list *list) {
-	DEBUG_TRACE_PRINT();
-	while ( list->next != list ) {
-		_chats_delete_node(list->next);
-	}
-
-	free(list);
-}
-
-
-/*
- * Prints all chats line by line
- */
-void cha_lst_print(chat_node *list) {
-	DEBUG_TRACE_PRINT();
-	chat_node *aux_node;
-
-	aux_node = list->next;
-	while ( aux_node != list ) {
-		printf("%d :%s\n", aux_node->info->id, aux_node->info->description);
-		aux_node = aux_node->next;
-	}
-}
-
-
-/*
- * Creates a new chat_node in the list with the provided info
- * "*info" is attached, not copied
- * Returns 0 or -1 if fails
- */
-int cha_lst_add(chat_list *list, chat_info *info) {
-	DEBUG_TRACE_PRINT();
-	chat_node *node;
-
-	if ( (node = malloc(sizeof(chat_node))) != NULL ) {
-		node->info = info;
-		node->next = list;
-		node->prev = list->prev;
-		list->prev->next = node;
-		list->prev = node;
-		return 0;
-	}
-
-	return -1;
-}
-
-
-/*
- * Removes and frees the chat with id "chat_id"
- * Returns 0 or -1 if "chat_id" does not exist in the list
- */
-int cha_lst_del(chat_list *list, int chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_node *aux_node;	
-	if ( (aux_node = _chats_find_node(list, chat_id)) != NULL ) {
-		_chats_delete_node(aux_node);
-		return 0;	
-	}
-
-	return -1;
-}
-
-
-/*
- * Finds the chat whos id is chat_id
- * Returns a pointer to the chat_info of NULL if fails
- */
-chat_info *cha_lst_find(chat_list *list, int chat_id) {
-	DEBUG_TRACE_PRINT();
-	chat_node *chat_node;
-	chat_node = _chats_find_node(list, chat_id);	
-	return (chat_node != NULL)? chat_node->info : NULL;
-}
-
-
-/* =========================================================================
- *  Chats
- * =========================================================================*/
-
-/*
- * Allocates a new chat_info struct with the provided data
- * Returns a pointer to the structure or NULL if fails
- */
-chat_info *cha_info_new(int id, const char *description, chat_member *admin, chat_member_list *members) {
-	DEBUG_TRACE_PRINT();
-	chat_info *info;
-
-	if (info = malloc(sizeof(chat_info))) {
-		info->id = id;
-		info->description = malloc(strlen(description) + sizeof(char));
-		strcpy(info->description, description);
-
-		info->admin = admin;
-		info->members = members;
-		return info;
-	}
-
-	return NULL;
-}
-
-
-/*
- * Frees the chat_info struct
- * Returns a pointer to the structure or NULL if fails
- */
-void cha_info_free(chat_info *info) {
-	DEBUG_TRACE_PRINT();
-	_chats_free_info(info);
-}
-
-
-/*
- * Switches the current admin with the chat member named "name"
- * that means that the previous admin becomes a normal member
- * Returns 0 or -1 if fails
- */
-int cha_info_change_admin(chat_info *chat_info, const char *name) {
-	DEBUG_TRACE_PRINT();
-	int member_index;
-	chat_member *aux_friend;
-
-	if( (member_index = _chats_find_member(chat_info->members, name)) == -1 ) {
-		DEBUG_FAILURE_PRINTF("Could not find member in chat");
-		return -1;  //user "name" is not part of the chat
-	}
-
-	aux_friend = chat_info->members->members[member_index];
-	chat_info->members->members[member_index] = chat_info->admin;
-	chat_info->admin = aux_friend;
-
-	return 0;
-}
-
-
-/* =========================================================================
- *  Chat member list
- * =========================================================================*/
-
-/*
- * Allocates a new chat member list
- * Returns a pointer to the list phantom node or NULL if fails
- */
-chat_member_list *cha_memberlst_new() {
-	DEBUG_TRACE_PRINT();
-	chat_member_list *list;
-
-	if( (list = malloc( sizeof(chat_member_list) )) == NULL ) {
-		return NULL;
-	}
-	list->members = NULL;
-	list->n_members = 0;
-	list->list_lenght = 0;
-
-	return list;
-}
-
-
-/*
- * Creates a new chat_node in the list with the provided info
- * "*info" is attached, not copied
- */
-void cha_memberlst_free(chat_member_list *list) {
-	DEBUG_TRACE_PRINT();
-	_chats_free_member_list(list);
-}
-
-
-/*
- * Prints all chat members line by line
- */
-void cha_memberlst_print(chat_member_list *list) {
-	DEBUG_TRACE_PRINT();
-	int i;
-	printf("Chat members: %d\n", list->n_members);
-	for(i = 0; i < list->n_members ; i++ ) {
-		if( list->members[i]->info != NULL ) {
-		printf("%s: %s\n", fri_GET_FRIEND_NAME(list->members[i]->info), 
-					fri_GET_FRIEND_INFORMATION(list->members[i]->info));
-		}
-		else {
-			printf("%s: NOT A FRIEND\n", list->members[i]->name);
-		}
-	}
-}
-
-
-/*
- * Adds the member to the chat list
- * "*member" is COPIED
- * Returns 0 or -1 if fails
- */
-int cha_memberlst_add(chat_member_list *list, chat_member *member) {
-	DEBUG_TRACE_PRINT();
-
-
-	if( list->members == NULL) {
-		if ( (list->members = malloc(sizeof(chat_member)*(list->list_lenght + 3)) ) == NULL ) {
-			return -1;
-		}
-		list->list_lenght += 3;
-	}
-	else if(list->list_lenght = list->n_members) {
-		if ( (list->members = realloc(list->members, sizeof(chat_member)*(list->list_lenght + 5)) ) == NULL ) {
-			return -1;
-		}
-		list->list_lenght += 5;
-	}
-
-	list->members[list->n_members] = member;
-	
-	list->n_members++;
-
-	return 0;
-}
-
-
-/*
- * Deletes the first ocurrence of a chat member with the provided "name"
- * Returns 0 or -1 if fails
- */
-int cha_memberlst_del(chat_member_list *list, const char *name) {
-	DEBUG_TRACE_PRINT();
-
-	int member_index;
-	int i;
-
-
-	if( (member_index = _chats_find_member(list, name)) == -1 ) {
-		return -1;
-	}
-
-	cha_memberinfo_free(list->members[member_index]);
-
-	for(i = member_index ; member_index < list->n_members-1 ; i++) {
-		list->members[i] = list->members[i+1];
-	}
-	list->n_members--;
-
-	if( (list->list_lenght - list->n_members) > 5 ) {
-		if ( (list->members = realloc(list->members, sizeof(chat_member)*(list->list_lenght - 5)) ) == NULL ) {
-			return -1;
-		}
-	}
-	list->list_lenght -= 5;
-	
-	return 0;
-}
-
-
-/*
- * Finds the first chat member named "user_name"
- * Returns a pointer to the chat_member struct or NULL if fails
- */
-chat_member *cha_memberlst_find(chat_member_list *list, const char *user_name) {
-	DEBUG_TRACE_PRINT();
-	int member_index;
-	if( (member_index = _chats_find_member(list, user_name)) == -1 ) {
-		return NULL;
-	}
-
-	return list->members[member_index];
-}
-
-
-/* =========================================================================
- *  Chat members
- * =========================================================================*/
-
-/*
- * Allocates a new chat member struct
- * Returns a pointer to the structure or NULL if fails
- */
-chat_member *cha_memberinfo_new(friend_info *friend_info, const char *name) {
-	DEBUG_TRACE_PRINT();
-	chat_member *member;
-
-	if( (member = malloc( sizeof(chat_member) )) == NULL ) {
-		return NULL;
-	}
-	member->info = friend_info;
-
-	if( (member->name = malloc( strlen(name) + sizeof(char) )) == NULL ) {
-		return NULL;
-	}
-	strcpy(member->name, name);
-	//DEBUG_INFO_PRINTF("Creating member %s", member->name);
-
-
-	return member;
-}
-
-
-/*
- * Frees the chat member
- * Returns a pointer to the structure or NULL if fails
- */
-chat_member *cha_memberinfo_free(chat_member *info) {
-	DEBUG_TRACE_PRINT();
-	free(info->name);
-	free(info);
-}
-
-

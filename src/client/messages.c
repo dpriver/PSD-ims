@@ -24,6 +24,7 @@
  ********************************************************************************/
 
 #include "messages.h"
+#include "list.h"
 #include "bool.h"
 #include <string.h>
 #include <stdlib.h>
@@ -31,35 +32,28 @@
 
 #include "debug_def.h"
 
-//#ifdef DEBUG
-//#include "leak_detector_c.h"
-//#endif
+#ifdef DEBUG
+#include "leak_detector_c.h"
+#endif
 
 
-int _mes_del_message(messages *messages, int id) {
-	DEBUG_TRACE_PRINT();
-	int i;
+#define sizeofstring(string) \
+	(strlen(string) + sizeof(char))
 
-	if( (id < 0) || (id > messages->n_messages-1) ) {
-		return -1;
-	}
+void message_list_info_free(void *info) {
 
-	free(messages->list[id].sender);
-	free(messages->list[id].text);
-	if(messages->list[id].have_attach)
-		free(messages->list[id].attach_path);
+}
 
-	for(i = id ; i < messages->n_messages-1 ; i++) {
-		messages->list[i] = messages->list[i+1];
-	}
-	messages->n_messages--;
+void message_free(void *message) {
 
-	if( (messages->lenght - messages->n_messages) > 5 ) {
-		if ( (messages->list = realloc(messages->list, sizeof(message_info)*(messages->lenght - 5)) ) == NULL ) {
-			return -1;
-		}
-	}
-	messages->lenght -= 5;
+}
+
+int message_timestamp_comp(const void *message, const void *timestamp) {
+	return ((message_info*)message)->timestamp - *((int*)timestamp);
+}
+
+int message_comp(const void *message1, const void *message2) {
+	return ((message_info*)message1)->timestamp - ((message_info*)message2)->timestamp;
 }
 
 
@@ -71,19 +65,23 @@ int _mes_del_message(messages *messages, int id) {
  * Allocates a new message list
  * Returns a pointer to the list or NULL if fails
  */
-messages *mes_new() {
+messages *mes_new(int max) {
 	DEBUG_TRACE_PRINT();
 	messages *messages_new;
-	if( ( messages_new = malloc(sizeof(messages)) ) == NULL) {
-		return NULL;
-	}
-	if( (messages_new->list = malloc(sizeof(message_info)*3) ) == NULL) {
-		free(messages_new);
-		return NULL;
-	}
+	message_list_info *list_info;
 
-	messages_new->n_messages = 0;
-	messages_new->lenght = 3;
+	if ( (list_info = malloc(sizeof(message_list_info))) == NULL ) {
+		return NULL;
+	}
+	
+	list_info->timestamp = 0;
+	
+	if ( (messages_new = list_new(list_info, max, message_list_info_free, message_free)) == NULL ) {
+		list_info_free(list_info);
+		return NULL; // could not allocate list
+	}
+	messages_new->item_value_comp = message_timestamp_comp;
+	messages_new->item_comp = message_comp;
 
 	return messages_new;
 }
@@ -94,31 +92,16 @@ messages *mes_new() {
  */
 void mes_free(messages *messages) {
 	DEBUG_TRACE_PRINT();
-	free(messages->list);
-	free(messages);
+	
+	list_free(messages);
 }
 
 
 /*
  * Prints all messages line by line
  */
-void mes_print_message_list(messages *messages) {
+void mes_print_messages(messages *messages) {
 	DEBUG_TRACE_PRINT();
-	int i;
-	for( i = 0; i < messages->n_messages ; i++) {
-		printf("[%d]%s: %s \n", mes_GET_SEND_DATE(messages->list[i]), (mes_GET_SENDER(messages->list[i]
-) != NULL)? mes_GET_SENDER(messages->list[i]): "Yo" , mes_GET_TEXT(messages->list[i]));
-	}
-}
-
-
-/*
- * Gets the last added message's send_date
- * Returns the send date or 0 if the list is empty
- */
-int mes_get_last_message_date(messages *messages) {
-	DEBUG_TRACE_PRINT();
-	return messages->list[messages->n_messages-1].send_date;
 }
 
 
@@ -126,65 +109,59 @@ int mes_get_last_message_date(messages *messages) {
  * Creates a new message in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int mes_add_message(messages *messages, const char *sender, const char *text, int send_date, const char *attach_path) {
+int mes_add_message(messages *messages, const char *sender, const char *text, int send_timestamp, const char *attach_path) {
 	DEBUG_TRACE_PRINT();
-
+	message_info *info;
 	//messages *aux_messages;
 
 	if ( text == NULL ) {
 		DEBUG_FAILURE_PRINTF("A message can not be added without 'text'");
 		return -1;
 	}
-	if( messages->lenght == 0 ) {
-		if( (messages->list = malloc(sizeof(message_info)*3) ) == NULL) {
-			return -1;
-		}
-		messages->lenght += 3;
+	
+	if ( (info = malloc(sizeof(message_info))) == NULL ) {
+		return -1;
 	}
 
-	if( messages->lenght == messages->n_messages  ) {
-		if( (messages->list = realloc(messages->list, sizeof(message_info)*(messages->lenght+5))) == NULL ) {
+	if (sender != NULL) {
+		if ( (info->sender = malloc(sizeofstring(sender)) ) == NULL ) {	
+			free(info);
 			return -1;
 		}
-		DEBUG_INFO_PRINTF("Made  %p", messages->list);
-		messages->lenght += 5;
-	}
-
-	// Copy sender in a new string if not NULL
-	if( sender != NULL) {
-		if( (messages->list[messages->n_messages].sender = malloc( strlen(sender) + sizeof(char) ) ) == NULL) {
-			return -1;
-		}
-		strcpy(messages->list[messages->n_messages].sender, sender);
+		strcpy(info->sender, sender);
 	}
 	else {
-		messages->list[messages->n_messages].sender = NULL;
+		info->sender = NULL;
 	}
-
-	if (text != NULL) {
-		if( (messages->list[messages->n_messages].text = malloc( strlen(text) + sizeof(char) ) ) == NULL) {
-			return -1;
-		}
-		strcpy(messages->list[messages->n_messages].text, text);
-		}
-	else {
-		messages->list[messages->n_messages].text = NULL;
+	if ( (info->text = malloc(sizeofstring(text)) ) == NULL ) {
+		free(info->sender);
+		free(info);
+		return -1;
 	}
-
+	strcpy(info->text, text);
+	
 	if( attach_path != NULL ) {
-		if( (messages->list[messages->n_messages].attach_path = malloc( strlen(attach_path) + sizeof(char) ) ) == NULL) {
+		if ( (info->attach_path = malloc(sizeofstring(attach_path)) ) == NULL ) {	
+			free(info->sender);
+			free(info->text);
+			free(info);
 			return -1;
 		}
-		strcpy(messages->list[messages->n_messages].attach_path, attach_path);
-		messages->list[messages->n_messages].have_attach = TRUE;
+		strcpy(info->attach_path, attach_path);
+		info->has_attach = TRUE;
 	}
 	else {
-		messages->list[messages->n_messages].attach_path = NULL;
-		messages->list[messages->n_messages].have_attach = FALSE;
+		info->attach_path = NULL;
+		info->has_attach = FALSE;
 	}
-	messages->list[messages->n_messages].send_date = send_date;
 
-	messages->n_messages++;
+	info->timestamp = send_timestamp;
+
+	if ( list_add_item(messages, info) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not add message to list");
+		message_free(info);
+		return -1;
+	}
 	
 	return 0;
 }
@@ -192,29 +169,20 @@ int mes_add_message(messages *messages, const char *sender, const char *text, in
 
 /*
  * Removes the last "n_messages" messages
- * Returns 0 or -1 if "id" does not exist in the list
+ * Returns 0 or -1 if fails
  */
 int mes_del_last_messages(messages *messages, int n_messages) {
 	DEBUG_TRACE_PRINT();
-	int i;
-
-	if( (n_messages > messages->n_messages) ) {
-		n_messages = messages->n_messages;
-	}
-
-	for( i = 1 ; i <= n_messages ; i++ ) {
-		free(messages->list[ messages->n_messages - i ].sender);
-		free(messages->list[ messages->n_messages - i ].text);
-		if(messages->list[ messages->n_messages - i ].have_attach)
-			free(messages->list[ messages->n_messages - i ].attach_path);
-	}
-	messages->n_messages -= n_messages;
-
-	if( (messages->lenght - messages->n_messages) > 5 ) {
-		if ( (messages->list = realloc(messages->list, sizeof(message_info)*(messages->lenght - 5)) ) == NULL ) {
-			return -1;
-		}
-	}
-	messages->lenght -= 5;
+	
 }
 
+
+/*
+ * Searches the message with the provided timestamp
+ * Returns a pointer to the message_info or NULL if fails
+ */
+message_info *mes_find_message(messages *messages, int send_timestamp) {
+	DEBUG_TRACE_PRINT();
+	
+	return (message_info*)list_find_item(messages, &send_timestamp);
+}

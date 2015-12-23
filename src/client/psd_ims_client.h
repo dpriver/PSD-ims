@@ -26,19 +26,24 @@
 #ifndef __PSD_IMS_CLIENT
 #define __PSD_IMS_CLIENT
 
-#define MAX_FILE_PATH_CHARS 100
-#define MAX_FILE_CHARS 10000
+#define MAX_FRIENDS	(50)
+#define MAX_FRIEND_REQUESTS (50)
+#define MAX_CHATS (50)
+#define MAX_MESSAGES (50)
+#define MAX_MEMBERS (50)
+
+#define MAX_FILE_PATH_CHARS (100)
+#define MAX_FILE_CHARS (10000)
 #define ATTACH_FILES_DIR "attached_files"
 
 #include "friends.h"
 #include "chats.h"
+#include "friend_requests.h"
+#include "messages.h"
+#include "chat_members.h"
 #include "network.h"
-#include "pending_chats.h"
 #include <pthread.h>
 
-
-typedef chat_node chat_list;
-typedef friend_node friend_list;
 
 typedef struct psd_ims_client psd_ims_client;
 struct psd_ims_client {
@@ -49,21 +54,324 @@ struct psd_ims_client {
 	// timestamps
 	int last_connection;
 	int last_notif_timestamp;
-	int friends_timestamp;
-	int chats_timestamp;
 	// lists
-	pending_chat_list new_chats;
 	network *network;
 	friends *friends;
-	chat_list *chats;
+	friend_requests *requests;
+	chats *chats;
 	// lists mutexes
 	pthread_mutex_t new_chats_mutex;
 	pthread_mutex_t chats_mutex;
 	pthread_mutex_t network_mutex;
 	pthread_mutex_t friends_mutex;
+	pthread_mutex_t requests_mutex;
 };
 
+struct chat_mes_iterator {
+	mes_iterator *iter;
+	chat_info *chat;
+};
 
+struct chat_member_iterator {
+	member_iterator *iter;
+	chat_info *chat;
+};
+
+typedef fri_iterator	friends_iterator;
+typedef req_iterator 	req_iterator;
+typedef chat_iterator	chats_iterator;
+typedef struct chat_mes_iterator 	chat_mes_iterator;
+typedef struct chat_member_iterator chat_member_iterator;
+
+
+/* =========================================================================
+ *  Iterators
+ * =========================================================================*/
+
+/*-----------------------------------------------------------
+ * 			 FRIENDS ITERATOR
+ * ----------------------------------------------------------/*
+
+/*
+ * begins a thread-safe friend iteration block and assigns a new iterator to iterator
+ */
+#define psd_begin_fri_iteration(client, iterator) \
+	do{ \
+		pthread_mutex_lock(&client->friends_mutex); \
+		iterator = fri_get_friends_iterator(client->friends); \
+	}while(0)
+
+#define psd_fri_iterator_valid(iterator) \
+	(iterator != NULL)
+
+/*
+ * ends a friend iteration block
+ */
+#define psd_end_fri_iteration(client, iterator) \
+	do{ \
+		pthread_mutex_unlock(&client->friends_mutex); \
+		iterator = NULL; \
+	}while(0)
+
+#define psd_fri_iterator_next(client, iterator) \
+		fri_iterator_next(client->friends, iterator)
+
+#define psd_fri_iterator_name(iterator, name) \
+	do{ \
+		friend_info *aux; \
+		aux = fri_get_info(iterator); \
+		name = fri_get_name(aux); \
+	}while(0)
+
+#define psd_fri_iterator_information(iterator, information) \
+	do{ \
+		friend_info *aux; \
+		aux = fri_get_info(iterator); \
+		name = fri_get_information(aux); \
+	}while(0)
+
+
+/*-----------------------------------------------------------
+ * 			 FRIEND REQUESTS ITERATOR
+ * ----------------------------------------------------------/*
+
+/*
+ * begins a thread-safe friend requests iteration block and assigns a new iterator to iterator
+ */
+#define psd_begin_req_iteration(client, iterator) \
+	do{ \
+		pthread_mutex_lock(&client->requests_mutex); \
+		iterator = req_get_requests_iterator(client->requests); \
+	}while(0)
+
+#define psd_req_iterator_valid(iterator) \
+	(iterator != NULL)
+
+/*
+ * ends a friend iteration block
+ */
+#define psd_end_req_iteration(client, iterator) \
+	do{ \
+		pthread_mutex_unlock(&client->requests_mutex); \
+		iterator = NULL; \
+	}while(0)
+
+#define psd_req_iterator_next(client, iterator) \
+		req_iterator_next(client->requests, iterator)
+
+#define psd_req_iterator_name(iterator, name) \
+	do{ \
+		request_info *aux; \
+		aux = req_get_info(iterator); \
+		name = req_name(aux); \
+	}while(0)
+
+#define psd_req_iterator_time(iterator, timestamp) \
+	do{ \
+		request_info *aux; \
+		aux = req_get_info(iterator); \
+		timestamp = req_time(aux); \
+	}while(0)
+
+
+/*-----------------------------------------------------------
+ * 			 CHATS ITERATOR
+ * ----------------------------------------------------------/*
+
+/*
+ * begins a thread-safe friend requests iteration block and assigns a new iterator to iterator
+ */
+#define psd_begin_chat_iteration(client, iterator) \
+	do{ \
+		pthread_mutex_lock(&client->chats_mutex); \
+		iterator = cha_get_chats_iterator(client->chats); \
+	}while(0)
+
+#define psd_chat_iterator_valid(iterator) \
+	(iterator != NULL)
+
+/*
+ * ends a friend iteration block
+ */
+#define psd_end_chat_iteration(client, iterator) \
+	do{ \
+		pthread_mutex_unlock(&client->chats_mutex); \
+		iterator = NULL; \
+	}while(0)
+
+#define psd_chat_iterator_next(client, iterator) \
+		cha_iterator_next(client->chats, iterator)
+
+#define psd_chat_iterator_id(iterator, id) \
+	do{ \
+		chat_info *aux; \
+		aux = cha_get_info(iterator); \
+		id = cha_get_id(aux); \
+	}while(0)
+
+#define psd_chat_iterator_description(iterator, description) \
+	do{ \
+		chat_info *aux; \
+		aux = cha_get_info(iterator); \
+		description = cha_description(aux); \
+	}while(0)
+
+#define psd_chat_iterator_unread(iterator, unread) \
+	do{ \
+		chat_info *aux; \
+		aux = cha_get_info(iterator); \
+		unread = cha_unread(aux); \
+	}while(0)
+
+
+/*-----------------------------------------------------------
+ * 			 CHAT MESSAGES ITERATOR
+ * ----------------------------------------------------------/*
+
+/*
+ * begins a thread-safe friend requests iteration block and assigns a new iterator to iterator
+ */
+#define psd_begin_mes_iteration(client, chat_id, iterator) \
+	do{ \
+		messages *aux; \
+		iterator = malloc(sizeof(chat_mes_iterator)); \
+		pthread_mutex_lock(&client->chats_mutex); \
+		iterator->chat = cha_find_chat(client->chats, chat_id); \
+		if (iterator->chat == NULL) { \
+			free(iterator); \
+			iterator = NULL; \
+			break; \
+		} \
+		aux = cha_messages(iterator->chat); \
+		iterator->iter = mes_get_messages_iterator( aux ); \
+		if (iterator->iter == NULL) { \
+			free(iterator); \
+			iterator = NULL; \
+			break; \
+		} \
+	}while(0)
+
+#define psd_mes_iterator_valid(iterator) \
+	((iterator != NULL ) && (iterator->iter != NULL))
+
+/*
+ * ends a friend iteration block
+ */
+#define psd_end_mes_iteration(client, iterator) \
+	do{ \
+		pthread_mutex_unlock(&client->chats_mutex); \
+		free(iterator); \
+		iterator = NULL; \
+	}while(0)
+
+#define psd_mes_iterator_next(iterator) \
+	do{ \
+		messages *aux; \
+		aux = cha_messages(iterator->chat); \
+		mes_iterator_next(aux, iterator->iter); \
+	}while(0)
+
+#define psd_mes_iterator_sender(iterator, name) \
+	do{ \
+		message_info *aux; \
+		aux = mes_get_info(iterator->iter); \
+		name = mes_sender(aux); \
+	}while(0)
+
+#define psd_mes_iterator_text(iterator, text) \
+	do{ \
+		message_info *aux; \
+		aux = mes_get_info(iterator->iter); \
+		text = mes_text(aux); \
+	}while(0)
+
+#define psd_mes_iterator_attach_path(iterator, path) \
+	do{ \
+		message_info *aux; \
+		aux = mes_get_info(iterator->iter); \
+		path = mes_attach_path(aux); \
+	}while(0)
+
+#define psd_mes_iterator_time(iterator, time) \
+	do{ \
+		message_info *aux; \
+		aux = mes_get_info(iterator->iter); \
+		time = mes_message_timestamp(aux); \
+	}while(0)
+	
+	
+/*-----------------------------------------------------------
+ * 			 CHAT MEMBERS ITERATOR
+ * ----------------------------------------------------------/*
+
+/*
+ * begins a thread-safe friend requests iteration block and assigns a new iterator to iterator
+ */
+#define psd_begin_member_iteration(client, chat_id, iterator) \
+	do{ \
+		chat_members *aux; \
+		iterator = malloc(sizeof(chat_member_iterator)); \
+		if (iterator == NULL) { \
+			free(iterator); \
+			iterator = NULL; \
+			break; \
+		} \
+		iterator->chat = cha_find_chat(client->chats, chat_id); \
+		pthread_mutex_lock(&client->chats_mutex); \
+		aux = cha_members(iterator->chat); \
+		iterator->iter = member_get_members_iterator( aux ); \
+		if (iterator->iter == NULL) { \
+			free(iterator); \
+			iterator = NULL; \
+			break; \
+		} \
+	}while(0)
+
+#define psd_member_iterator_valid(iterator) \
+	((iterator != NULL ) && (iterator->iter != NULL))
+
+/*
+ * ends a friend iteration block
+ */
+#define psd_end_member_iteration(client, iterator) \
+	do{ \
+		pthread_mutex_unlock(&client->chats_mutex); \
+		free(iterator); \
+		iterator = NULL; \
+	}while(0)
+
+#define psd_member_iterator_next(iterator) \
+	do{ \
+		chat_members *aux; \
+		aux = cha_members(iterator->chat); \
+		member_iterator_next(aux, iterator->iter); \
+	}while(0)
+
+
+#define psd_member_iterator_name(iterator, name) \
+	do{ \
+		member_info *aux; \
+		aux = member_get_info(iterator->iter); \
+		name = member_name(aux); \
+	}while(0)
+
+#define psd_member_iterator_isfriend(iterator, isfriend) \
+	do{ \
+		member_info *aux; \
+		aux = member_get_info(iterator->iter); \
+		isfriend = member_is_friend(aux); \
+	}while(0)
+
+#define psd_member_iterator_information(iterator, information) \
+	do{ \
+		member_info *aux; \
+		aux = member_get_info(iterator->iter); \
+		if (!member_is_friend(aux)) { \
+			break; \
+		} \
+		information = fri_get_information(member_friend_info(aux)); \
+	}while(0)
+	
 
 /* =========================================================================
  *  Client struct
@@ -127,6 +435,12 @@ int psd_user_register(psd_ims_client *client, char *name, char *password, char *
 int psd_recv_notifications(psd_ims_client *client);
 
 /*
+ * Receive all the chat's messages
+ * Returns the number of received messages or -1 if fails
+ */
+int psd_recv_messages(psd_ims_client *client, int chat_id);
+
+/*
  * Receive the pending messages
  * Returns the number of received messages or -1 if fails
  */
@@ -144,6 +458,8 @@ int psd_recv_all_messages(psd_ims_client *client);
  */
 int psd_recv_all_pending_messages(psd_ims_client *client);
 
+int psd_recv_message_attachment(psd_ims_client *client, int chat_id, int msg_timestamp);
+
 /*
  * Receive the user chats
  * Returns the number of created chats or -1 if fails
@@ -155,12 +471,6 @@ int psd_recv_chats(psd_ims_client *client);
  * Returns the number of added friends or -1 if fails
  */
 int psd_recv_friends(psd_ims_client *client);
-
-/*
- * Receive the locally not registered chats
- * Returns the number of created chats or -1 if fails
- */
-int psd_recv_new_chats(psd_ims_client *client);
 
 /*
  * Creates a new chat
@@ -204,116 +514,10 @@ int psd_send_request_accept(psd_ims_client *client, char *user);
  */
 int psd_send_request_decline(psd_ims_client *client, char *user);
 
-
-/* =========================================================================
- *  Chats
- * =========================================================================*/
-
 /*
- * Prints all chats line by line
+ * Check if the chat exists in list
  */
-void psd_print_chats(psd_ims_client *client);
-
-/*
- * Prints all chat members line by line
- */
-void psd_print_chat_members(psd_ims_client *client, int chat_id);
-
-/*
- * Prints all chat messages line by line
- */
-void psd_print_chat_messages(psd_ims_client *client, int chat_id);
-
-/*
- * Adds a new chat to client's chat list
- * Returns 0 or -1 if fails
- */
-int psd_add_chat(psd_ims_client *client, int id, const char *description, const char *admin,
-			char *members[], int n_members);
-
-/*
- * Removes and frees the first chat that matches "chat_ic"
- * Returns 0 or -1 if "chat_id" does not exist in the list
- */
-int psd_del_chat(psd_ims_client *client, int chat_id);
-
-/*
- * Adds the member "user_name" to the chat "chat_id"
- * Returns 0 or -1 if fails
- */
-int psd_add_friend_to_chat(psd_ims_client *client, int chat_id, const char *user_name);
-
-/*
- * Deletes the first ocurrence of a chat member with the provided "name" from the cha "chat_id"
- * Returns 0 or -1 if fails
- */
-int psd_del_friend_from_chat(psd_ims_client *client, int chat_id, const char *user_name);
-
-/*
- * Adds the messages in the chat
- * Returns 0 or -1 if fails
- */
-int psd_add_messages(psd_ims_client *client, int chat_id, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages);
-
-/*
- * Get the number of pending messages
- */
-int psd_get_n_pending_messages(psd_ims_client *client, int chat_id);
-
-/*
- * Clears the chat pending messages counter
- */
-int psd_clean_pending_messages(psd_ims_client *client, int chat_id);
-
-/*
- * Updates the chat pending messages counter
- */
-int psd_update_pending_messages(psd_ims_client *client, int chat_id, int n_messages);
-
-/*
- * Switches the current admin with the chat member named "user_name"
- * that means that the previous admin becomes a normal member
- * Returns 0 or -1 if fails
- */
-int psd_change_chat_admin(psd_ims_client *client, int chat_id, const char *user_name);
-
-
-
-/* =========================================================================
- *  Friends
- * =========================================================================*/
-
-/*
- * Prints all friends line by line
- */
-void psd_print_friends(psd_ims_client *client);
-
-/*
- * Prints all friends requests line by line
- */
-void psd_print_friend_requests(psd_ims_client *client);
-
-/*
- * Adds a new friend to client's friend list
- * Returns 0 or -1 if fails
- */
-int psd_add_friend(psd_ims_client *client, const char *name, const char *information);
-
-/*
- * Adds a sended friend request to "name"
- */
-int psd_add_friend_req_snd(psd_ims_client *client, const char *name,  int send_date);
-
-/*
- * Adds a received friend request from "name"
- */
-int psd_add_friend_req_rcv(psd_ims_client *client, const char *name, int send_date);
-
-/*
- * Removes and frees the first friend that matches "name"
- * Returns 0 or -1 if "name" does not exist in the list
- */
-int psd_del_friend(psd_ims_client *client, const char *name);
+boolean psd_chat_exists(psd_ims_client *client, int chat_id);
 
 
 #endif /* __PSD_IMS_CLIENT */

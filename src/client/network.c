@@ -239,6 +239,12 @@ void net_logout(network *network) {
 }
 
 
+psdims__user_info *net_recv_user_info(network *network, char *name) {
+	DEBUG_TRACE_PRINT();
+	return NULL;
+}
+
+
 /*
  *
  *

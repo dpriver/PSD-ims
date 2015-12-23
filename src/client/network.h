@@ -63,6 +63,13 @@ int net_bind_network(network *network, char *serverURL);
  */
 psdims__user_info *net_login(network *network, char *name, char *password);
 
+
+/*
+ *
+ *
+ */
+psdims__user_info *net_recv_user_info(network *network, char *name);
+
 /*
  *
  *
@@ -92,6 +99,12 @@ psdims__file *net_get_attachment(network *network, int chat_id, int msg_timestam
  *
  */
 psdims__chat_list *net_get_chat_list(network *network, int timestamp);
+
+/*
+ *
+ *
+ */
+psdims__chat_info *net_recv_chat_info(network *network, int chat_id);
 
 /*
  *

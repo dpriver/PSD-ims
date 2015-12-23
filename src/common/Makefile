@@ -1,5 +1,5 @@
-SOURCES=leak_detector_c.c
-HEADERS=bool.h leak_detector_c.h debug_def.h
+SOURCES=leak_detector_c.c list.c
+HEADERS=bool.h leak_detector_c.h debug_def.h list.h
 
 COBJS=$(SOURCES:%.c=$(OBJ_DIR)/%.o)
 CHEADS=$(HEADERS)

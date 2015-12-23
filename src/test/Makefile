@@ -1,5 +1,5 @@
 SOURCES=
-CLIENT_SOURCES=test_client_friend_list.c test_client_chat_list.c test_psd_client_api.c test_client_graphic.c test_client_network.c
+CLIENT_SOURCES=
 SERVER_SOURCES=test_psd_server.c test_persistence.c
 HEADERS=
 

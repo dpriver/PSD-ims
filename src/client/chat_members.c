@@ -23,6 +23,7 @@
  *
  ********************************************************************************/
 
+#include "chat_members.h"
 #include "friends.h"
 #include "list.h"
 #include <stdlib.h>
@@ -40,83 +41,82 @@
 #define sizeofstring(string) \
 	(strlen(string) + sizeof(char))
 
-void friend_list_info_free(void *info) {
+void member_list_info_free(void *info) {
 	free(info);
 }
 
-void friend_free(void *friend) {
-	free(((friend_info*)friend)->name);
-	free(((friend_info*)friend)->information);
-	free(friend);
+void member_free(void *member) {
+	free(((member_info*)member)->name);
+	free(member);
 }
 
-int friend_name_comp(const void *friend, const void *name) {
-	return strcmp(((friend_info*)friend)->name, (char*)name);
+int member_name_comp(const void *member, const void *name) {
+	return strcmp(((member_info*)member)->name, (char*)name);
 }
 
-int friend_comp(const void *friend1, const void *friend2) {
-	return strcmp(((friend_info*)friend1)->name, ((friend_info*)friend2)->name);
+int member_comp(const void *member1, const void *member2) {
+	return strcmp(((member_info*)member1)->name, ((member_info*)member2)->name);
 }
+
+
 
 /* =========================================================================
- *  Friend struct API
+ *  Chat member struct API
  * =========================================================================*/
 
 /*
- * Allocates a new friend list
- * Returns a pointer to the list phantom node or NULL if fails
+ * Allocates a new member list
+ * Returns a pointer to the list or NULL if fails
  */
-friends *fri_new(int max) {
+friends *members_new(int max) {
 	DEBUG_TRACE_PRINT();
-	friends *friends_new;
-	friend_list_info *list_info;
+	chat_members *members_new;
+	member_list_info *list_info;
 
-	if ( (list_info = malloc(sizeof(friend_list_info))) == NULL ) {
+	if ( (list_info = malloc(sizeof(member_list_info))) == NULL ) {
 		return NULL;
 	}
 
 	list_info->timestamp = 0;
 
-	if ( (friends_new = list_new(list_info, max, friend_list_info_free, friend_free)) == NULL ) {
+	if ( (members_new = list_new(list_info, max, member_list_info_free, member_free)) == NULL ) {
 		list_info_free(list_info);
 		return NULL; // could not allocate list
 	}
-	friends_new->item_value_comp = friend_name_comp;
-	friends_new->item_comp = friend_comp;
+	members_new->item_value_comp = member_name_comp;
+	members_new->item_comp = member_comp;
 
-	return friends_new;
+	return members_new;
 }
 
 
 /*
- * Frees the friend list
+ * Frees the member list
  */
-void fri_free(friends *friends) {
+void members_free(chat_members *members) {
 	DEBUG_TRACE_PRINT();
 
-	list_free(friends);
+	list_free(members);
 }
 
 
 /*
- * Prints all friends line by line
+ * Prints all members line by line
  */
-void fri_print_friend_list(friends *friends) {
+void members_print_friend_list(chat_members *members) {
 	DEBUG_TRACE_PRINT();
-	//fri_lst_print(friends->friend_list);
 }
 
 
 /*
- * Creates a new friend_node in the list with the provided info
- * "*info" is attached, not copied
+ * Creates a new chat member in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int fri_add_friend(friends *friends, const char *name, const char *information) {
+int members_add_member(chat_members *members, const char *name, friend_info *friend_info) {
 	DEBUG_TRACE_PRINT();
-	friend_info *info;
+	member_info *info;
 
-	if ( (info = malloc(sizeof(friend_info))) == NULL ) {
+	if ( (info = malloc(sizeof(member_info))) == NULL ) {
 		return -1;
 	}
 	
@@ -124,23 +124,17 @@ int fri_add_friend(friends *friends, const char *name, const char *information) 
 		free(info);
 		return -1;
 	}
-	
-	if ( (info->information = malloc(sizeofstring(information)) ) == NULL ) {
-		free(info->name);
-		free(info);
-		return -1;
-	}
 
 	strcpy(info->name, name);
-	strcpy(info->information, information);
+	info->info = friend_info;
 
-	if ( list_add_item(friends, info) != 0 ) {
+	if ( list_add_item(members, info) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not add friend to list");
-		friend_free(info);
+		member_free(info);
 		return -1;
 	}
 
-	return 0;
+	return 0;	
 }
 
 
@@ -148,26 +142,25 @@ int fri_add_friend(friends *friends, const char *name, const char *information) 
  * Removes and frees the first node that matches the provided "name"
  * Returns 0 or -1 if "name" does not exist in the list
  */
-int fri_del_friend(friends *friends, const char *name) {
+int members_del_member(chat_members *members, const char *name) {
 	DEBUG_TRACE_PRINT();
 	list_node *node;
-	node = list_find_node(friends, name);
+	node = list_find_node(members, name);
 	if (node == NULL) {
-		DEBUG_FAILURE_PRINTF("Friend does not exists in list");
+		DEBUG_FAILURE_PRINTF("Member does not exists in list");
 		return -1;
 	}
 	
-	list_delete_node(friends, node);
-	return 0;
+	list_delete_node(members, node);	
 }
 
 
 /*
- * Search for the friend in the list
- * Returns a pointer to the friend_info or NULL if fails
+ * Finds the chat whos id is chat_id
+ * Returns a pointer to the chat_info of NULL if fails
  */
-friend_info *fri_find_friend(friends *friends, const char *name) {
+member_info *member_find_member(chat_members *members, const char *name) {
 	DEBUG_TRACE_PRINT();
 	
-	return (friend_info*)list_find_item(friends, name);
+	return (member_info*)list_find_item(members, name);	
 }

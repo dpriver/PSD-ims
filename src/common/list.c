@@ -34,6 +34,7 @@
 #endif
 
 void _node_delete(list_node *node, void (*item_free)(void *item)) {
+	DEBUG_TRACE_PRINT();
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
 	
@@ -42,6 +43,7 @@ void _node_delete(list_node *node, void (*item_free)(void *item)) {
 }
 
 int _node_add(list *list, list_node *node) {
+	DEBUG_TRACE_PRINT();
 	node->next = list->ghost_item;
 	node->prev = list->ghost_item->prev;
 	list->ghost_item->prev->next = node;
@@ -50,7 +52,8 @@ int _node_add(list *list, list_node *node) {
 	return 0;
 }
 
-list_node *_find_node(list *list, void *comp_val, int (*comp)(void *item, void *val)) {
+list_node *_find_node(list *list, const void *comp_val, int (*comp)(const void *item, const void *val)) {
+	DEBUG_TRACE_PRINT();
 	list_node *node;
 	
 	node = list->ghost_item->next;
@@ -69,9 +72,11 @@ list_node *_find_node(list *list, void *comp_val, int (*comp)(void *item, void *
  * =========================================================================*/
  
 list *list_new(void *list_info, int max_elems, void (*info_free)(void *info), void (*item_free)(void *item)) {
+	DEBUG_TRACE_PRINT();
 	list *new_list;
 	
 	if ((info_free == NULL) || (item_free == NULL)) {
+		DEBUG_FAILURE_PRINTF("Could not create list, NULL free functions");
 		return NULL;
 	}
 	
@@ -79,6 +84,15 @@ list *list_new(void *list_info, int max_elems, void (*info_free)(void *info), vo
 	if (new_list == NULL) {
 		return NULL;
 	}
+	
+	new_list->ghost_item = malloc(sizeof(list_node));
+	if (new_list->ghost_item == NULL) {
+		free(new_list);
+		return NULL;
+	}
+	new_list->ghost_item->item = NULL;
+	new_list->ghost_item->next = new_list->ghost_item;
+	new_list->ghost_item->prev = new_list->ghost_item;
 	
 	new_list->info_free = info_free;
 	new_list->item_free = item_free;
@@ -92,7 +106,13 @@ list *list_new(void *list_info, int max_elems, void (*info_free)(void *info), vo
 
 
 void list_free(list *list) {
+	DEBUG_TRACE_PRINT();
 	list_node *node;
+	
+	if ((list->item_free == NULL) || (list->info_free == NULL) ) {
+		DEBUG_FAILURE_PRINTF("Could not free the list, free functions not defined");
+		return;
+	}
 	
 	node = list->ghost_item;
 	while (node != node->next) {
@@ -105,21 +125,37 @@ void list_free(list *list) {
 }
 
 
-list_node *list_find_node(list *list, void *comp_val) {
-	return _find_node(list, comp_val, list->item_comp);
+list_node *list_find_node(list *list, const void *comp_val) {
+	DEBUG_TRACE_PRINT();
+	if (list->item_value_comp == NULL) {
+		DEBUG_FAILURE_PRINTF("Can not search, item_value_comp not defined");
+		return NULL;
+	}
+	return _find_node(list, comp_val, list->item_value_comp);
 }
 
 	
-void *list_find_item(list *list, void *comp_val) {
+void *list_find_item(list *list, const void *comp_val) {
+	DEBUG_TRACE_PRINT();
 	list_node *node;
-	node = _find_node(list, comp_val, list->item_comp);
+	if (list->item_value_comp == NULL) {
+		DEBUG_FAILURE_PRINTF("Can not search, item_value_comp not defined");
+		return NULL;
+	}
+	node = _find_node(list, comp_val, list->item_value_comp);
 	
 	return (node != NULL)? node->item : NULL;
 }
 
 
 int list_add_item(list *list, void *item) {
+	DEBUG_TRACE_PRINT();
 	list_node *node;
+	
+	if (item == NULL) {
+		DEBUG_FAILURE_PRINTF("The added item cannot be null");
+		return -1;
+	}
 	
 	node = malloc(sizeof(list_node));
 	if (node == NULL) {
@@ -134,5 +170,17 @@ int list_add_item(list *list, void *item) {
 
 
 void list_delete_node(list *list, list_node *node) {
+	DEBUG_TRACE_PRINT();
 	_node_delete(node, list->item_free);
+}
+
+
+void list_delete_last(list *list, int num_elems) {
+	DEBUG_TRACE_PRINT();
+	for( num_elems ; num_elems > 0 ; num_elems-- ) {
+		if(list->ghost_item->prev = list->ghost_item) {
+			return;	// if the list is empty
+		}
+		_node_delete(list->ghost_item->prev, list->item_free);
+	}
 }

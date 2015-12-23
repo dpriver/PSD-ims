@@ -1,8 +1,8 @@
 MAIN_SRC=client.c
-SOURCES=chats.c friends.c messages.c persistence.c psd_ims_client.c network.c client_graphic_v2.c pending_chats.c
-HEADERS=chats.h friends.h messages.h persistence.h psd_ims_client.h network.h client_graphic_v2.c pending_chats.h
+SOURCES=chats.c friends.c messages.c chat_members.c friend_requests.c persistence.c psd_ims_client.c network.c client_graphic_v2.c
+HEADERS=chats.h friends.h messages.h chat_members.h friend_requests.h persistence.h psd_ims_client.h network.h client_graphic_v2.h
 
-COMMON_LIBS=*
+COMMON_LIBS=list leak_detector_c
 RPC_LIBS=soapC soapClient
 
 TARGET=$(MAIN_SRC:%.c=$(BIN_DIR)/%)

@@ -27,8 +27,6 @@
 #define __GENERIC_LIST
 
 
-#define MAX_FRIENDS 200
-
 typedef struct list_node list_node;
 struct list_node {
 	void *item;
@@ -44,8 +42,8 @@ struct linked_list {
 	int max_elems;
 	void (*info_free)(void *info);		// function to free the list info
 	void (*item_free)(void *item);		// function to free the list items
-	int (*item_comp)(void *item1, void *item2);	// function to set an order
-	int (*item_value_comp)(void *item, void *value);	// function to comp an item with a value
+	int (*item_comp)(const void *item1, const void *item2);	// function to set an order
+	int (*item_value_comp)(const void *item, const void *value);	// function to comp an item with a value
 };
 
 /* Definition of the list iterator */
@@ -56,12 +54,13 @@ typedef list_node list_iterator;
  * =========================================================================*/
 
 #define list_item(list_node_ptr)		(list_node_ptr->item)
-#define list_num_elems(list_ptr) 		(list->n_elems)
-#define list_max_elems(list_ptr) 		(list->max_elems)
-#define list_info(list_ptr) 			(list->list_info)
-#define list_iterator(list_ptr)			((list->ghost_item->next != list->ghost_item) ? (list_iterator)list->ghost_item->next : NULL)
-#define list_iterator_next(list_ptr, list_iterator_ptr)	((list_iterator_ptr->next != list->ghost_item) ? list_iterator_ptr = list_iterator_ptr->next : NULL);
-#define list_iterator_prev(list_ptr, list_iterator_ptr)	((list_iterator_ptr->prev != list->ghost_item) ? list_iterator_ptr = list_iterator_ptr->prev : NULL);
+#define list_num_elems(list_ptr) 		(list_ptr->n_elems)
+#define list_max_elems(list_ptr) 		(list_ptr->max_elems)
+#define list_info(list_ptr) 			(list_ptr->list_info)
+#define list_iterator(list_ptr)			((list_ptr->ghost_item->next != list_ptr->ghost_item) ? (list_iterator*)list_ptr->ghost_item->next : NULL)
+#define list_iterator_info(list_iterator_ptr)			(list_iterator_ptr->item)
+#define list_iterator_next(list_ptr, list_iterator_ptr)	(list_iterator_ptr = (list_iterator_ptr->next != list_ptr->ghost_item) ? list_iterator_ptr->next : NULL)
+#define list_iterator_prev(list_ptr, list_iterator_ptr)	(list_iterator_ptr = (list_iterator_ptr->prev != list_ptr->ghost_item) ? list_iterator_ptr->prev : NULL)
 
 /* =========================================================================
  *  List functions
@@ -71,14 +70,15 @@ list *list_new(void *list_info, int max_elems, void (*info_free)(void *info), vo
 
 void list_free(list *list);
 
-list_node *list_find_node(list *list, void *comp_val);
+list_node *list_find_node(list *list, const void *comp_val);
 	
-void *list_find_item(list *list, void *comp_val);
+void *list_find_item(list *list, const void *comp_val);
 
 int list_add_item(list *list, void *item);
 
 void list_delete_node(list *list, list_node *node);
 
+void list_delete_last(list *list, int num_elems);
 
 
 
