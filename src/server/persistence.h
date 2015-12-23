@@ -49,17 +49,17 @@ int del_user(persistence* persistence, char* name);
 
 int user_exist(persistence* persistence, char name[]);
 
-char* get_user_pass(persistence* persistence, char name[]);
+int get_user_pass(persistence* persistence, char name[], char *buff, int max_chars);
 
 int get_user_id(persistence* persistence, char name[]);
 
-int get_user_name(persistence* persistence, int user_id,char* buff);
+int get_user_name(persistence* persistence, int user_id,char* buff, int max_chars);
 
-int get_user_info(persistence* persistence, int user_id,char* buff);
+int get_user_info(persistence* persistence, int user_id,char* buff, int max_chars);
 
 int get_id_admin_chat(persistence* persistence,int id_chat);
 
-int get_chat_info(persistence* persistence, int chat_id,char* buff);
+int get_chat_info(persistence* persistence, int chat_id,char* buff, int max_chars);
 
 int exist_user_in_chat(persistence* persistence,int user_id, int chat_id);
 

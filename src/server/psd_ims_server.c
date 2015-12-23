@@ -26,12 +26,12 @@
 #include "soapH.h"
 #include "psdims.nsmap"
 #include "persistence.h"
+#include "bool.h"
 #include <pthread.h>
 #include <mysql.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <string.h>
@@ -44,10 +44,15 @@
 
 #include "debug_def.h"
 
+#define MAX_ALIVE_THREADS (200)
+
+
 struct server {
 	persistence *persistence;
 	struct soap soap;
 	int n_alive_threads;
+	pthread_mutex_t n_threads_mutex;
+	pthread_cond_t zero_alive_threads;
 } server;
 
 
@@ -64,8 +69,6 @@ void end_soap_connection(struct soap *soap) {
 void *thread_serve_request(void *soap) {
 	DEBUG_TRACE_PRINT();
 
-	// INCREMENT server.n_alive_threads
-
 	pthread_detach(pthread_self());
 	soap_serve((struct soap*)soap);
 
@@ -73,13 +76,13 @@ void *thread_serve_request(void *soap) {
 	end_soap_connection((struct soap*)soap);
 	free(soap);
 
-	// DECREMENT server.n_alive_threads
-
-	// Now it could report to the main thread via a pipe or so that it has finished, doing so
-		// when the main thread is listenning to connections, ignores the pipe
-		// when the main thread has to finish and is waiting for the threads, instead of
-		// polling the number of threads, keeps listening the pipe, and anytime a thread finish, polls
-		// the number of threads
+	// decrement the number of alive threads
+	pthread_mutex_lock(&server.n_threads_mutex);
+	server.n_alive_threads--;
+	if (server.n_alive_threads == 0) {
+		pthread_cond_signal(&server.zero_alive_threads);
+	}
+	pthread_mutex_unlock(&server.n_threads_mutex);
 
 	return NULL;
 }
@@ -95,6 +98,9 @@ int init_server(int bind_port, char persistence_user[], char persistence_pass[])
 
 	SOAP_SOCKET m;
 	
+	server.n_alive_threads = 0;
+	pthread_mutex_init(&server.n_threads_mutex, NULL);
+	pthread_cond_init(&server.zero_alive_threads, NULL);
 	server.persistence = init_persistence(persistence_user, persistence_pass);
 	if (server.persistence == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not init persistence");
@@ -130,6 +136,13 @@ void free_server() {
 	// finish the "list" soap connection
 	end_soap_connection(&server.soap);
 	// wait until (n_alive_threads == 0)
+	
+	pthread_mutex_lock(&server.n_threads_mutex);
+	while (server.n_alive_threads > 0) {
+		pthread_cond_wait(&server.zero_alive_threads, &server.n_threads_mutex);
+	}
+	pthread_mutex_unlock(&server.n_threads_mutex);
+	
 	free_persistence(server.persistence);
 }
 
@@ -191,10 +204,38 @@ int mthread_listen_connection () {
 		DEBUG_FAILURE_PRINTF("Could not copy the soap struct");
 		return -1;
 	}
+
+	// Increment number of alive threads
+	// it will be decremented inside the thread
+	pthread_mutex_lock(&server.n_threads_mutex);
+	if (server.n_alive_threads >= MAX_ALIVE_THREADS) {
+		pthread_mutex_unlock(&server.n_threads_mutex);
+		return -1;
+	}
+	server.n_alive_threads++;
+	pthread_mutex_unlock(&server.n_threads_mutex);
 	
+	// Launch the new thread
 	pthread_create(&tid, NULL, (void*(*)(void*))thread_serve_request, (void*)tsoap);
 
 	return 0;
+}
+
+
+boolean login_correct(psdims__login_info *login) {
+	char pass[50];
+	if ( (login == NULL) || (login->name == NULL) || (login->password == NULL) ) {
+		DEBUG_FAILURE_PRINTF("Login failed");
+		return FALSE;
+	}
+	if(user_exist(server.persistence,login->name)!=1) {
+		return FALSE;
+	}
+	get_user_pass(server.persistence,login->name, pass, sizeof(char)*50);
+ 	if(strcmp(login->password,pass)!=0) {
+		return FALSE;
+	}
+	return TRUE;
 }
 
 
@@ -210,7 +251,7 @@ int psdims__user_register(struct soap *soap,psdims__register_info *user_info, in
 	DEBUG_TRACE_PRINT();
 	*ERRCODE = 1;
 
-	if ( (user_info->name == NULL) || (user_info->name == NULL) || (user_info->name == NULL) ) {
+	if ( (user_info == NULL) || (user_info->name == NULL) || (user_info->password == NULL) || (user_info->information == NULL) ) {
 		DEBUG_FAILURE_PRINTF("Some fields are empty");
 		return SOAP_USER_ERROR;
 	}
@@ -234,10 +275,7 @@ int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *E
 	DEBUG_TRACE_PRINT();
 	*ERRCODE = 1;
 
-	if(user_exist(server.persistence,login->name)!=1)
-		return SOAP_USER_ERROR;
-
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -258,17 +296,20 @@ int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *E
  */
 int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_info *user) {
 	DEBUG_TRACE_PRINT();
-	if(user_exist(server.persistence,login->name)!=1)
-		return SOAP_USER_ERROR;
-
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	
+	if ( user == NULL) {
 		return SOAP_USER_ERROR;
 	}
+	
+	if ( !login_correct(login) ) {
+		return SOAP_USER_ERROR;
+	}
+	
 	user->name = soap_malloc(soap, strlen(login->name) + sizeof(char));
 	user->information = soap_malloc(soap, sizeof(char)*200);
 
 	strcpy(user->name,login->name);  
-	get_user_info(server.persistence,get_user_id(server.persistence,login->name),user->information);
+	get_user_info(server.persistence,get_user_id(server.persistence,login->name),user->information, 200);
 
 	// Buscar el usuario mediante persistence
 		//[SI no se encuentra]
@@ -287,10 +328,11 @@ int psdims__get_friends(struct soap *soap,psdims__login_info *login, int timesta
 	DEBUG_TRACE_PRINT();
 	int id;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if (friends == NULL) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -313,10 +355,11 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, int timestamp
 	DEBUG_TRACE_PRINT();
 	int id;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if (chats == NULL) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -339,10 +382,11 @@ int psdims__get_chat_info(struct soap *soap, psdims__login_info *login, int chat
 	DEBUG_TRACE_PRINT();
 	int id_user;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if (chat == NULL) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -366,10 +410,11 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
 	DEBUG_TRACE_PRINT();
 	int id_user;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if (messages == NULL) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -396,6 +441,10 @@ int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int cha
 	int fd_read;
 	int existe=0;
 
+	if (file == NULL) {
+		return SOAP_USER_ERROR;
+	}
+
 	char *path = malloc(50);
 	char *file_path= malloc(30);
 	char *name_file= malloc(30);
@@ -406,10 +455,7 @@ int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int cha
     struct dirent *info_dir;
     DIR  *directorio;
 
-	if(user_exist(server.persistence,login->name)!=1)
-		return SOAP_USER_ERROR;
-
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -481,6 +527,10 @@ int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int ch
 	int existe=0;
 	int fd_write;
 
+	if (file == NULL) {
+		return SOAP_USER_ERROR;
+	}
+
 	char *path = malloc(50);
 	char *name_file= malloc(30);
 	char *buffer = malloc(50);
@@ -490,10 +540,7 @@ int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int ch
     struct dirent *info_dir;
     DIR  *directorio;
 
-	if(user_exist(server.persistence,login->name)!=1)
-		return SOAP_USER_ERROR;
-
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -570,10 +617,11 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
 	DEBUG_TRACE_PRINT();
 	int id_user;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if (notifications == NULL) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -595,14 +643,16 @@ int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__ne
 	DEBUG_TRACE_PRINT();
 	int timestamp;
 	int id_user;
-	timestamp = time(NULL);
 
-	if(user_exist(server.persistence,login->name)!=1)
-		return SOAP_USER_ERROR;
-
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( (new_chat == NULL) || (chat_id == NULL) ) {
 		return SOAP_USER_ERROR;
 	}
+	
+	if ( !login_correct(login) ) {
+		return SOAP_USER_ERROR;
+	}
+	
+	timestamp = time(NULL);
 
 	id_user=get_user_id(server.persistence,login->name);
 
@@ -622,15 +672,18 @@ int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name,
 	
 	int id_user;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if ( name == NULL ) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
 	if(chat_exist(server.persistence,chat_id)!=1)
 		return SOAP_USER_ERROR;
+
+	DEBUG_INFO_PRINTF("Adding %s to chat", name);
 
 	id_user=get_user_id(server.persistence,name);
 
@@ -655,10 +708,7 @@ int psdims__quit_from_chat(struct soap *soap, psdims__login_info *login, int cha
 	
 	int id_user,first_user;
 
-	if(user_exist(server.persistence,login->name)!=1)
-		return SOAP_USER_ERROR;
-
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -699,10 +749,11 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 	DEBUG_TRACE_PRINT();
 	int id_user;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if ( (message == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -727,10 +778,11 @@ int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, cha
 	DEBUG_TRACE_PRINT();
 	int id_user,id_request_name;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if ( (request_name == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0){
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
 	}
 
@@ -763,11 +815,13 @@ int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *re
 	DEBUG_TRACE_PRINT();
 	int id_user,id_request_name;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if ( (request_name == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0)
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
+	}
 
 	id_user=get_user_id(server.persistence,login->name);
 	id_request_name=get_user_id(server.persistence,request_name);
@@ -793,11 +847,13 @@ int psdims__decline_request(struct soap *soap, psdims__login_info *login, char *
 	DEBUG_TRACE_PRINT();
 	int id_user,id_request_name;
 
-	if(user_exist(server.persistence,login->name)!=1)
+	if ( (request_name == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
+	}
 
- 	if(strcmp(login->password,get_user_pass(server.persistence,login->name))!=0)
+	if ( !login_correct(login) ) {
 		return SOAP_USER_ERROR;
+	}
 
 	id_user=get_user_id(server.persistence,login->name);
 	id_request_name=get_user_id(server.persistence,request_name);

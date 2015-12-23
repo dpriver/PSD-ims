@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include "psd_ims_client.h"
 #include "bool.h"
+#include "errors.h"
 
 #include "debug_def.h"
 
@@ -699,6 +700,7 @@ void menu_login(client_graphic *graphic) {
 
 int graphic_client_run(psd_ims_client *client) {
 	client_graphic graphic;
+
 	
 	graphic.menu_update_screen = NULL;
 	graphic.screen_data = NULL;

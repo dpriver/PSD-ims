@@ -127,7 +127,7 @@ typedef struct chat_member_iterator chat_member_iterator;
 	do{ \
 		friend_info *aux; \
 		aux = fri_get_info(iterator); \
-		name = fri_get_information(aux); \
+		information = fri_get_information(aux); \
 	}while(0)
 
 
