@@ -52,10 +52,10 @@ typedef list_iterator member_iterator;
 		(member_info->name)
 
 #define member_is_friend(member_info) \
-		( (member_info->information != NULL)? (TRUE) : (FALSE) )
+		( (member_info->info != NULL)? (TRUE) : (FALSE) )
 
 #define member_friend_info(member_info) \
-		fri_get_info(member_info->info)
+		(member_info->info)
 
 
 #define member_num_members(members) \

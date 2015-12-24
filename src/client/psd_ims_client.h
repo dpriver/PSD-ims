@@ -85,6 +85,16 @@ typedef struct chat_member_iterator chat_member_iterator;
 
 
 /* =========================================================================
+ *  Struct access
+ * =========================================================================*/
+
+#define psd_client_user_name(client) \
+		(client->user_name)
+
+#define psd_client_user_information(client) \
+		(client->user_info)
+
+/* =========================================================================
  *  Iterators
  * =========================================================================*/
 
@@ -221,6 +231,35 @@ typedef struct chat_member_iterator chat_member_iterator;
 		chat_info *aux; \
 		aux = cha_get_info(iterator); \
 		unread = cha_unread(aux); \
+	}while(0)
+
+#define psd_chat_iterator_admin_myself(iterator, admin_myself) \
+	do{ \
+		chat_info *aux; \
+		aux = cha_get_info(iterator); \
+		admin_myself = cha_admin_myself(aux); \
+	}while(0)
+
+#define psd_chat_iterator_admin_name(iterator, name) \
+	do{ \
+		chat_info *aux; \
+		aux = cha_get_info(iterator); \
+		if (cha_admin_myself(aux)) { \
+			name = NULL; \
+			break; \
+		} \
+		name = cha_admin_name(aux); \
+	}while(0)
+	
+#define psd_chat_iterator_admin_info(iterator, information) \
+	do{ \
+		chat_info *aux; \
+		aux = cha_get_info(iterator); \
+		if (cha_admin_myself(aux)) { \
+			information = NULL; \
+			break; \
+		} \
+		information = cha_admin_information(aux); \
 	}while(0)
 
 
@@ -367,11 +406,21 @@ typedef struct chat_member_iterator chat_member_iterator;
 		member_info *aux; \
 		aux = member_get_info(iterator->iter); \
 		if (!member_is_friend(aux)) { \
+			information = NULL; \
 			break; \
 		} \
 		information = fri_get_information(member_friend_info(aux)); \
 	}while(0)
 	
+#define psd_member_iterator_admin_myself(iterator, admin_myself) \
+		(admin_myself = cha_admin_myself(iterator->chat))
+
+#define psd_member_iterator_admin_name(iterator, name) \
+		(name = cha_admin_name(iterator->chat))
+	
+#define psd_member_iterator_admin_info(iterator, information) \
+		(information = cha_admin_information(iterator->chat))
+
 
 /* =========================================================================
  *  Client struct
@@ -483,6 +532,12 @@ int psd_create_chat(psd_ims_client *client, char *description, char *member);
  *
  */
 int psd_add_member_to_chat(psd_ims_client *client, char *member, int chat_id);
+
+/*
+ *
+ *
+ */
+int psd_del_member_from_chat(psd_ims_client *client, char *member, int chat_id);
 
 /*
  *

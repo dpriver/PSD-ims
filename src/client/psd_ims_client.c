@@ -725,6 +725,52 @@ int psd_add_member_to_chat(psd_ims_client *client, char *member, int chat_id) {
  *
  *
  */
+int psd_del_member_from_chat(psd_ims_client *client, char *member, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	chat_info *chat = NULL;
+	friend_info *friend = NULL;
+	DEBUG_FAILURE_PRINTF("Not implemented");
+	return -1;
+/*
+	pthread_mutex_lock(&client->network_mutex);
+	if( net_add_user_to_chat(client->network, member, chat_id) != 0 ) {
+		pthread_mutex_unlock(&client->network_mutex);
+		DEBUG_FAILURE_PRINTF("Could not add the member to the chat");
+		return -1;
+	}
+	pthread_mutex_unlock(&client->network_mutex);
+
+	pthread_mutex_lock(&client->friends_mutex);
+	if ( (friend = fri_find_friend(client->friends, member)) == NULL ) {
+		pthread_mutex_unlock(&client->friends_mutex);
+		DEBUG_FAILURE_PRINTF("The member is not in the local list, but is a friend");
+		return -1;
+	} 
+	pthread_mutex_unlock(&client->friends_mutex);
+	
+	pthread_mutex_lock(&client->chats_mutex);
+	if ( (chat = cha_find_chat(client->chats, chat_id)) == NULL ) {
+		pthread_mutex_unlock(&client->chats_mutex);
+		DEBUG_FAILURE_PRINTF("The chat is not in the local list");
+		return -1;
+	} 	
+	
+	if ( cha_del_member(chat, chat_id, member) != 0 ) {
+		pthread_mutex_unlock(&client->chats_mutex);
+		DEBUG_FAILURE_PRINTF("Could not del the member locally");
+		return -1;
+	}
+	pthread_mutex_unlock(&client->chats_mutex);
+
+	return 0;
+*/
+}
+
+
+/*
+ *
+ *
+ */
 int psd_quit_from_chat(psd_ims_client *client, int chat_id) {
 	DEBUG_TRACE_PRINT();
 

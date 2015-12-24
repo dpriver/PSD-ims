@@ -68,10 +68,19 @@ typedef list_iterator chat_iterator;
 #define cha_unread(chat_info) \
 		(chat_info->unread_messages)
 
+#define cha_admin_myself(chat_info) \
+		(chat_info->admin == NULL)
+
+#define cha_admin_name(chat_info) \
+		fri_get_name(chat_info->admin)
+
+#define cha_admin_information(chat_info) \
+		fri_get_information(chat_info->admin)
+
 #define cha_messages(chat_info) \
 		(chat_info->messages)
 		
-#define cha_members(chat_indo) \
+#define cha_members(chat_info) \
 		(chat_info->members)
 
 #define cha_set_pending(chat_info, num_pending) \

@@ -269,6 +269,42 @@ void menu_friend_req(client_graphic *graphic) {
  *  Chat Menu
  * =========================================================================*/
 
+void show_chat_members(psd_ims_client *client, int chat_id) {
+	chat_member_iterator *iterator;
+	char *name, *information;
+	boolean is_friend;
+	boolean admin_myself;
+	
+	psd_begin_member_iteration(client, chat_id, iterator);
+	
+	printf(" [ADMIN] ");
+	psd_member_iterator_admin_myself(iterator, admin_myself);
+	if(admin_myself) {
+		printf("Myself\n");
+	}
+	else {
+		psd_member_iterator_admin_name(iterator, name);
+		psd_member_iterator_admin_info(iterator, information);
+		printf("%s: %s", name, information);
+	}
+	
+	while(psd_member_iterator_valid(iterator)) {
+		psd_member_iterator_name(iterator, name);
+		psd_member_iterator_information(iterator, information);
+		psd_member_iterator_isfriend(iterator, is_friend);
+		if (strcmp(name, psd_client_user_name(client)) == 0) {
+			printf(" [I]: %s \n", psd_client_user_information(client));
+		}
+		else {
+			printf(" [%s]: %s\n", name, ((is_friend)? information : "Not a friend"));
+		}
+		psd_member_iterator_next(iterator);
+	}
+	psd_end_member_iteration(client, iterator);
+	wait_user();
+}
+
+
 int add_member_to_chat(psd_ims_client *client, int chat_id) {
 	char member[MAX_USER_NAME_CHARS];
 	char *name, *information;
@@ -297,7 +333,48 @@ int add_member_to_chat(psd_ims_client *client, int chat_id) {
 
 
 int delete_member_from_chat(psd_ims_client *client, int chat_id) {
-	printf("Not implemented\n");
+	char member[MAX_USER_NAME_CHARS];
+	chat_member_iterator *iterator;
+	char *name, *information;
+	boolean is_friend;
+	boolean admin_myself;
+	
+	psd_begin_member_iteration(client, chat_id, iterator);
+	
+	printf(" [ADMIN] ");
+	psd_member_iterator_admin_myself(iterator, admin_myself);
+	if(admin_myself) {
+		printf("Myself\n");
+	}
+	else {
+		psd_member_iterator_admin_name(iterator, name);
+		psd_member_iterator_admin_info(iterator, information);
+		printf("%s: %s", name, information);
+	}
+	
+	while(psd_member_iterator_valid(iterator)) {
+		psd_member_iterator_name(iterator, name);
+		psd_member_iterator_information(iterator, information);
+		psd_member_iterator_isfriend(iterator, is_friend);
+		if (strcmp(name, psd_client_user_name(client)) == 0) {
+			printf(" [I]: %s \n", psd_client_user_information(client));
+		}
+		else {
+			printf(" [%s]: %s\n", name, ((is_friend)? information : "Not a friend"));
+		}
+		psd_member_iterator_next(iterator);
+	}
+	psd_end_member_iteration(client, iterator);
+	
+	printf("\n member: ");
+	scan_input_string(member, MAX_USER_NAME_CHARS);
+
+	if( psd_del_member_from_chat(client, member, chat_id) != 0 ) {
+		printf(" FAIL: Could not add %s to the chat\n", member);
+		wait_user();
+		return -1;
+	}
+	return 0;
 	wait_user();
 	return -1;	
 }
@@ -355,7 +432,7 @@ void screen_chat_show(psd_ims_client *client, void *data_raw) {
 	data = (struct chat_data*)data_raw;
 
 	menu_header_show("PSD IMS - Chats");
-	printf(" (/e)exit, (/a)add member, (/d)delete member, (/l)leave\n");
+	printf(" (/e)exit, (/s)show members,  (/a)add member, (/d)delete member, (/l)leave\n");
 	printf(" (/t)<file> attach <file> to message, (/r)remove attach\n");
 	printf(" --------------------------------------------\n");
 
@@ -409,6 +486,9 @@ void menu_chat(client_graphic *graphic, int chat_id) {
 					break;
 				case 'a':
 					add_member_to_chat(graphic->client, chat_id);
+					break;
+				case 's':
+					show_chat_members(graphic->client, chat_id);
 					break;
 				case 'd':
 					delete_member_from_chat(graphic->client, chat_id);
@@ -486,6 +566,23 @@ int create_new_chat(psd_ims_client *client) {
 }
 
 
+int view_friends(psd_ims_client *client) {
+	char *name, *information;
+	friends_iterator *iterator;
+
+	printf(" Friends \n");
+	psd_begin_fri_iteration(client, iterator);
+	while(psd_fri_iterator_valid(iterator)) {
+		psd_fri_iterator_name(iterator, name);
+		psd_fri_iterator_information(iterator, information);
+		printf(" %s: %s\n", name, information);
+		psd_fri_iterator_next(client, iterator);
+	}
+	psd_end_fri_iteration(client, iterator);
+	wait_user();
+}
+
+
 int send_friend_request(psd_ims_client *client) {
 	char name[MAX_USER_NAME_CHARS];
 
@@ -511,8 +608,8 @@ void screen_main_show(psd_ims_client *client, void *data) {
 	int id, unread; 
 
 	menu_header_show("PSD IMS - Chats");
-	printf(" (/e)exit, (/l)logout, (/n)new chat (/f)send friend request\n");
-	printf(" (/r)review friend requests\n");
+	printf(" (/e)exit, (/l)logout, (/n)new chat (/f)view friends\n");
+	printf(" (/r)review friend requests, (/s)send friend request\n");
 	printf(" --------------------------------------------\n");
 
 	psd_begin_chat_iteration(client, iterator);
@@ -559,6 +656,9 @@ void menu_main(client_graphic *graphic, boolean *global_exit) {
 					create_new_chat(graphic->client);
 					break;
 				case 'f':
+					view_friends(graphic->client);
+					break;
+				case 's':
 					send_friend_request(graphic->client);
 					break;
 				case 'r':
@@ -651,9 +751,9 @@ int login(psd_ims_client *client) {
 
 void screen_login_show(psd_ims_client *client, void *data) {
 	menu_header_show("PSD IMS - Login");
-	printf(" 1. Alta\n");
+	printf(" 1. Register\n");
 	printf(" 2. Login\n");
-	printf("\n 0. Salir\n");
+	printf("\n 0. Exit\n");
 	menu_footer_show();
 }
 
