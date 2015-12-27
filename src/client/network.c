@@ -112,11 +112,11 @@ void _net_unlink_chat() {
 void _net_unlink_chat_list(struct soap *soap, psdims__chat_list *chats) {
 	int i, j;
 	for( i = 0 ; i < chats->__sizenelems ; i++ ) {
-		for( j = 0 ; j < chats->chat_info[i].members->__sizenelems ; j++ ) {
-			soap_unlink(soap, chats->chat_info[i].members->name[j].string);
+		for( j = 0 ; j < chats->chat_info[i].members.__sizenelems ; j++ ) {
+			soap_unlink(soap, chats->chat_info[i].members.name[j].string);
 		}
-		soap_unlink(soap, chats->chat_info[i].members->name);
-		soap_unlink(soap, chats->chat_info[i].members);
+		soap_unlink(soap, chats->chat_info[i].members.name);
+		//soap_unlink(soap, &(chats->chat_info[i].members));
 		soap_unlink(soap, chats->chat_info[i].description);
 		soap_unlink(soap, chats->chat_info[i].admin);
 	}
@@ -140,6 +140,9 @@ network *net_new() {
 	new_network->login_info.password = NULL;	
 	new_network->serverURL = NULL;
 	new_network->logged = FALSE;
+
+	new_network->soap.send_timeout = 60; 			// 60 secs
+	new_network->soap.recv_timeout = 60;			// 60 secs
 
 	soap_init(&new_network->soap);
 	return new_network;
@@ -241,7 +244,60 @@ void net_logout(network *network) {
 
 psdims__user_info *net_recv_user_info(network *network, char *name) {
 	DEBUG_TRACE_PRINT();
-	return NULL;
+	int soap_response = 0;
+	psdims__user_info *user_info;
+	char *soap_error;
+
+
+	if ( (user_info = malloc(sizeof(psdims__user_info)) ) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory for user info");
+		return NULL;
+	}
+
+	soap_response = soap_call_psdims__get_friend_info(&network->soap, network->serverURL, "", &network->login_info, name, user_info);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		free(user_info);
+		return NULL;
+	}
+
+	_net_unlink_user(&network->soap, user_info);
+
+	return user_info;
+}
+
+
+/*
+ * 
+ * 
+ */
+psdims__client_data *net_recv_all_data(network *network) {
+	DEBUG_TRACE_PRINT();
+	int soap_response = 0;
+	psdims__client_data *client_data;
+	char *soap_error;	
+	
+	if ( (client_data = malloc(sizeof(psdims__client_data)) ) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory for client data");
+		return NULL;
+	}
+	
+	soap_response = soap_call_psdims__get_all_data(&network->soap, network->serverURL, "", &network->login_info, client_data);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		free(client_data);
+		return NULL;
+	}
+	
+	//_net_unlink_client_data(&network->soap, client_data);
+	
+	return client_data;
 }
 
 
@@ -249,11 +305,13 @@ psdims__user_info *net_recv_user_info(network *network, char *name) {
  *
  *
  */
-psdims__notifications *net_recv_notifications(network *network, int timestamp) {
+psdims__notifications *net_recv_notifications(network *network, int timestamp, int chat_id[], int read_timestamp[], int n_chats) {
 	DEBUG_TRACE_PRINT();
 	int soap_response = 0;
 	psdims__notifications *notification_list;
+	psdims__sync sync;
 	char *soap_error;
+	int i;
 
 	if( !network->logged ) {
 		DEBUG_FAILURE_PRINTF("Not logged");
@@ -264,9 +322,20 @@ psdims__notifications *net_recv_notifications(network *network, int timestamp) {
 		DEBUG_FAILURE_PRINTF("Could not allocate memory for notification list");
 		return NULL;
 	}
+	
+	// Create sync struct
+	if ( (sync.chat_read_timestamps.chat = malloc(sizeof(psdims__notif_chat_info)*n_chats) ) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory for sync");
+		return NULL;
+	}	
+	sync.chat_read_timestamps.__sizenelems = n_chats;
+	for ( i = 0 ; i < n_chats ; i++) {
+		sync.chat_read_timestamps.chat[i].chat_id = chat_id[i];
+		sync.chat_read_timestamps.chat[i].timestamp = read_timestamp[i];
+		DEBUG_INFO_PRINTF("syn chat %d -> %d", chat_id[i], read_timestamp[i]);
+	}
 
-	DEBUG_INFO_PRINTF("Calling the server");
-	soap_response = soap_call_psdims__get_pending_notifications(&network->soap, network->serverURL, "", &network->login_info, timestamp, notification_list);
+	soap_response = soap_call_psdims__get_pending_notifications(&network->soap, network->serverURL, "", &network->login_info, timestamp, &sync, notification_list);
 	if( soap_response != SOAP_OK ) {
 		soap_error = malloc(sizeof(char)*200);
 		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
@@ -276,6 +345,7 @@ psdims__notifications *net_recv_notifications(network *network, int timestamp) {
 		return NULL;
 	}
 
+	free(sync.chat_read_timestamps.chat);
 	_net_unlink_notification_list(&network->soap, notification_list);
 
 	return notification_list;
@@ -796,11 +866,11 @@ void net_free_chat_list(psdims__chat_list *chats) {
 	DEBUG_TRACE_PRINT();
 	int i, j;
 	for( i = 0 ; i < chats->__sizenelems ; i++ ) {
-		for( j = 0 ; j < chats->chat_info[i].members->__sizenelems ; j++ ) {
-			free(chats->chat_info[i].members->name[j].string);
+		for( j = 0 ; j < chats->chat_info[i].members.__sizenelems ; j++ ) {
+			free(chats->chat_info[i].members.name[j].string);
 		}
-		free(chats->chat_info[i].members->name);
-		free(chats->chat_info[i].members);
+		free(chats->chat_info[i].members.name);
+		//free(chats->chat_info[i].members);
 		free(chats->chat_info[i].description);
 		free(chats->chat_info[i].admin);
 	}

@@ -232,6 +232,13 @@ typedef struct chat_member_iterator chat_member_iterator;
 		aux = cha_get_info(iterator); \
 		unread = cha_unread(aux); \
 	}while(0)
+	
+#define psd_chat_iterator_pending(iterator, pending) \
+	do{ \
+		chat_info *aux; \
+		aux = cha_get_info(iterator); \
+		pending = cha_pending(aux); \
+	}while(0)
 
 #define psd_chat_iterator_admin_myself(iterator, admin_myself) \
 	do{ \
@@ -274,7 +281,7 @@ typedef struct chat_member_iterator chat_member_iterator;
 	do{ \
 		messages *aux; \
 		iterator = malloc(sizeof(chat_mes_iterator)); \
-		pthread_mutex_lock(&client->chats_mutex); \
+		pthread_mutex_lock(&(client->chats_mutex)); \
 		iterator->chat = cha_find_chat(client->chats, chat_id); \
 		if (iterator->chat == NULL) { \
 			free(iterator); \
@@ -298,7 +305,7 @@ typedef struct chat_member_iterator chat_member_iterator;
  */
 #define psd_end_mes_iteration(client, iterator) \
 	do{ \
-		pthread_mutex_unlock(&client->chats_mutex); \
+		pthread_mutex_unlock(&(client->chats_mutex)); \
 		free(iterator); \
 		iterator = NULL; \
 	}while(0)
@@ -336,6 +343,11 @@ typedef struct chat_member_iterator chat_member_iterator;
 		message_info *aux; \
 		aux = mes_get_info(iterator->iter); \
 		time = mes_message_timestamp(aux); \
+	}while(0)
+	
+#define psd_mes_iterator_clear_unread(iterator) \
+	do{ \
+		cha_clear_unread(iterator->chat); \
 	}while(0)
 	
 	

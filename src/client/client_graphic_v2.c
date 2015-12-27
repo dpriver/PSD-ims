@@ -136,7 +136,8 @@ struct client_graphic {
 		
 #define screen_update(graphic) \
 		pthread_mutex_lock(&(graphic->screen_update_mutex)); \
-		graphic->menu_update_screen(graphic->client, graphic->screen_data); \
+		if ( graphic->screen_updateable ) \
+			graphic->menu_update_screen(graphic->client, graphic->screen_data); \
 		pthread_mutex_unlock(&(graphic->screen_update_mutex))
 
 
@@ -150,8 +151,22 @@ int run_notifications_thread(client_graphic *graphic);
 int configure_signal_handling();
 
 
+#define screen_move_cursor(line, column) \
+		printf("\033[%d;%dH", line, column)
+
+#define screen_clear() \
+		write(1,"\E[H\E[2J",7)
+
+#define screen_clear_line(line) \
+		screen_move_cursos(line, 0); \
+		printf("\033[K")
+
+#define screen_printf(line, column, text, ...) \
+		screen_move_cursor(line, column); \
+		printf(text, ##__VA_ARGS__)
+
 void menu_header_show(const char *string) {
-	write(1,"\E[H\E[2J",7);
+	screen_clear();
 	printf("=============================================\n");
 	printf("              %s\n", string);
 	printf("=============================================\n");
@@ -173,8 +188,8 @@ void wait_user() {
 }
 
 void save_state(psd_ims_client *client) {
-	printf(" = Saving state =\n");
-	printf(" (NOT implemented)\n");
+	//printf(" = Saving state =\n");
+	//printf(" (NOT implemented)\n");
 }
 
 
@@ -213,6 +228,7 @@ void screen_friend_req_show(psd_ims_client *client, void *data) {
 	int time;
 	menu_header_show("PSD IMS - Friend requests");
 	printf(" (/e)exit, (/a<name>)accept <name>, (/d<name>)decline <name>\n");
+	printf(" (/u)update screen\n");
 	printf(" --------------------------------------------\n");
 
 	psd_begin_req_iteration(client, iterator);
@@ -238,7 +254,7 @@ void menu_friend_req(client_graphic *graphic) {
 		set_screen_updateable(graphic, TRUE);
 		screen_update(graphic);
 		ret = get_user_input(graphic->input_buffer, MAX_INPUT_CHARS);
-		set_screen_updateable(graphic, FALSE);
+		//set_screen_updateable(graphic, FALSE);
 		
 		if (ret < 0) return;
 		if (ret < 2) continue;
@@ -253,6 +269,9 @@ void menu_friend_req(client_graphic *graphic) {
 					break;
 				case 'd':
 					decline_friend_req(graphic->client, &graphic->input_buffer[2]);
+					break;
+				case 'u':
+					screen_update(graphic);
 					break;
 			}
 		} 
@@ -285,7 +304,7 @@ void show_chat_members(psd_ims_client *client, int chat_id) {
 	else {
 		psd_member_iterator_admin_name(iterator, name);
 		psd_member_iterator_admin_info(iterator, information);
-		printf("%s: %s", name, information);
+		printf("%s: %s\n", name, information);
 	}
 	
 	while(psd_member_iterator_valid(iterator)) {
@@ -434,20 +453,26 @@ void screen_chat_show(psd_ims_client *client, void *data_raw) {
 	menu_header_show("PSD IMS - Chats");
 	printf(" (/e)exit, (/s)show members,  (/a)add member, (/d)delete member, (/l)leave\n");
 	printf(" (/t)<file> attach <file> to message, (/r)remove attach\n");
+	printf(" (/u)update screen\n");
 	printf(" --------------------------------------------\n");
 
+	DEBUG_INFO_PRINTF("Esperando el mutex");
 	psd_begin_mes_iteration(client, data->chat_id, iterator);
+	if (psd_mes_iterator_valid(iterator)) {
+		psd_mes_iterator_clear_unread(iterator);
+	}
 	while(psd_mes_iterator_valid(iterator)) {
 		psd_mes_iterator_sender(iterator, sender);
 		psd_mes_iterator_text(iterator, text);
 		psd_mes_iterator_time(iterator, time);
+		psd_mes_iterator_attach_path(iterator, attach_path);
 		t = (time_t)time;
 		tm = *localtime(&t);
-		psd_mes_iterator_attach_path(iterator, attach_path);
 		printf(" (%02d:%02d:%02d) [%s]: %s %s\n", tm.tm_hour, tm.tm_min, tm.tm_sec, ((sender)? sender:"I") , text, (attach_path)?"[ATTACH]":"");
 		psd_mes_iterator_next(iterator);
 	}
 	psd_end_mes_iteration(client, iterator);
+	DEBUG_INFO_PRINTF("He soltado el mutex");
 
 	if(data->has_attach)
 		printf(" attached file: %s", data->attach_path);
@@ -474,7 +499,7 @@ void menu_chat(client_graphic *graphic, int chat_id) {
 		set_screen_updateable(graphic, TRUE);
 		screen_update(graphic);
 		ret = get_user_input(graphic->input_buffer, MAX_INPUT_CHARS);
-		set_screen_updateable(graphic, FALSE);
+		//set_screen_updateable(graphic, FALSE);
 		
 		if (ret < 0) return;
 		if (ret < 1) continue;
@@ -501,6 +526,9 @@ void menu_chat(client_graphic *graphic, int chat_id) {
 						chat_data->has_attach = TRUE;
 						strcpy(chat_data->attach_path, &graphic->input_buffer[2]);
 					}
+					break;
+				case 'u':
+					screen_update(graphic);
 					break;
 				case 'r':
 					chat_data->has_attach = FALSE;
@@ -610,6 +638,7 @@ void screen_main_show(psd_ims_client *client, void *data) {
 	menu_header_show("PSD IMS - Chats");
 	printf(" (/e)exit, (/l)logout, (/n)new chat (/f)view friends\n");
 	printf(" (/r)review friend requests, (/s)send friend request\n");
+	printf(" (/u)update screen\n");
 	printf(" --------------------------------------------\n");
 
 	psd_begin_chat_iteration(client, iterator);
@@ -617,7 +646,7 @@ void screen_main_show(psd_ims_client *client, void *data) {
 		psd_chat_iterator_description(iterator, description);
 		psd_chat_iterator_id(iterator, id);
 		psd_chat_iterator_unread(iterator, unread);
-		printf(" (%d) %d: \n", unread, id);
+		printf(" (%d) %d: %s\n", unread, id, description);
 		psd_chat_iterator_next(client, iterator);
 	}
 	psd_end_chat_iteration(client, iterator);
@@ -638,7 +667,7 @@ void menu_main(client_graphic *graphic, boolean *global_exit) {
 		set_screen_updateable(graphic, TRUE);
 		screen_update(graphic);
 		ret = get_user_input(graphic->input_buffer, MAX_INPUT_CHARS);
-		set_screen_updateable(graphic, FALSE);
+		//set_screen_updateable(graphic, FALSE);
 		if (ret < 0) return;
 		if (ret < 1) continue;
 		if (graphic->input_buffer[0] == COMMAND_CHAR) {
@@ -660,6 +689,9 @@ void menu_main(client_graphic *graphic, boolean *global_exit) {
 					break;
 				case 's':
 					send_friend_request(graphic->client);
+					break;
+				case 'u':
+					screen_update(graphic);
 					break;
 				case 'r':
 					menu_friend_req(graphic);
@@ -779,7 +811,7 @@ void menu_login(client_graphic *graphic) {
 			case '2': 
 				if( login(graphic->client) == 0) {
 					configure_signal_handling();
-					//run_notifications_thread(client);
+					run_notifications_thread(graphic);
 					menu_main(graphic, &exit);
 					set_screen_update(graphic, screen_login_show, NULL);
 				}
@@ -826,14 +858,8 @@ int graphic_client_run(psd_ims_client *client) {
 
 
 void retrieve_user_data(psd_ims_client *client) {
-	if ( psd_recv_friends(client) < 0 ) {
-		printf(" Failed to retrieve new friends");
-		wait_user();
-		return;
-	}
-
-	if ( psd_recv_chats(client) < 0 ) {
-		printf(" Failed to retrieve new chats");
+	if ( psd_recv_all_data(client) < 0 ) {
+		printf(" Failed to retrieve the user data");
 		wait_user();
 		return;
 	}
@@ -881,7 +907,8 @@ void *notifications_fetch(void *arg) {
 	while(1) {
 		sleep(1);
 		psd_recv_notifications(graphic->client);
-		screen_update(graphic);
+		psd_recv_all_pending_messages(graphic->client);
+		//screen_update(graphic);
 
 		pthread_mutex_lock(&(graphic->continue_fetching_mutex));
 		if( !graphic->continue_fetching ) {

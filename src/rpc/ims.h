@@ -55,6 +55,7 @@ typedef struct psdims__notif_friend_list {
 
 typedef struct psdims__notif_chat_info {
 	int chat_id;
+	int timestamp;
 } psdims__notif_chat_info;
 
 typedef struct psdims__notif_chat_list {
@@ -62,11 +63,20 @@ typedef struct psdims__notif_chat_list {
 	psdims__notif_chat_info *chat;
 } psdims__notif_chat_list;
 
-typedef struct psdims__notifications {
-	psdims__notif_friend_list friend_request;
-	psdims__notif_chat_list chats_with_messages;
-	int last_timestamp;
-} psdims__notifications;
+typedef struct psdims__notif_member_info {
+	psdims__string name;
+	int chat_id;
+	int timestamp;
+} psdims__notif_member_info;
+
+typedef struct psdims__notif_chat_member_list {
+	int __sizenelems;
+	psdims__notif_member_info *member;
+} psdims__notif_chat_member_list;
+
+typedef struct psdims__sync {
+	psdims__notif_chat_list chat_read_timestamps;
+} psdims__sync;
 
 typedef struct psdims__new_chat {
 	char *description;
@@ -108,6 +118,7 @@ typedef struct psdims__message_info {
 typedef struct psdims__message_list {
 	int __sizenelems;
 	psdims__message_info *messages;
+	int read_timestamp;
 	int last_timestamp;
 } psdims__message_list;
 
@@ -122,7 +133,9 @@ typedef struct psdims__chat_info {
 	int chat_id;
 	char *description;
 	char *admin;
-	psdims__member_list *members;
+	int read_timestamp;
+	psdims__message_list messages;
+	psdims__member_list members;
 } psdims__chat_info;
 
 typedef struct psdims__chat_list {
@@ -131,6 +144,20 @@ typedef struct psdims__chat_list {
 	int last_timestamp;
 } psdims__chat_list;
 
+typedef struct psdims__notifications {
+	psdims__notif_friend_list friend_request;
+	psdims__user_list new_friends;
+	psdims__notif_chat_list chats_with_messages;
+	psdims__notif_chat_member_list chat_members;
+	int last_timestamp;
+} psdims__notifications;
+
+typedef struct psdims__client_data {
+	psdims__chat_list chats;
+	psdims__user_list friends;
+	psdims__notif_friend_list friend_requests;
+	int timestamp;
+} psdims__client_data;
 
 
 /********************************************************************
@@ -148,6 +175,9 @@ int psdims__get_user(psdims__login_info *login, psdims__user_info *user);
 // get friend list
 int psdims__get_friends(psdims__login_info *login, int timestamp, psdims__user_list *friends);
 
+// get friend info
+int psdims__get_friend_info(psdims__login_info *login, char *name, psdims__user_info *friend_info);
+
 // get chat list
 int psdims__get_chats(psdims__login_info *login, int timestamp, psdims__chat_list *chats);
 
@@ -161,7 +191,10 @@ int psdims__get_chat_messages(psdims__login_info *login, int chat_id, int timest
 int psdims__get_attachment(psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file);
 
 // get pending notifications
-int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, psdims__notifications *notifications);
+int psdims__get_pending_notifications(psdims__login_info *login, int timestamp, psdims__sync *sync, psdims__notifications *notifications);
+
+//
+int psdims__get_all_data(psdims__login_info *login, psdims__client_data *client_data);
 
 // create new chat
 int psdims__create_chat(psdims__login_info *login, psdims__new_chat *new_chat, int *chat_id);

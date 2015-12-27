@@ -90,7 +90,8 @@ int main( int argc, char **argv) {
 
 	while( 1 ) {
 		DEBUG_INFO_PRINTF("Waiting for new connection");
-		mthread_listen_connection();
+		//mthread_listen_connection();
+		listen_connection();
 		
 		sigprocmask(SIG_BLOCK, &sig_blocked_mask, &old_sig_mask);
 		if( !continue_listening ) 

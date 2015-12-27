@@ -77,10 +77,16 @@ psdims__user_info *net_recv_user_info(network *network, char *name);
 void net_logout(network *network);
 
 /*
+ * 
+ * 
+ */
+ psdims__client_data *net_recv_all_data(network *network);
+
+/*
  *
  *
  */
-psdims__notifications *net_recv_notifications(network *network, int timestamp);
+psdims__notifications *net_recv_notifications(network *network, int timestamp, int chat_id[], int read_timestamp[], int n_chats);
 
 /*
  *

@@ -85,6 +85,7 @@ chats *cha_new(int max) {
 		return NULL;
 	}
 	
+	
 	chats_new->item_value_comp = chat_id_comp;
 	chats_new->item_comp = chat_comp;
 	
@@ -106,7 +107,7 @@ void cha_free(chats *chats) {
  * Creates a new chat in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], char *member_names[], int n_members, int max_members, int max_messages) {
+int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], char *member_names[], int n_members, int max_members, int max_messages, int read_timestamp) {
 
 	DEBUG_TRACE_PRINT();
 	chat_info *info;
@@ -134,6 +135,7 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
 		return -1;
 	}
 	info->id = chat_id;
+	info->read_timestamp = read_timestamp;
 	info->unread_messages = 0;
 	info->pending_messages = 0;
 	info->admin = admin;
@@ -165,7 +167,7 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
  * Adds the message in the chat
  * Returns 0 or -1 if fails
  */
-int cha_add_message(chat_info *chat, const char *sender, const char *text, int send_timestamp, const char *attach_path, boolean unread) {
+int cha_add_message(chat_info *chat, const char *sender, const char *text, int send_timestamp, const char *attach_path) {
 	DEBUG_TRACE_PRINT();
 
 	if( mes_add_message(chat->messages, sender, text, send_timestamp, attach_path) != 0 ) {
@@ -173,8 +175,9 @@ int cha_add_message(chat_info *chat, const char *sender, const char *text, int s
 		return -1;
 	}
 
-	if(unread)
+	if(send_timestamp > chat->read_timestamp){
 		chat->unread_messages++;
+	}
 
 	return 0;
 }
@@ -184,7 +187,7 @@ int cha_add_message(chat_info *chat, const char *sender, const char *text, int s
  * Adds the messages in the chat
  * Returns 0 or -1 if fails
  */
-int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_timestamp[], char *attach_path[], int n_messages, boolean unread) {
+int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_timestamp[], char *attach_path[], int n_messages) {
 	DEBUG_TRACE_PRINT();
 	
 	int i;
@@ -196,10 +199,10 @@ int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_tim
 			mes_del_last_messages(chat->messages, i); // (i+1) messages (-1) the last failed
 			return -1;
 		}
+		if(send_timestamp[i] > chat->read_timestamp ){
+			chat->unread_messages++;
+		}
 	}
-
-	if(unread)
-		chat->unread_messages += n_messages;
 
 	return 0;
 }

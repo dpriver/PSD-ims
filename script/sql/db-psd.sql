@@ -33,6 +33,7 @@ CREATE TABLE users_chats(
  ID_USERS INT(10) NOT NULL,
  ID_CHAT INT(10) NOT NULL,
  CREATION_TIME INT(10),
+ READ_MSG_TIME INT(10),
  FOREIGN KEY (ID_USERS) REFERENCES users(ID) on delete cascade on update cascade,
  FOREIGN KEY (ID_CHAT) REFERENCES chats(ID) on delete cascade on update cascade
 );

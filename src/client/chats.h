@@ -37,6 +37,7 @@ typedef struct chat_info chat_info;
 struct chat_info {
 	int id;
 	char *description;
+	int read_timestamp;
 	int unread_messages;
 	int pending_messages;
 	friend_info *admin;
@@ -68,6 +69,9 @@ typedef list_iterator chat_iterator;
 #define cha_unread(chat_info) \
 		(chat_info->unread_messages)
 
+#define cha_read_timestamp(chat_info) \
+		(chat_info->read_timestamp)
+
 #define cha_admin_myself(chat_info) \
 		(chat_info->admin == NULL)
 
@@ -82,6 +86,10 @@ typedef list_iterator chat_iterator;
 		
 #define cha_members(chat_info) \
 		(chat_info->members)
+
+#define cha_clear_unread(chat_info) \
+		(chat_info->unread_messages = 0); \
+		mes_get_timestamp(chat_info->messages, chat_info->read_timestamp)
 
 #define cha_set_pending(chat_info, num_pending) \
 		(chat_info->pending_messages = num_pending)
@@ -109,7 +117,7 @@ typedef list_iterator chat_iterator;
 
 
 #define cha_num_chats(chats) \
-		list_num_elems(member_list)	
+		list_num_elems(chats)	
 
 #define cha_get_timestamp(chats, chat_timestamp) \
 	do{ \
@@ -158,19 +166,19 @@ void cha_free(chats *chats);
  * Creates a new chat in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], char *member_names[], int n_members, int max_members,  int max_messages);
+int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], char *member_names[], int n_members, int max_members,  int max_messages, int read_timestamp);
 
 /*
  * Adds the message in the chat
  * Returns 0 or -1 if fails
  */
-int cha_add_message(chat_info *chat, const char *sender, const char *text, int send_date, const char *attach_path, boolean unread);
+int cha_add_message(chat_info *chat, const char *sender, const char *text, int send_date, const char *attach_path);
 
 /*
  * Adds the messages in the chat
  * Returns 0 or -1 if fails
  */
-int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages, boolean unread);
+int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_date[], char *attach_path[], int n_messages);
 
 /*
  * Creates a new chat member in the list with the provided info

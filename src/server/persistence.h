@@ -91,7 +91,7 @@ int add_chat(persistence* persistence, int admin_id, char* description, int time
 
 int del_chat(persistence* persistence, int user_id);
 
-int add_user_chat(persistence* persistence, int user_id, int chat_id, int timestamp);
+int add_user_chat(persistence* persistence, int user_id, int chat_id, int read_timestamp, int timestamp);
 
 int del_user_chat(persistence* persistence, int user_id, int chat_id);
 
@@ -109,7 +109,13 @@ int set_file(persistence* persistence, int user_id, int chat_id,char* path, int 
 
 int get_file(persistence* persistence, int user_id, int chat_id,char* path, int timestamp);
 
-int get_notifications(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__notifications *notifications);
+int update_sync(persistence *persistence, int user_id, int chat_id, int read_timestamp);
+
+int get_notif_chats_with_messages(persistence *persistence, int user_id, int timestamp, struct soap *soap, psdims__notif_chat_list *chat_list);
+
+int get_notif_friend_requests(persistence *persistence, int user_id, int timestamp, struct soap *soap, psdims__notif_friend_list *request_list);
+
+int get_notif_chat_members(persistence *persistence, int user_id, int timestamp, struct soap *soap, psdims__notif_chat_member_list *member_list);
 
 #endif /* __PERSISTENCE */
 

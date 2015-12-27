@@ -149,6 +149,7 @@ int req_del_request(friend_requests *requests, const char *name) {
 	}
 	
 	list_delete_node(requests, node);
+	return 0;
 }
 
 

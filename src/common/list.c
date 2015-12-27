@@ -157,6 +157,10 @@ int list_add_item(list *list, void *item) {
 		return -1;
 	}
 	
+	if (list->n_elems >= list->max_elems) {
+		DEBUG_FAILURE_PRINTF("The list is full");
+	}
+	
 	node = malloc(sizeof(list_node));
 	if (node == NULL) {
 		return -1;
@@ -164,6 +168,7 @@ int list_add_item(list *list, void *item) {
 	
 	node->item = item;
 	_node_add(list, node);
+	list->n_elems++;
 	
 	return 0;
 }
@@ -172,6 +177,7 @@ int list_add_item(list *list, void *item) {
 void list_delete_node(list *list, list_node *node) {
 	DEBUG_TRACE_PRINT();
 	_node_delete(node, list->item_free);
+	list->n_elems--;
 }
 
 
@@ -182,5 +188,6 @@ void list_delete_last(list *list, int num_elems) {
 			return;	// if the list is empty
 		}
 		_node_delete(list->ghost_item->prev, list->item_free);
+		list->n_elems--;
 	}
 }
