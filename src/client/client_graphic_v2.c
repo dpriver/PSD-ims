@@ -303,8 +303,7 @@ void show_chat_members(psd_ims_client *client, int chat_id) {
 	}
 	else {
 		psd_member_iterator_admin_name(iterator, name);
-		psd_member_iterator_admin_info(iterator, information);
-		printf("%s: %s\n", name, information);
+		printf("%s\n", name);
 	}
 	
 	while(psd_member_iterator_valid(iterator)) {
@@ -367,8 +366,7 @@ int delete_member_from_chat(psd_ims_client *client, int chat_id) {
 	}
 	else {
 		psd_member_iterator_admin_name(iterator, name);
-		psd_member_iterator_admin_info(iterator, information);
-		printf("%s: %s", name, information);
+		printf("%s\n", name);
 	}
 	
 	while(psd_member_iterator_valid(iterator)) {
@@ -389,7 +387,7 @@ int delete_member_from_chat(psd_ims_client *client, int chat_id) {
 	scan_input_string(member, MAX_USER_NAME_CHARS);
 
 	if( psd_del_member_from_chat(client, member, chat_id) != 0 ) {
-		printf(" FAIL: Could not add %s to the chat\n", member);
+		printf(" FAIL: Could not delete %s to the chat\n", member);
 		wait_user();
 		return -1;
 	}
@@ -442,6 +440,7 @@ void screen_chat_show(psd_ims_client *client, void *data_raw) {
 	chat_mes_iterator *iterator;
 	char *sender = NULL, *text = NULL, *attach_path = NULL;
 	int time;
+	int double_check_time;
 	time_t t;
 	struct tm tm;
 	
@@ -456,10 +455,10 @@ void screen_chat_show(psd_ims_client *client, void *data_raw) {
 	printf(" (/u)update screen\n");
 	printf(" --------------------------------------------\n");
 
-	DEBUG_INFO_PRINTF("Esperando el mutex");
 	psd_begin_mes_iteration(client, data->chat_id, iterator);
 	if (psd_mes_iterator_valid(iterator)) {
 		psd_mes_iterator_clear_unread(iterator);
+		psd_mes_iterator_double_check_time(iterator, double_check_time);
 	}
 	while(psd_mes_iterator_valid(iterator)) {
 		psd_mes_iterator_sender(iterator, sender);
@@ -468,11 +467,11 @@ void screen_chat_show(psd_ims_client *client, void *data_raw) {
 		psd_mes_iterator_attach_path(iterator, attach_path);
 		t = (time_t)time;
 		tm = *localtime(&t);
-		printf(" (%02d:%02d:%02d) [%s]: %s %s\n", tm.tm_hour, tm.tm_min, tm.tm_sec, ((sender)? sender:"I") , text, (attach_path)?"[ATTACH]":"");
+		printf(" %c[0;%dm(%02d:%02d:%02d) %s[%s]:%c[0m",  0x1b, 36, tm.tm_hour, tm.tm_min, tm.tm_sec, ((time > double_check_time)? " ": "\u2714") , ((sender)? sender:"I"), 0x1b);
+		printf("\t%s %s\n", text, ((attach_path)?"[ATTACH]":""));
 		psd_mes_iterator_next(iterator);
 	}
 	psd_end_mes_iteration(client, iterator);
-	DEBUG_INFO_PRINTF("He soltado el mutex");
 
 	if(data->has_attach)
 		printf(" attached file: %s", data->attach_path);
@@ -576,15 +575,8 @@ int create_new_chat(psd_ims_client *client) {
 	printf("\n description: ");
 	scan_input_string(description, MAX_DESCRIPTION_CHARS);
 
-	if( (chat_id = psd_create_chat(client, description, NULL)) < 0 ) {
+	if( (chat_id = psd_create_chat(client, description, member)) < 0 ) {
 		printf(" FAIL: Could not create the chat\n");
-		wait_user();
-		return -1;
-	}
-
-	if( psd_add_member_to_chat(client, member, chat_id) != 0 ) {
-		psd_quit_from_chat(client, chat_id);
-		printf(" Failed to create the chat\n");
 		wait_user();
 		return -1;
 	}
@@ -629,6 +621,20 @@ int send_friend_request(psd_ims_client *client) {
 	return 0;
 }
 
+int show_timestamps(psd_ims_client *client) {
+	int notif_time, fri_time, cha_time, req_time;
+	
+	psd_notif_timestamp(client, notif_time);
+	psd_chats_timestamp(client, cha_time);
+	psd_friends_timestamp(client, fri_time);
+	psd_requests_timestamp(client, req_time);
+	
+	printf("notif: %d\n", notif_time);
+	printf("chats: %d\n", cha_time);
+	printf("frien: %d\n", fri_time);
+	printf("reque: %d\n", req_time);
+	wait_user();
+}
 
 void screen_main_show(psd_ims_client *client, void *data) {
 	chats_iterator *iterator;
@@ -638,7 +644,7 @@ void screen_main_show(psd_ims_client *client, void *data) {
 	menu_header_show("PSD IMS - Chats");
 	printf(" (/e)exit, (/l)logout, (/n)new chat (/f)view friends\n");
 	printf(" (/r)review friend requests, (/s)send friend request\n");
-	printf(" (/u)update screen\n");
+	printf(" (/u)update screen (/t)show timestamps\n");
 	printf(" --------------------------------------------\n");
 
 	psd_begin_chat_iteration(client, iterator);
@@ -693,6 +699,9 @@ void menu_main(client_graphic *graphic, boolean *global_exit) {
 				case 'u':
 					screen_update(graphic);
 					break;
+				case 't':
+					show_timestamps(graphic->client);
+					break;
 				case 'r':
 					menu_friend_req(graphic);
 					set_screen_update(graphic, screen_main_show, NULL);
@@ -712,6 +721,12 @@ void menu_main(client_graphic *graphic, boolean *global_exit) {
 		
 	} while( cont );
 	
+	
+	set_continue_fetching(graphic_global, FALSE);
+	// wait for the thread to end
+	if( graphic_global->notifications_tid != -1) {
+		pthread_join(graphic_global->notifications_tid, NULL);
+	}
 	psd_logout(graphic->client);
 }
 

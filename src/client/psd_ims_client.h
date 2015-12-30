@@ -94,6 +94,18 @@ typedef struct chat_member_iterator chat_member_iterator;
 #define psd_client_user_information(client) \
 		(client->user_info)
 
+#define psd_notif_timestamp(client, timestamp) \
+		(timestamp = client->last_notif_timestamp)
+		
+#define psd_friends_timestamp(client, timestamp) \
+		fri_get_timestamp(client->friends, timestamp)
+		
+#define psd_requests_timestamp(client, timestamp) \
+		req_list_timestamp(client->requests, timestamp)
+		
+#define psd_chats_timestamp(client, timestamp) \
+		cha_get_timestamp(client->chats, timestamp)
+
 /* =========================================================================
  *  Iterators
  * =========================================================================*/
@@ -257,17 +269,6 @@ typedef struct chat_member_iterator chat_member_iterator;
 		} \
 		name = cha_admin_name(aux); \
 	}while(0)
-	
-#define psd_chat_iterator_admin_info(iterator, information) \
-	do{ \
-		chat_info *aux; \
-		aux = cha_get_info(iterator); \
-		if (cha_admin_myself(aux)) { \
-			information = NULL; \
-			break; \
-		} \
-		information = cha_admin_information(aux); \
-	}while(0)
 
 
 /*-----------------------------------------------------------
@@ -344,6 +345,9 @@ typedef struct chat_member_iterator chat_member_iterator;
 		aux = mes_get_info(iterator->iter); \
 		time = mes_message_timestamp(aux); \
 	}while(0)
+	
+#define psd_mes_iterator_double_check_time(iterator, time) \
+		(time = cha_all_read_timestamp(iterator->chat))
 	
 #define psd_mes_iterator_clear_unread(iterator) \
 	do{ \
@@ -556,6 +560,12 @@ int psd_del_member_from_chat(psd_ims_client *client, char *member, int chat_id);
  *
  */
 int psd_quit_from_chat(psd_ims_client *client, int chat_id);
+
+/*
+ *
+ *
+ */
+int psd_remove_chat(psd_ims_client *client, int chat_id);
 
 /*
  * Send a message to the chat "chat_id"

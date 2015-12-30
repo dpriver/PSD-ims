@@ -151,7 +151,8 @@ int members_del_member(chat_members *members, const char *name) {
 		return -1;
 	}
 	
-	list_delete_node(members, node);	
+	list_delete_node(members, node);
+	return 0;
 }
 
 

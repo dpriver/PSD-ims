@@ -140,7 +140,6 @@ int fri_add_friend(friends *friends, const char *name, const char *information) 
 		return -1;
 	}
 
-	DEBUG_INFO_PRINTF("Added friend %s", name);
 	return 0;
 }
 

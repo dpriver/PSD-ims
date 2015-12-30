@@ -32,8 +32,6 @@
 #include <unistd.h>
 
 #include "psd_ims_server.h"
-//#include "persistence.h"
-//#include "network.h"
 
 #include "debug_def.h"
 
@@ -47,6 +45,7 @@ void stop_server(int sig);
 
 int main( int argc, char **argv) {
 
+	int listenner_ret_value = 0;
 	int bind_port;
 	sigset_t sig_blocked_mask;
 	sigset_t old_sig_mask;
@@ -88,10 +87,9 @@ int main( int argc, char **argv) {
 		return 0;
 	}
 
-	while( 1 ) {
-		DEBUG_INFO_PRINTF("Waiting for new connection");
-		//mthread_listen_connection();
-		listen_connection();
+	DEBUG_INFO_PRINTF("Init master connection");
+	while( listenner_ret_value == 0 ) {
+		listenner_ret_value = listen_connection();
 		
 		sigprocmask(SIG_BLOCK, &sig_blocked_mask, &old_sig_mask);
 		if( !continue_listening ) 

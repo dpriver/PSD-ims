@@ -332,7 +332,6 @@ psdims__notifications *net_recv_notifications(network *network, int timestamp, i
 	for ( i = 0 ; i < n_chats ; i++) {
 		sync.chat_read_timestamps.chat[i].chat_id = chat_id[i];
 		sync.chat_read_timestamps.chat[i].timestamp = read_timestamp[i];
-		DEBUG_INFO_PRINTF("syn chat %d -> %d", chat_id[i], read_timestamp[i]);
 	}
 
 	soap_response = soap_call_psdims__get_pending_notifications(&network->soap, network->serverURL, "", &network->login_info, timestamp, &sync, notification_list);
@@ -602,6 +601,30 @@ int net_add_user_to_chat(network *network, char *member, int chat_id) {
 
 	// Comprobar error del servidor
 	return 0;
+}
+
+
+/*
+ *
+ *
+ */
+int net_remove_user_from_chat(network *network, char *member, int chat_id) {
+	DEBUG_TRACE_PRINT();
+	int soap_response = 0;
+	int errcode = 0;
+	char *soap_error;
+
+	soap_response = soap_call_psdims__remove_member(&network->soap, network->serverURL, "", &network->login_info, member, chat_id, &errcode);
+	if( soap_response != SOAP_OK ) {
+		soap_error = malloc(sizeof(char)*200);
+		soap_sprint_fault(&network->soap, soap_error, sizeof(char)*200);
+		DEBUG_FAILURE_PRINTF("Server request failed: %s", soap_error);
+		free(soap_error);
+		return -1;
+	}
+
+	// Comprobar error del servidor
+	return 0;	
 }
 
 

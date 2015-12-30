@@ -28,7 +28,6 @@
 #include "persistence.h"
 #include "bool.h"
 #include <pthread.h>
-#include <mysql.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -69,6 +68,8 @@ void end_soap_connection(struct soap *soap) {
 void *thread_serve_request(void *soap) {
 	DEBUG_TRACE_PRINT();
 
+	DEBUG_INFO_PRINTF("Serving slave connection");
+
 	pthread_detach(pthread_self());
 	soap_serve((struct soap*)soap);
 
@@ -76,6 +77,7 @@ void *thread_serve_request(void *soap) {
 	end_soap_connection((struct soap*)soap);
 	free(soap);
 
+	DEBUG_INFO_PRINTF("Closing slave connection");
 	// decrement the number of alive threads
 	pthread_mutex_lock(&server.n_threads_mutex);
 	server.n_alive_threads--;
@@ -97,17 +99,17 @@ int init_server(int bind_port, char persistence_user[], char persistence_pass[])
 	DEBUG_TRACE_PRINT();
 
 	SOAP_SOCKET m;
-	
 	server.n_alive_threads = 0;
 	pthread_mutex_init(&server.n_threads_mutex, NULL);
 	pthread_cond_init(&server.zero_alive_threads, NULL);
+
 	server.persistence = init_persistence(persistence_user, persistence_pass);
 	if (server.persistence == NULL ) {
 		DEBUG_FAILURE_PRINTF("Could not init persistence");
 		return -1;
 	}
-
-	DEBUG_INFO_PRINTF("Init soap...");
+	
+	DEBUG_INFO_PRINTF("Init soap");
 	soap_init(&server.soap);
 	
 	server.soap.send_timeout = 60; 			// 60 secs
@@ -153,6 +155,23 @@ void free_server() {
  */
 int listen_connection () {
 	DEBUG_TRACE_PRINT();
+	int ret_value;
+
+	if ( persistence_thread_safe(server.persistence) )
+		ret_value = mthread_listen_connection();
+	else
+		ret_value = sthread_listen_connection();
+		
+	return ret_value;
+}
+
+
+/*
+ *
+ * Returns 0 or -1 if fails
+ */
+int sthread_listen_connection () {
+	DEBUG_TRACE_PRINT();
 
 	SOAP_SOCKET s;
 
@@ -166,12 +185,23 @@ int listen_connection () {
 		return -1;
 	}
 	
+	if (persistence_err(server.persistence)) {
+		DEBUG_FAILURE_PRINTF("Persistence is disconnected, atempting to reconnect...");
+		reconnect_persistence(server.persistence);
+		if (persistence_err(server.persistence)) {
+			DEBUG_FAILURE_PRINTF("Could not reconnect.");
+			return -1;
+		}
+	}
+	
 	// Execute invoked operation
-	soap_serve(&server.soap);
+	if (soap_serve(&(server.soap)) != SOAP_OK) {
+		soap_print_fault(&(server.soap), stderr);
+	}
 
 	// Clean up!
-	soap_end(&server.soap);
-
+	soap_destroy(&(server.soap));
+	soap_end(&(server.soap));
 	return 0;
 }
 
@@ -187,6 +217,8 @@ int mthread_listen_connection () {
 	pthread_t tid;
 	struct soap *tsoap;
 
+	DEBUG_INFO_PRINTF("Master connection ready");
+
 	s = soap_accept(&server.soap);
 	if (!soap_valid_socket(s)) {
 		if(server.soap.errnum) {
@@ -197,6 +229,16 @@ int mthread_listen_connection () {
 		return -1;
 	}
 
+	if (persistence_err(server.persistence)) {
+		DEBUG_FAILURE_PRINTF("Persistence is disconnected, atempting to reconnect...");
+		reconnect_persistence(server.persistence);
+		if (persistence_err(server.persistence)) {
+			DEBUG_FAILURE_PRINTF("Could not reconnect.");
+			return -1;
+		}
+	}
+
+	DEBUG_INFO_PRINTF("Creating slave handler");
 	// The threads are not controlled, there may potencially be an infinite number of them
 	// at the same time (resource problems... )
 	tsoap = soap_copy(&server.soap);	//make a safe copy
@@ -230,7 +272,7 @@ int check_login(psdims__login_info *login) {
 		DEBUG_FAILURE_PRINTF("Login failed");
 		return -1;
 	}
-	user_id = get_user_id(server.persistence,login->name);
+	user_id = get_user_id(server.persistence, login->name);
 	if( user_id == -1) {
 		DEBUG_FAILURE_PRINTF("Login failed: the user does not exist\n");
 		return -1;
@@ -319,11 +361,6 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
 	strcpy(user->name,login->name);  
 	get_user_info(server.persistence, user_id, user->information, 200);
 
-	// Buscar el usuario mediante persistence
-		//[SI no se encuentra]
-			//soap->user = (char*)malloc(sizeof(char)*200);
-			//strcpy((char *)soap->user, "Incorrect login credentials");
-			//return SOAP_USER_ERROR
 	return SOAP_OK;
 }
 
@@ -658,13 +695,15 @@ int psdims__get_all_data(struct soap *soap, psdims__login_info *login, psdims__c
 	}	
 	
 	client_data->timestamp = time(NULL);
-	if (get_list_friends(server.persistence, user_id, 0, soap, &(client_data->friends))) {
+	
+	if (get_notif_friend_requests(server.persistence, user_id, 0, soap, &(client_data->friend_requests))) {
 		return SOAP_USER_ERROR;
 	}
 	if (get_list_chats(server.persistence, user_id, 0, soap, &(client_data->chats))) {
 		return SOAP_USER_ERROR;
 	}
-	if (get_notif_friend_requests(server.persistence, user_id, 0, soap, &(client_data->friend_requests))) {
+	
+	if (get_list_friends(server.persistence, user_id, 0, soap, &(client_data->friends))) {
 		return SOAP_USER_ERROR;
 	}
 	
@@ -701,10 +740,19 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
 	if(get_notif_chats_with_messages(server.persistence, id_user, timestamp, soap, &(notifications->chats_with_messages)) < 0){
 		return SOAP_USER_ERROR;
 	}
+	if(get_notif_chats_read_times(server.persistence, id_user, soap, &(notifications->chats_read_times)) < 0){
+		return SOAP_USER_ERROR;
+	}	
 	if(get_notif_friend_requests(server.persistence, id_user, timestamp, soap, &(notifications->friend_request)) < 0){
 		return SOAP_USER_ERROR;
 	}
 	if(get_notif_chat_members(server.persistence, id_user, timestamp, soap, &(notifications->chat_members)) < 0){
+		return SOAP_USER_ERROR;
+	}
+	if(get_notif_chat_rem_members(server.persistence, id_user, timestamp, soap, &(notifications->rem_chat_members)) < 0){
+		return SOAP_USER_ERROR;
+	}
+	if(get_notif_chat_admins(server.persistence, id_user, timestamp, soap, &(notifications->chat_admins)) < 0) {
 		return SOAP_USER_ERROR;
 	}
 	if(get_list_friends(server.persistence, id_user, timestamp, soap, &(notifications->new_friends)) < 0){
@@ -724,6 +772,8 @@ int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__ne
 	DEBUG_TRACE_PRINT();
 	int timestamp;
 	int id_user;
+	int id_member;
+	int aux_chat_id;
 
 	if ( (new_chat == NULL) || (chat_id == NULL) ) {
 		return SOAP_USER_ERROR;
@@ -736,8 +786,24 @@ int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__ne
 	
 	timestamp = time(NULL);
 
-	if(add_chat(server.persistence, id_user, new_chat->description, timestamp, chat_id) !=0 )
+	id_member = get_user_id(server.persistence, new_chat->member);
+	if (id_user == -1) {
+		printf("User does not exist\n");
 		return SOAP_USER_ERROR;
+	}
+
+	if(add_chat(server.persistence, id_user, new_chat->description, timestamp, &aux_chat_id) !=0 ) {
+		return SOAP_USER_ERROR;
+	}
+	if(add_user_chat(server.persistence, id_user, aux_chat_id, timestamp, timestamp) != 0) {
+		del_chat(server.persistence, aux_chat_id);
+		return SOAP_USER_ERROR;
+	}
+	if(add_user_chat(server.persistence, id_member, aux_chat_id, timestamp, timestamp) != 0) {
+		return SOAP_USER_ERROR;
+	}
+
+	*chat_id = aux_chat_id;
 
 	return SOAP_OK; 
 }
@@ -775,12 +841,20 @@ int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name,
 		return SOAP_USER_ERROR;
 	}
 
-	DEBUG_INFO_PRINTF("Adding %s to chat", name);
-
-	id_user=get_user_id(server.persistence, name);
+	id_user = get_user_id(server.persistence, name);
 	if (id_user == -1) {
 		printf("User does not exist\n");
 		return SOAP_USER_ERROR;
+	}
+
+	if (id_user == id_login) {
+		printf("An user tried to add himself to a chat");
+		return SOAP_USER_ERROR;
+	}
+
+	if( exist_friendly(server.persistence, id_user, id_login) != 1) {
+		printf("An user tried to add a non-friend to a chat");
+		return SOAP_USER_ERROR;;
 	}
 
     if(exist_user_in_chat(server.persistence, id_user, chat_id) == 1){
@@ -788,8 +862,70 @@ int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name,
 		return SOAP_USER_ERROR;
 	}
 
-	// msg read is equal to current time because we don't want a new chat user to read previous messages
-	if(add_user_chat(server.persistence, id_user, chat_id, timestamp, timestamp) != 0)
+	if (exist_user_entry_in_chat(server.persistence, id_user, chat_id) == 1 ) {
+		 if( recover_user_chat(server.persistence, id_user, chat_id, timestamp) != 0) {
+			return SOAP_USER_ERROR;
+		}		
+	}
+	else {
+		// msg read is equal to current time because we don't want a new chat user to read previous messages
+		if(add_user_chat(server.persistence, id_user, chat_id, timestamp, timestamp) != 0){
+			return SOAP_USER_ERROR;
+		}	
+	}
+
+	return SOAP_OK;  
+}
+
+
+/*
+ *
+ * Returns SOAP_OK or SOAP_USER_ERROR if fails
+ */
+int psdims__remove_member(struct soap *soap, psdims__login_info *login, char *name, int chat_id, int *ERRCODE) {
+	DEBUG_TRACE_PRINT();
+	
+	int id_user;
+	int id_login;
+	int timestamp;
+
+	if ( name == NULL ) {
+		return SOAP_USER_ERROR;
+	}
+
+	id_login = check_login(login);
+	if ( id_login < 0 ) {
+		return SOAP_USER_ERROR;
+	}
+	
+	if(chat_exist(server.persistence, chat_id) != 1) {
+		printf("Chat does not exist\n");
+		return SOAP_USER_ERROR;
+	}
+
+	if(!is_admin(server.persistence, id_login, chat_id)) {
+		printf("User is not the chat admin");
+		return SOAP_USER_ERROR;
+	}
+
+	id_user = get_user_id(server.persistence, name);
+	if (id_user == -1) {
+		printf("User does not exist\n");
+		return SOAP_USER_ERROR;
+	}
+
+	if (id_user == id_login) {
+		printf("User can not remove himself from chat");
+		return SOAP_USER_ERROR;
+	}
+
+    if(!exist_user_in_chat(server.persistence, id_user, chat_id) == 1){
+		printf("User does not exist in the chat\n");
+		return SOAP_USER_ERROR;
+	}
+	
+	timestamp = time(NULL);
+	if(del_user_chat(server.persistence, id_user, chat_id, timestamp) != 0)
 		return SOAP_USER_ERROR;
 
 	return SOAP_OK;  
@@ -803,7 +939,7 @@ int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name,
 int psdims__quit_from_chat(struct soap *soap, psdims__login_info *login, int chat_id, int *ERRCODE) {
 	DEBUG_TRACE_PRINT();
 	
-	int id_user,first_user;
+	int id_user,first_user, timestamp;
 
 	id_user = check_login(login);
 	if ( id_user < 0 ) {
@@ -816,14 +952,16 @@ int psdims__quit_from_chat(struct soap *soap, psdims__login_info *login, int cha
 	if(exist_user_in_chat(server.persistence, id_user, chat_id) != 1)
 		return SOAP_USER_ERROR;
 
-	if(del_user_chat(server.persistence, id_user, chat_id) != 0)	
+	timestamp = time(NULL);
+
+	if(del_user_chat(server.persistence, id_user, chat_id, timestamp) != 0)	
 		return SOAP_USER_ERROR;
 
 	if(still_users_in_chat(server.persistence, chat_id) == 1){
 		if(is_admin(server.persistence, id_user, chat_id) == 1){
-			if((first_user=get_first_users_in_chat(server.persistence, chat_id))==1)
+			if((first_user = get_first_users_in_chat(server.persistence, chat_id)) == 1)
 				return SOAP_USER_ERROR;
-			if(change_admin(server.persistence, first_user, chat_id)==1)
+			if(change_admin(server.persistence, first_user, chat_id, timestamp) == 1)
 				return SOAP_USER_ERROR;
 		}
 	}
@@ -844,6 +982,7 @@ int psdims__quit_from_chat(struct soap *soap, psdims__login_info *login, int cha
 int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_id,  psdims__message_info *message, int *timestamp){
 	DEBUG_TRACE_PRINT();
 	int id_user;
+	int local_time;
 
 	if ( (message == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
@@ -854,13 +993,24 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 		return SOAP_USER_ERROR;
 	}
 	
-	*timestamp = time(NULL);
 
 	if(exist_user_in_chat(server.persistence, id_user, chat_id)!=1)
 		return SOAP_USER_ERROR;
+
 	
-	if( send_messages(server.persistence, chat_id, *timestamp, message) != 0)
+	// As timestamp are in seconds resolution, and the messages do not have id, 
+	// they need diferent timestamps...
+	// Sure this can be done better.
+	local_time = time(NULL);
+	while( exist_timestamp_in_messages(server.persistence, chat_id, local_time) ) {
+		sleep(1);
+		local_time = time(NULL);
+	}
+	
+	if( send_messages(server.persistence, chat_id, id_user, local_time, message) != 0)
 		return SOAP_USER_ERROR;
+
+	*timestamp = local_time;
 
 	return SOAP_OK; 
 }

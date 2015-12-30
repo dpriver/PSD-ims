@@ -156,9 +156,20 @@ int list_add_item(list *list, void *item) {
 		DEBUG_FAILURE_PRINTF("The added item cannot be null");
 		return -1;
 	}
+
+	if (list->item_comp == NULL) {
+		DEBUG_FAILURE_PRINTF("Can not search, item_value_comp not defined");
+		return -1;
+	}
 	
 	if (list->n_elems >= list->max_elems) {
 		DEBUG_FAILURE_PRINTF("The list is full");
+		return -1;
+	}
+	
+	if (_find_node(list, item, list->item_comp) != NULL) {
+		DEBUG_FAILURE_PRINTF("The item does exist in the list");
+		return -1;
 	}
 	
 	node = malloc(sizeof(list_node));

@@ -32,12 +32,15 @@
 typedef struct persistence persistence;
 struct persistence {
 	MYSQL *mysql;
+	int thread_safe;
 	char *location;
 	char *bd_name;
 	char *user_name;
 	char *user_pass;
 };
 
+#define persistence_thread_safe(persistence) \
+		(persistence->thread_safe)
 
 persistence * init_persistence(char user[],char pass[]);
 
@@ -63,6 +66,8 @@ int get_chat_info(persistence* persistence, int chat_id,char* buff, int max_char
 
 int exist_user_in_chat(persistence* persistence,int user_id, int chat_id);
 
+int exist_user_entry_in_chat(persistence* persistence,int user_id, int chat_id);
+
 int chat_exist(persistence* persistence, int chat_id);
 
 int get_list_friends(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__user_list *friends);
@@ -73,7 +78,9 @@ int get_list_messages(persistence* persistence,int chat_id,int timestamp, struct
 
 int get_list_chats(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__chat_list *chats);
 
-int send_messages(persistence* persistence,int chat_id, int timestamp, psdims__message_info *message);
+int exist_timestamp_in_messages(persistence* persistence, int chat_id, int timestamp);
+
+int send_messages(persistence* persistence,int chat_id, int user_id, int timestamp, psdims__message_info *message);
 
 int decline_friend_request(persistence* persistence, int user_id1, int user_id2);
 
@@ -93,9 +100,9 @@ int del_chat(persistence* persistence, int user_id);
 
 int add_user_chat(persistence* persistence, int user_id, int chat_id, int read_timestamp, int timestamp);
 
-int del_user_chat(persistence* persistence, int user_id, int chat_id);
+int del_user_chat(persistence* persistence, int user_id, int chat_id, int timestamp);
 
-int change_admin(persistence* persistence, int user_id, int chat_id);
+int change_admin(persistence* persistence, int user_id, int chat_id, int timestamp);
 
 int is_admin(persistence* persistence, int user_id, int chat_id);
 
@@ -113,9 +120,15 @@ int update_sync(persistence *persistence, int user_id, int chat_id, int read_tim
 
 int get_notif_chats_with_messages(persistence *persistence, int user_id, int timestamp, struct soap *soap, psdims__notif_chat_list *chat_list);
 
+int get_notif_chats_read_times(persistence *persistence, int user_id, struct soap *soap, psdims__notif_chat_list *chat_list);
+
 int get_notif_friend_requests(persistence *persistence, int user_id, int timestamp, struct soap *soap, psdims__notif_friend_list *request_list);
 
 int get_notif_chat_members(persistence *persistence, int user_id, int timestamp, struct soap *soap, psdims__notif_chat_member_list *member_list);
+
+int get_notif_chat_rem_members(persistence *persistence, int user_id, int timestamp, struct soap *soap, psdims__notif_chat_member_list *member_list) ;
+
+int get_notif_chat_admins(persistence *persistence, int user_id, int timestamp, struct soap *soap, psdims__notif_chat_member_list *member_list);
 
 #endif /* __PERSISTENCE */
 

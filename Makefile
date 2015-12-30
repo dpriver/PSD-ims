@@ -14,7 +14,7 @@ force_release: clean rpc_regenerate all tests
 
 force_debug: clean rpc_regenerate all_debug tests
 
-force_trace: clean rpc_regenerate all_debug_trace tests
+force_trace: clean rpc_regenerate common_debug rpc client_debug server_debug_trace tests
 
 all: common rpc client server
 

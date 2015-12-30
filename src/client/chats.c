@@ -107,7 +107,7 @@ void cha_free(chats *chats) {
  * Creates a new chat in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], char *member_names[], int n_members, int max_members, int max_messages, int read_timestamp) {
+int cha_add_chat(chats *chats, int chat_id, const char *description, char *admin, friend_info *members[], char *member_names[], int n_members, int max_members, int max_messages, int read_timestamp, int all_read_timestamp) {
 
 	DEBUG_TRACE_PRINT();
 	chat_info *info;
@@ -118,6 +118,10 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
 	}
 
 	if ( (info->description = malloc(sizeofstring(description))) == NULL ) {
+		free(info);
+		return -1;
+	}
+	if ( (info->admin = malloc(sizeofstring(admin))) == NULL ) {
 		free(info);
 		return -1;
 	}
@@ -136,9 +140,10 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info
 	}
 	info->id = chat_id;
 	info->read_timestamp = read_timestamp;
+	info->all_read_timestamp = all_read_timestamp;
 	info->unread_messages = 0;
 	info->pending_messages = 0;
-	info->admin = admin;
+	strcpy(info->admin, admin);
 	strcpy(info->description, description);
 
 	for( i = 0; i < n_members ; i++ ) {
@@ -193,7 +198,6 @@ int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_tim
 	int i;
 
 	for( i=0; i< n_messages; i++ ) {
-		DEBUG_INFO_PRINTF("Adding %s %s %d", sender[i], text[i], send_timestamp[i]);
 		if( mes_add_message(chat->messages, sender[i], text[i], send_timestamp[i], attach_path[i]) != 0 ) {
 			DEBUG_FAILURE_PRINTF("Could not add the message");
 			mes_del_last_messages(chat->messages, i); // (i+1) messages (-1) the last failed
@@ -225,6 +229,49 @@ int cha_add_member(chat_info *chat, friend_info *member, const char *member_name
 
 
 /*
+ * Deletes chat member from the chat
+ * Returns 0 or -1 if fails
+ */
+int cha_del_member(chat_info *chat, const char *member_name) {
+	DEBUG_TRACE_PRINT();
+
+	if( members_del_member(chat->members, member_name) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Could not remove member from chat");
+		return -1;
+	}
+
+	return 0;
+}
+
+
+/*
+ * Switches the current admin with the chat member named "name"
+ * that means that the previous admin becomes a normal member
+ * Returns 0 or -1 if fails
+ */
+int cha_change_admin(chat_info *chat, const char *member_name) {
+	DEBUG_TRACE_PRINT();
+	char *aux_admin;
+	
+	if( member_find_member(chat->members, member_name) == NULL ) {
+		DEBUG_FAILURE_PRINTF("New admin is not a chat member");
+		return -1;
+	}
+	
+	if ( (aux_admin = malloc(sizeofstring(member_name))) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not allocate memory for admin name");
+		return -1;
+	}
+	strcpy(aux_admin, member_name);
+	
+	free(chat->admin);
+	chat->admin = aux_admin;
+	
+	return 0;
+}
+
+
+/*
  * Deletes chat from the list
  * Returns 0 or -1 if fails
  */
@@ -242,43 +289,7 @@ int cha_del_chat(chats *chats, int chat_id) {
 }
 
 
-/*
- * Deletes chat member from the chat
- * Returns 0 or -1 if fails
- */
-int cha_del_member(chats *chats, int chat_id, const char *name) {
-	DEBUG_TRACE_PRINT();
-		
-	chat_info *chat_info;
-	
-	if( (chat_info = cha_find_chat(chats, chat_id)) == NULL ) {
-		DEBUG_FAILURE_PRINTF("Could not find chat");
-		return -1;
-	}
-
-	if( members_del_member(chat_info->members, name) != 0 ) {
-		DEBUG_FAILURE_PRINTF("Could not remove member from chat");
-		return -1;
-	}
-
-	return 0;
-}
-
-
 chat_info *cha_find_chat(chats *chats, int chat_id) {
 	DEBUG_TRACE_PRINT();
 	return list_find_item(chats , &chat_id);
-}
-
-
-/*
- * Switches the current admin with the chat member named "name"
- * that means that the previous admin becomes a normal member
- * Returns 0 or -1 if fails
- */
-int cha_change_admin(chats *chats, int chat_id, const char *name) {
-	DEBUG_TRACE_PRINT();
-
-
-	return 0;
 }

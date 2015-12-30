@@ -147,6 +147,12 @@ int net_add_user_to_chat(network *network, char *member, int chat_id);
  *
  *
  */
+int net_remove_user_from_chat(network *network, char *member, int chat_id);
+
+/*
+ *
+ *
+ */
 int net_quit_from_chat(network *network, int chat_id);
 
 /*

@@ -38,9 +38,10 @@ struct chat_info {
 	int id;
 	char *description;
 	int read_timestamp;
+	int all_read_timestamp;
 	int unread_messages;
 	int pending_messages;
-	friend_info *admin;
+	char *admin;
 	chat_members *members;
 	messages *messages;
 };
@@ -72,14 +73,14 @@ typedef list_iterator chat_iterator;
 #define cha_read_timestamp(chat_info) \
 		(chat_info->read_timestamp)
 
+#define cha_all_read_timestamp(chat_info) \
+		(chat_info->all_read_timestamp)
+
 #define cha_admin_myself(chat_info) \
 		(chat_info->admin == NULL)
 
 #define cha_admin_name(chat_info) \
-		fri_get_name(chat_info->admin)
-
-#define cha_admin_information(chat_info) \
-		fri_get_information(chat_info->admin)
+		(chat_info->admin)
 
 #define cha_messages(chat_info) \
 		(chat_info->messages)
@@ -90,6 +91,9 @@ typedef list_iterator chat_iterator;
 #define cha_clear_unread(chat_info) \
 		(chat_info->unread_messages = 0); \
 		mes_get_timestamp(chat_info->messages, chat_info->read_timestamp)
+
+#define cha_set_all_read_timestamp(chat_info, timestamp) \
+		(chat_info->all_read_timestamp = timestamp)
 
 #define cha_set_pending(chat_info, num_pending) \
 		(chat_info->pending_messages = num_pending)
@@ -166,7 +170,7 @@ void cha_free(chats *chats);
  * Creates a new chat in the list with the provided info
  * Returns 0 or -1 if fails
  */
-int cha_add_chat(chats *chats, int chat_id, const char *description, friend_info *admin, friend_info *members[], char *member_names[], int n_members, int max_members,  int max_messages, int read_timestamp);
+int cha_add_chat(chats *chats, int chat_id, const char *description, char *admin, friend_info *members[], char *member_names[], int n_members, int max_members,  int max_messages, int read_timestamp, int all_read_timestamp);
 
 /*
  * Adds the message in the chat
@@ -187,31 +191,29 @@ int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_dat
 int cha_add_member(chat_info *chat, friend_info *member, const char *name);
 
 /*
- * Deletes chat from the list
- * Returns 0 or -1 if fails
- */
-int cha_del_chat(chats *chats, int chat_id);
-
-/*
  * Deletes chat member from the chat
  * Returns 0 or -1 if fails
  */
-int cha_del_member(chats *chats, int chat_id, const char *name);
-
-/*
- * Search for the chat coincident with chat_id
- * Returns a chat_info pointer or NULL if fails
- */
-chat_info *cha_find_chat(chats *chats, int chat_id);
-
+int cha_del_member(chat_info *chat, const char *member_name);
 
 /*
  * Switches the current admin with the chat member named "name"
  * that means that the previous admin becomes a normal member
  * Returns 0 or -1 if fails
  */
-int cha_change_admin(chats *chats, int chat_id, const char *name);
+int cha_change_admin(chat_info *chat, const char *member_name);
 
+/*
+ * Deletes chat from the list
+ * Returns 0 or -1 if fails
+ */
+int cha_del_chat(chats *chats, int chat_id);
+
+/*
+ * Search for the chat coincident with chat_id
+ * Returns a chat_info pointer or NULL if fails
+ */
+chat_info *cha_find_chat(chats *chats, int chat_id);
 
 
 #endif /* __CHATS */

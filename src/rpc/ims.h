@@ -134,7 +134,8 @@ typedef struct psdims__chat_info {
 	char *description;
 	char *admin;
 	int read_timestamp;
-	psdims__message_list messages;
+	int all_read_timestamp;
+	//psdims__message_list messages;
 	psdims__member_list members;
 } psdims__chat_info;
 
@@ -148,7 +149,10 @@ typedef struct psdims__notifications {
 	psdims__notif_friend_list friend_request;
 	psdims__user_list new_friends;
 	psdims__notif_chat_list chats_with_messages;
+	psdims__notif_chat_list chats_read_times;
 	psdims__notif_chat_member_list chat_members;
+	psdims__notif_chat_member_list rem_chat_members;
+	psdims__notif_chat_member_list chat_admins;
 	int last_timestamp;
 } psdims__notifications;
 
@@ -201,6 +205,9 @@ int psdims__create_chat(psdims__login_info *login, psdims__new_chat *new_chat, i
 
 // add member to chat
 int psdims__add_member(psdims__login_info *login, char *name, int chat_id, int *ERRCODE);
+
+// remove member from chat
+int psdims__remove_member(psdims__login_info *login, char *name, int chat_id, int *ERRCODE);
 
 // quit from chat
 int psdims__quit_from_chat(psdims__login_info *login, int chat_id, int *ERRCODE);
