@@ -46,8 +46,8 @@ CREATE TABLE users_chats(
 CREATE TABLE messages(
  ID_SENDER INT(10) NOT NULL, 
  ID_CHAT INT(10) NOT NULL,
- FILE_ VARCHAR(500) ,
- TEXT VARCHAR(500) ,
+ FILE_ VARCHAR(50),
+ TEXT VARCHAR(500),
  CREATION_TIME INT(10),
  FOREIGN KEY (ID_SENDER) REFERENCES users(ID) on delete cascade on update cascade,
  FOREIGN KEY (ID_CHAT) REFERENCES chats(ID) on delete cascade on update cascade

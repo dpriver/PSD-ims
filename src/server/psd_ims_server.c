@@ -27,6 +27,7 @@
 #include "psdims.nsmap"
 #include "persistence.h"
 #include "bool.h"
+#include "psd_ims_server.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +45,10 @@
 #include "debug_def.h"
 
 #define MAX_ALIVE_THREADS (200)
+#define ATTACH_FILES_DIR "server_files"
 
+#define create_file_path(buff, chat_id, timestamp) \
+		sprintf(buff, "%s/_%d%d", ATTACH_FILES_DIR, chat_id, timestamp)
 
 struct server {
 	persistence *persistence;
@@ -264,7 +268,7 @@ int mthread_listen_connection () {
 }
 
 
-int check_login(psdims__login_info *login) {
+int check_login(persistence *persistence, psdims__login_info *login) {
 	char pass[50];
 	int user_id;
 	
@@ -272,12 +276,12 @@ int check_login(psdims__login_info *login) {
 		DEBUG_FAILURE_PRINTF("Login failed");
 		return -1;
 	}
-	user_id = get_user_id(server.persistence, login->name);
+	user_id = get_user_id(persistence, login->name);
 	if( user_id == -1) {
 		DEBUG_FAILURE_PRINTF("Login failed: the user does not exist\n");
 		return -1;
 	}
-	get_user_pass(server.persistence,login->name, pass, sizeof(char)*50);
+	get_user_pass(persistence,login->name, pass, sizeof(char)*50);
  	if(strcmp(login->password,pass)!=0) {
 		DEBUG_FAILURE_PRINTF("Login failed: the password is not correct\n");
 		return -1;
@@ -295,21 +299,35 @@ int check_login(psdims__login_info *login) {
  *
  * Returns SOAP_OK or SOAP_USER_ERROR if fails
  */
-int psdims__user_register(struct soap *soap,psdims__register_info *user_info, int *ERRCODE){
+int psdims__user_register(struct soap *soap, psdims__register_info *user_info, int *ERRCODE){
 	DEBUG_TRACE_PRINT();
 	*ERRCODE = 1;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ( (user_info == NULL) || (user_info->name == NULL) || (user_info->password == NULL) || (user_info->information == NULL) ) {
 		DEBUG_FAILURE_PRINTF("Some fields are empty");
 		return SOAP_USER_ERROR;
 	}
 
+	if (user_entry_exist(persistence, user_info->name)) {
+		DEBUG_FAILURE_PRINTF("Failed to add user: The name is already in use");
+		return SOAP_USER_ERROR;
+	}
+
 	DEBUG_INFO_PRINTF("Registering: name:%s pass:%s", user_info->name, user_info->password);
 
-	if( add_user(server.persistence, user_info->name, user_info->password, user_info->information) != 0 ) {
+	if( add_user(persistence, user_info->name, user_info->password, user_info->information) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Failed to add user");
 		return SOAP_USER_ERROR;
 	}
+
+	free_persistence(persistence);
 
 	return SOAP_OK; 
 }
@@ -322,17 +340,40 @@ int psdims__user_register(struct soap *soap,psdims__register_info *user_info, in
 int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *ERRCODE){
 	DEBUG_TRACE_PRINT();
 	*ERRCODE = 1;
+	int user_id, timestamp;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
-	if ( check_login(login) < 0 ) {
+	if ( (login == NULL) || (login->name == NULL) || (login->password == NULL) ) {
+		DEBUG_FAILURE_PRINTF("Some fields are empty");
+		return SOAP_USER_ERROR;
+	}
+
+
+	user_id = check_login(persistence, login);
+	if ( user_id < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
 	DEBUG_INFO_PRINTF("Unregistering: name:%s ", login->name);
 
-	if( del_user(server.persistence, login->name) != 0 ) {
+	timestamp = time(NULL);
+	if( del_user(persistence, login->name) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Failed to delete user");
 		return SOAP_USER_ERROR;
 	}
+
+	if( del_user_all_chats(persistence, user_id, timestamp) != 0 ) {
+		DEBUG_FAILURE_PRINTF("Failed to delete user");
+		return SOAP_USER_ERROR;
+	}
+
+	free_persistence(persistence);
 
 	return SOAP_OK;
 }
@@ -345,12 +386,19 @@ int psdims__user_unregister(struct soap *soap, psdims__login_info *login, int *E
 int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_info *user) {
 	DEBUG_TRACE_PRINT();
 	int user_id;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 	
 	if ( user == NULL) {
 		return SOAP_USER_ERROR;
 	}
 	
-	user_id = check_login(login);
+	user_id = check_login(persistence, login);
 	if ( user_id < 0 ) {
 		return SOAP_USER_ERROR;
 	}
@@ -359,7 +407,9 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
 	user->information = soap_malloc(soap, sizeof(char)*200);
 
 	strcpy(user->name,login->name);  
-	get_user_info(server.persistence, user_id, user->information, 200);
+	get_user_info(persistence, user_id, user->information, 200);
+
+	free_persistence(persistence);
 
 	return SOAP_OK;
 }
@@ -372,19 +422,28 @@ int psdims__get_user(struct soap *soap, psdims__login_info *login, psdims__user_
 int psdims__get_friends(struct soap *soap,psdims__login_info *login, int timestamp, psdims__user_list *friends){
 	DEBUG_TRACE_PRINT();
 	int id;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if (friends == NULL) {
 		return SOAP_USER_ERROR;
 	}
 	
-	id = check_login(login);
+	id = check_login(persistence, login);
 	if ( id < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
-  	if(get_list_friends(server.persistence, id, timestamp, soap, friends) != 0){
+  	if(get_list_friends(persistence, id, timestamp, soap, friends) != 0){
 		return SOAP_USER_ERROR;
 	}
+
+	free_persistence(persistence);
 
 	return SOAP_OK;
 }
@@ -394,17 +453,24 @@ int psdims__get_friends(struct soap *soap,psdims__login_info *login, int timesta
 int psdims__get_friend_info(struct soap *soap, psdims__login_info *login, char *name, psdims__user_info *friend_info) {
 	DEBUG_TRACE_PRINT();
 	int id, friend_id;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ((name == NULL) || (friend_info == NULL)) {
 		return SOAP_USER_ERROR;
 	}
 	
-	id = check_login(login);
+	id = check_login(persistence, login);
 	if ( id < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 	
-	friend_id = get_user_id(server.persistence, name);
+	friend_id = get_user_id(persistence, name);
 	if( friend_id == -1) {
 		DEBUG_FAILURE_PRINTF("Login failed: the user does not exist\n");
 		return -1;
@@ -414,7 +480,9 @@ int psdims__get_friend_info(struct soap *soap, psdims__login_info *login, char *
 	friend_info->information = soap_malloc(soap, sizeof(char)*200);
 
 	strcpy(friend_info->name, name);  
-	get_user_info(server.persistence, friend_id, friend_info->information, 200);	
+	get_user_info(persistence, friend_id, friend_info->information, 200);	
+
+	free_persistence(persistence);
 	
 	return SOAP_OK;
 }
@@ -427,20 +495,29 @@ int psdims__get_friend_info(struct soap *soap, psdims__login_info *login, char *
 int psdims__get_chats(struct soap *soap,psdims__login_info *login, int timestamp, psdims__chat_list *chats){
 	DEBUG_TRACE_PRINT();
 	int id;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if (chats == NULL) {
 		return SOAP_USER_ERROR;
 	}
 
-	id = check_login(login);
+	id = check_login(persistence, login);
 	if ( id < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
 
-	if(get_list_chats(server.persistence, id, timestamp, soap, chats) != 0){
+	if(get_list_chats(persistence, id, timestamp, soap, chats) != 0){
 		return SOAP_USER_ERROR;
 	}
+
+	free_persistence(persistence);
 	
 	return SOAP_OK; 
 }
@@ -453,21 +530,30 @@ int psdims__get_chats(struct soap *soap,psdims__login_info *login, int timestamp
 int psdims__get_chat_info(struct soap *soap, psdims__login_info *login, int chat_id, psdims__chat_info *chat) {
 	DEBUG_TRACE_PRINT();
 	int id_user;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if (chat == NULL) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
-	if(chat_exist(server.persistence, chat_id) != 1)
+	if(chat_exist(persistence, chat_id) != 1)
 		return SOAP_USER_ERROR;
 
-	if( get_all_chat_info(server.persistence, chat_id, soap, chat) != 1)
+	if( get_all_chat_info(persistence, chat_id, soap, chat) != 1)
 		return SOAP_USER_ERROR;
+
+	free_persistence(persistence);
 
 	return SOAP_OK; 
 }
@@ -480,24 +566,33 @@ int psdims__get_chat_info(struct soap *soap, psdims__login_info *login, int chat
 int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int chat_id, int timestamp, psdims__message_list *messages){
 	DEBUG_TRACE_PRINT();
 	int id_user;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if (messages == NULL) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
-	if(chat_exist(server.persistence, chat_id) != 1)
+	if(chat_exist(persistence, chat_id) != 1)
 		return SOAP_USER_ERROR;
 
-	if(exist_user_in_chat(server.persistence, id_user, chat_id) != 1)
+	if(exist_user_in_chat(persistence, id_user, chat_id) != 1)
 		return SOAP_USER_ERROR;
 
-	if(get_list_messages(server.persistence, chat_id, timestamp, soap, messages) != 0)
+	if(get_list_messages(persistence, chat_id, id_user, timestamp, soap, messages) != 0)
 		return SOAP_USER_ERROR;
+
+	free_persistence(persistence);
 
 	return SOAP_OK; 
 }
@@ -507,173 +602,130 @@ int psdims__get_chat_messages(struct soap *soap,psdims__login_info *login, int c
 int psdims__get_attachment(struct soap *soap, psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file) {
 	DEBUG_TRACE_PRINT();
 	int id_user;
-	int i=0;
-	int fd_read;
-	int existe=0;
-
-	if (file == NULL) {
+	int i = 0;
+	char *file_path;
+	struct stat st;
+	FILE *fd;
+	unsigned char * file_buffer;
+	unsigned char *file_buff_aux;
+	int total_blocks, readed_blocks;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
 		return SOAP_USER_ERROR;
 	}
 
-	char *path = malloc(50);
-	char *file_path= malloc(30);
-	char *name_file= malloc(30);
-	char *buffer = malloc(210);
+	if ( file == NULL) {
+		return SOAP_USER_ERROR;
+	}
 
-	struct dirent **namelist;
-	struct stat info;
-    struct dirent *info_dir;
-    DIR  *directorio;
-
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
-
-	if(chat_exist(server.persistence, chat_id) !=1 )
-		return SOAP_USER_ERROR;
 	
-	if(get_file(server.persistence, id_user, chat_id, name_file, msg_timestamp) == -1)
+	if( message_have_attach(persistence, id_user, chat_id, msg_timestamp) == 0) {
+		DEBUG_FAILURE_PRINTF("The message does not have attachment");
 		return SOAP_USER_ERROR;
-
-	strcat(path,"../files/");	
-
-	if(((directorio=opendir(path))==NULL) || ((info_dir = readdir(directorio))==NULL)){
-        perror("");
-        exit(2);
-    }
-
-	while(info_dir!= NULL && !existe){
-		 if(lstat(info_dir->d_name,&info)){
-                perror("");
-                exit(-1);
-            }
-         else{
-                if(strcmp(info_dir->d_name,name_file)==0){
-					existe=1;
-				}	
-			}
-		 info_dir = readdir(directorio);
-	}
-
-	if(!existe){
-		printf("No existe el archivo\n");
-		return -1;
 	}
 	
-	strcat(path,name_file);
+	file_path = soap_malloc(soap, sizeof(char)*20 );
+	create_file_path(file_path, chat_id, msg_timestamp);
 
-	if((fd_read=open(path,O_RDONLY))==-1){
-		    perror("Error en la apertura del archivo");
-		    exit(2);
+	if( (fd = fopen(file_path, "r")) == NULL) {
+		DEBUG_FAILURE_PRINTF("The file does not exist yet");
+		fclose(fd);
+		return SOAP_USER_ERROR;
 	}
 
-		
-	while(read(fd_read,buffer,200)>0){
-		strcat(file->xop__Include.__ptr,buffer);
-    }
+	file_buffer = soap_malloc(soap, MAX_FILE_CHARS);
+	total_blocks = 0;
 
-	free(path);
-	free(file_path);
-	free(name_file);
-	free(buffer);
+	file_buff_aux = file_buffer;
+	do {
+		readed_blocks = fread(file_buff_aux++, 1, 1, fd);
+		total_blocks += readed_blocks;
+	} while( (readed_blocks == 1) && (total_blocks < MAX_FILE_CHARS) );
 
-	free(namelist);
-    free(info_dir);
-    free(directorio);
+	fclose(fd);
 
-return SOAP_OK;
+	file->__ptr = file_buffer;
+	file->__size = total_blocks * sizeof(char);
+
+	free_persistence(persistence);
+
+	return SOAP_OK;
 }
 
 
 // Send a file to attach msd_id
 int psdims__send_attachment(struct soap *soap, psdims__login_info *login, int chat_id, int msg_timestamp, psdims__file *file, int *ERRCODE) {
 	DEBUG_TRACE_PRINT();
+	*ERRCODE = 0;
 
 	int id_user;
-	int i=0;
-    int n;
-	int existe=0;
-	int fd_write;
+	int i = 0;
+	char *file_path;
+	struct stat st;
+	FILE *fd_write;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
+	
 
-	if (file == NULL) {
+	if ( file == NULL) {
 		return SOAP_USER_ERROR;
 	}
 
-	char *path = malloc(50);
-	char *name_file= malloc(30);
-	char *buffer = malloc(50);
-
-	struct dirent **namelist;
-	struct stat info;
-    struct dirent *info_dir;
-    DIR  *directorio;
-
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
-	if(chat_exist(server.persistence,chat_id)!=1)
-		return SOAP_USER_ERROR;
 	
-	strcat(path,"../files/");	
-	strcat(name_file,"fichero_prueba");
-
-	if(((directorio=opendir(path))==NULL) || ((info_dir = readdir(directorio))==NULL)){
-        perror("");
-        exit(2);
-    }
-
-	while(info_dir!= NULL && !existe){
-		 if(lstat(info_dir->d_name,&info)){
-                perror("");
-                exit(-1);
-            }
-         else{
-                if(strcmp(info_dir->d_name,name_file)==0){
-					existe=1;
-				}
-			}
-		 info_dir = readdir(directorio);
+	if( message_can_attach(persistence, id_user, chat_id, msg_timestamp) == 0) {
+		DEBUG_FAILURE_PRINTF("The message does not have attachment");
+		return SOAP_USER_ERROR;
 	}
 
-	strcat(path,name_file);
-
-	if(!existe){
-		fd_write = creat(path, 0644);
+	if( stat(ATTACH_FILES_DIR, &st) == -1 ) {
+		mkdir(ATTACH_FILES_DIR, 0700);
 	}
 	
-	if((fd_write=open(path,O_WRONLY))==-1){
-		    perror("Error en la apertura del archivo");
-		    exit(2);
-	}
-
-	if(existe){		
-		lseek(fd_write,0,SEEK_END);
-	}
-	else{
-		//SE SOBREESCRIBE
-	}
-
-	while(i<file->xop__Include.__size){
-       write(fd_write,&file->xop__Include.__ptr,200);
-	   file->xop__Include.__ptr+=200;
-	   i+=200;
-    }
-
-	if(set_file(server.persistence,id_user,chat_id,name_file,msg_timestamp)==-1)
+	file_path = soap_malloc(soap, sizeof(char)*20 );
+	create_file_path(file_path, chat_id, msg_timestamp);
+	
+	// check if the file exist
+	if( (fd_write = fopen(file_path, "r")) != NULL) {
+		DEBUG_FAILURE_PRINTF("The file does exist yet");
+		fclose(fd_write);
 		return SOAP_USER_ERROR;
+	}
 
-	free(path);
-	free(name_file);
-	free(buffer);
+	// create the new file
+	if( (fd_write = fopen(file_path, "w")) == NULL ) {
+		DEBUG_FAILURE_PRINTF("Could not create the file");
+		return SOAP_USER_ERROR;
+	}
 
-	free(namelist);
-    free(info_dir);
-    free(directorio);	
+	if( fwrite(file->__ptr, file->__size, 1, fd_write) != 1 ) {
+		DEBUG_FAILURE_PRINTF("Could not save the received file");
+		fclose(fd_write);
+		return SOAP_USER_ERROR;
+	}
 
-return SOAP_OK;
+
+	fclose(fd_write);
+
+	free_persistence(persistence);
+
+	return SOAP_OK;
 }
 
 
@@ -684,28 +736,37 @@ return SOAP_OK;
 int psdims__get_all_data(struct soap *soap, psdims__login_info *login, psdims__client_data *client_data){
 	DEBUG_TRACE_PRINT();
 	int user_id;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if (client_data == NULL) {
 		return SOAP_USER_ERROR;
 	}
 
-	user_id = check_login(login);
+	user_id = check_login(persistence, login);
 	if ( user_id < 0 ) {
 		return SOAP_USER_ERROR;
 	}	
 	
 	client_data->timestamp = time(NULL);
 	
-	if (get_notif_friend_requests(server.persistence, user_id, 0, soap, &(client_data->friend_requests))) {
+	if (get_notif_friend_requests(persistence, user_id, 0, soap, &(client_data->friend_requests))) {
 		return SOAP_USER_ERROR;
 	}
-	if (get_list_chats(server.persistence, user_id, 0, soap, &(client_data->chats))) {
+	if (get_list_chats(persistence, user_id, 0, soap, &(client_data->chats))) {
 		return SOAP_USER_ERROR;
 	}
 	
-	if (get_list_friends(server.persistence, user_id, 0, soap, &(client_data->friends))) {
+	if (get_list_friends(persistence, user_id, 0, soap, &(client_data->friends))) {
 		return SOAP_USER_ERROR;
 	}
+
+	free_persistence(persistence);
 	
 	return SOAP_OK;
 }
@@ -719,47 +780,55 @@ int psdims__get_pending_notifications(struct soap *soap,psdims__login_info *logi
 	DEBUG_TRACE_PRINT();
 	int i;
 	int id_user;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ((notifications == NULL) || (sync == NULL)) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
 	// use sync to update chats' read_timestamp
 	for(i = 0 ; i < sync->chat_read_timestamps.__sizenelems ; i++) {
-		update_sync(server.persistence, id_user, sync->chat_read_timestamps.chat[i].chat_id, sync->chat_read_timestamps.chat[i].timestamp);
+		update_sync(persistence, id_user, sync->chat_read_timestamps.chat[i].chat_id, sync->chat_read_timestamps.chat[i].timestamp);
 	}
 
 	// There may be problems with this concerns...
 	notifications->last_timestamp = time(NULL);
 
-	if(get_notif_chats_with_messages(server.persistence, id_user, timestamp, soap, &(notifications->chats_with_messages)) < 0){
+	if(get_notif_chats_with_messages(persistence, id_user, timestamp, soap, &(notifications->chats_with_messages)) < 0){
 		return SOAP_USER_ERROR;
 	}
-	if(get_notif_chats_read_times(server.persistence, id_user, soap, &(notifications->chats_read_times)) < 0){
+	if(get_notif_chats_read_times(persistence, id_user, soap, &(notifications->chats_read_times)) < 0){
 		return SOAP_USER_ERROR;
 	}	
-	if(get_notif_friend_requests(server.persistence, id_user, timestamp, soap, &(notifications->friend_request)) < 0){
+	if(get_notif_friend_requests(persistence, id_user, timestamp, soap, &(notifications->friend_request)) < 0){
 		return SOAP_USER_ERROR;
 	}
-	if(get_notif_chat_members(server.persistence, id_user, timestamp, soap, &(notifications->chat_members)) < 0){
+	if(get_notif_chat_members(persistence, id_user, timestamp, soap, &(notifications->chat_members)) < 0){
 		return SOAP_USER_ERROR;
 	}
-	if(get_notif_chat_rem_members(server.persistence, id_user, timestamp, soap, &(notifications->rem_chat_members)) < 0){
+	if(get_notif_chat_rem_members(persistence, id_user, timestamp, soap, &(notifications->rem_chat_members)) < 0){
 		return SOAP_USER_ERROR;
 	}
-	if(get_notif_chat_admins(server.persistence, id_user, timestamp, soap, &(notifications->chat_admins)) < 0) {
+	if(get_notif_chat_admins(persistence, id_user, timestamp, soap, &(notifications->chat_admins)) < 0) {
 		return SOAP_USER_ERROR;
 	}
-	if(get_list_friends(server.persistence, id_user, timestamp, soap, &(notifications->new_friends)) < 0){
+	if(get_list_friends(persistence, id_user, timestamp, soap, &(notifications->new_friends)) < 0){
 		return SOAP_USER_ERROR;
 	}
 
-	DEBUG_INFO_PRINTF("notification fetch finished");
+	free_persistence(persistence);
+	
 	return SOAP_OK; 
 }
 
@@ -774,36 +843,45 @@ int psdims__create_chat(struct soap *soap, psdims__login_info *login, psdims__ne
 	int id_user;
 	int id_member;
 	int aux_chat_id;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ( (new_chat == NULL) || (chat_id == NULL) ) {
 		return SOAP_USER_ERROR;
 	}
 	
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 	
 	timestamp = time(NULL);
 
-	id_member = get_user_id(server.persistence, new_chat->member);
+	id_member = get_user_id(persistence, new_chat->member);
 	if (id_user == -1) {
 		printf("User does not exist\n");
 		return SOAP_USER_ERROR;
 	}
 
-	if(add_chat(server.persistence, id_user, new_chat->description, timestamp, &aux_chat_id) !=0 ) {
+	if(add_chat(persistence, id_user, new_chat->description, timestamp, &aux_chat_id) !=0 ) {
 		return SOAP_USER_ERROR;
 	}
-	if(add_user_chat(server.persistence, id_user, aux_chat_id, timestamp, timestamp) != 0) {
-		del_chat(server.persistence, aux_chat_id);
+	if(add_user_chat(persistence, id_user, aux_chat_id, timestamp, timestamp) != 0) {
+		del_chat(persistence, aux_chat_id);
 		return SOAP_USER_ERROR;
 	}
-	if(add_user_chat(server.persistence, id_member, aux_chat_id, timestamp, timestamp) != 0) {
+	if(add_user_chat(persistence, id_member, aux_chat_id, timestamp, timestamp) != 0) {
 		return SOAP_USER_ERROR;
 	}
 
 	*chat_id = aux_chat_id;
+
+	free_persistence(persistence);
 
 	return SOAP_OK; 
 }
@@ -819,29 +897,36 @@ int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name,
 	int id_user;
 	int id_login;
 	int timestamp;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ( name == NULL ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_login = check_login(login);
+	id_login = check_login(persistence, login);
 	if ( id_login < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
 	timestamp = time(NULL);
 
-	if(chat_exist(server.persistence, chat_id) != 1) {
+	if(chat_exist(persistence, chat_id) != 1) {
 		printf("Chat does not exist\n");
 		return SOAP_USER_ERROR;
 	}
 
-	if(!is_admin(server.persistence, id_login, chat_id)) {
+	if(!is_admin(persistence, id_login, chat_id)) {
 		printf("User is not the chat admin");
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = get_user_id(server.persistence, name);
+	id_user = get_user_id(persistence, name);
 	if (id_user == -1) {
 		printf("User does not exist\n");
 		return SOAP_USER_ERROR;
@@ -852,27 +937,29 @@ int psdims__add_member(struct soap *soap, psdims__login_info *login, char *name,
 		return SOAP_USER_ERROR;
 	}
 
-	if( exist_friendly(server.persistence, id_user, id_login) != 1) {
+	if( exist_friendly(persistence, id_user, id_login) != 1) {
 		printf("An user tried to add a non-friend to a chat");
 		return SOAP_USER_ERROR;;
 	}
 
-    if(exist_user_in_chat(server.persistence, id_user, chat_id) == 1){
+    if(exist_user_in_chat(persistence, id_user, chat_id) == 1){
 		printf("User is already in the chat\n");
 		return SOAP_USER_ERROR;
 	}
 
-	if (exist_user_entry_in_chat(server.persistence, id_user, chat_id) == 1 ) {
-		 if( recover_user_chat(server.persistence, id_user, chat_id, timestamp) != 0) {
+	if (exist_user_entry_in_chat(persistence, id_user, chat_id) == 1 ) {
+		 if( recover_user_chat(persistence, id_user, chat_id, timestamp) != 0) {
 			return SOAP_USER_ERROR;
 		}		
 	}
 	else {
 		// msg read is equal to current time because we don't want a new chat user to read previous messages
-		if(add_user_chat(server.persistence, id_user, chat_id, timestamp, timestamp) != 0){
+		if(add_user_chat(persistence, id_user, chat_id, timestamp, timestamp) != 0){
 			return SOAP_USER_ERROR;
 		}	
 	}
+
+	free_persistence(persistence);
 
 	return SOAP_OK;  
 }
@@ -888,27 +975,34 @@ int psdims__remove_member(struct soap *soap, psdims__login_info *login, char *na
 	int id_user;
 	int id_login;
 	int timestamp;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ( name == NULL ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_login = check_login(login);
+	id_login = check_login(persistence, login);
 	if ( id_login < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 	
-	if(chat_exist(server.persistence, chat_id) != 1) {
+	if(chat_exist(persistence, chat_id) != 1) {
 		printf("Chat does not exist\n");
 		return SOAP_USER_ERROR;
 	}
 
-	if(!is_admin(server.persistence, id_login, chat_id)) {
+	if(!is_admin(persistence, id_login, chat_id)) {
 		printf("User is not the chat admin");
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = get_user_id(server.persistence, name);
+	id_user = get_user_id(persistence, name);
 	if (id_user == -1) {
 		printf("User does not exist\n");
 		return SOAP_USER_ERROR;
@@ -919,14 +1013,16 @@ int psdims__remove_member(struct soap *soap, psdims__login_info *login, char *na
 		return SOAP_USER_ERROR;
 	}
 
-    if(!exist_user_in_chat(server.persistence, id_user, chat_id) == 1){
+    if(!exist_user_in_chat(persistence, id_user, chat_id) == 1){
 		printf("User does not exist in the chat\n");
 		return SOAP_USER_ERROR;
 	}
 	
 	timestamp = time(NULL);
-	if(del_user_chat(server.persistence, id_user, chat_id, timestamp) != 0)
+	if(del_user_chat(persistence, id_user, chat_id, timestamp) != 0)
 		return SOAP_USER_ERROR;
+
+	free_persistence(persistence);
 
 	return SOAP_OK;  
 }
@@ -940,36 +1036,44 @@ int psdims__quit_from_chat(struct soap *soap, psdims__login_info *login, int cha
 	DEBUG_TRACE_PRINT();
 	
 	int id_user,first_user, timestamp;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
-	if(chat_exist(server.persistence, chat_id) != 1)
+	if(chat_exist(persistence, chat_id) != 1)
 		return SOAP_USER_ERROR;
 
-	if(exist_user_in_chat(server.persistence, id_user, chat_id) != 1)
+	if(exist_user_in_chat(persistence, id_user, chat_id) != 1)
 		return SOAP_USER_ERROR;
 
 	timestamp = time(NULL);
 
-	if(del_user_chat(server.persistence, id_user, chat_id, timestamp) != 0)	
+	if(del_user_chat(persistence, id_user, chat_id, timestamp) != 0)	
 		return SOAP_USER_ERROR;
 
-	if(still_users_in_chat(server.persistence, chat_id) == 1){
-		if(is_admin(server.persistence, id_user, chat_id) == 1){
-			if((first_user = get_first_users_in_chat(server.persistence, chat_id)) == 1)
+	if(still_users_in_chat(persistence, chat_id) == 1){
+		if(is_admin(persistence, id_user, chat_id) == 1){
+			if((first_user = get_first_users_in_chat(persistence, chat_id)) == 1)
 				return SOAP_USER_ERROR;
-			if(change_admin(server.persistence, first_user, chat_id, timestamp) == 1)
+			if(change_admin(persistence, first_user, chat_id, timestamp) == 1)
 				return SOAP_USER_ERROR;
 		}
 	}
 	else{
-		if(del_chat(server.persistence, chat_id) != 0)	
+		if(del_chat(persistence, chat_id) != 0)	
 			return SOAP_USER_ERROR;
 	}
 
+	free_persistence(persistence);
 
 	return SOAP_OK;  
 }
@@ -983,18 +1087,25 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 	DEBUG_TRACE_PRINT();
 	int id_user;
 	int local_time;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ( (message == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 	
 
-	if(exist_user_in_chat(server.persistence, id_user, chat_id)!=1)
+	if(exist_user_in_chat(persistence, id_user, chat_id)!=1)
 		return SOAP_USER_ERROR;
 
 	
@@ -1002,15 +1113,17 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 	// they need diferent timestamps...
 	// Sure this can be done better.
 	local_time = time(NULL);
-	while( exist_timestamp_in_messages(server.persistence, chat_id, local_time) ) {
+	while( exist_timestamp_in_messages(persistence, chat_id, local_time) ) {
 		sleep(1);
 		local_time = time(NULL);
 	}
 	
-	if( send_messages(server.persistence, chat_id, id_user, local_time, message) != 0)
+	if( send_messages(persistence, chat_id, id_user, local_time, message) != 0)
 		return SOAP_USER_ERROR;
 
 	*timestamp = local_time;
+
+	free_persistence(persistence);
 
 	return SOAP_OK; 
 }
@@ -1023,35 +1136,44 @@ int psdims__send_message(struct soap *soap,psdims__login_info *login, int chat_i
 int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, char* request_name, int *timestamp){
 	DEBUG_TRACE_PRINT();
 	int id_user,id_request_name;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ( (request_name == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_request_name = get_user_id(server.persistence, request_name);
+	id_request_name = get_user_id(persistence, request_name);
 	if (id_request_name == id_user) {
 		DEBUG_FAILURE_PRINTF("An user tried to add himshelf.. what a jerk..");
 		return SOAP_USER_ERROR;
 	}
 	*timestamp = time(NULL);
 
-	if(exist_friendly(server.persistence,id_user,id_request_name) != 0){
+	if(exist_friendly(persistence,id_user,id_request_name) != 0){
 		DEBUG_FAILURE_PRINTF("The users are already friends\n");
 		return SOAP_USER_ERROR;
 	}
 
-	if(exist_request(server.persistence, id_user, id_request_name) != 0){
+	if(exist_request(persistence, id_user, id_request_name) != 0){
 		DEBUG_FAILURE_PRINTF("There is a previous a friend request\n");
 		return SOAP_USER_ERROR;
 	}
 
-	if(send_request(server.persistence,id_user, id_request_name, *timestamp) != 0)
+	if(send_request(persistence,id_user, id_request_name, *timestamp) != 0)
 		return SOAP_USER_ERROR;
+
+	free_persistence(persistence);
 
 	return SOAP_OK; 
 }
@@ -1064,27 +1186,36 @@ int psdims__send_friend_request(struct soap *soap,psdims__login_info *login, cha
 int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *request_name, int *timestamp){
 	DEBUG_TRACE_PRINT();
 	int id_user, id_request_name;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ( (request_name == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_request_name=get_user_id(server.persistence,request_name);
+	id_request_name = get_user_id(persistence,request_name);
 	*timestamp = time(NULL);
 
 	DEBUG_INFO_PRINTF("accepting req %s -> %s", request_name, login->name);
-	if(exist_request(server.persistence, id_request_name, id_user) == 0){
+	if(exist_request(persistence, id_request_name, id_user) == 0){
 		DEBUG_FAILURE_PRINTF("The friend request does not exist\n");
 		return SOAP_USER_ERROR;
 	}
     
-    if(accept_friend_request(server.persistence, id_request_name, id_user, *timestamp) != 0)
+    if(accept_friend_request(persistence, id_request_name, id_user, *timestamp) != 0)
 		return SOAP_USER_ERROR;
+
+	free_persistence(persistence);
 
 	return SOAP_OK; 
 }
@@ -1097,26 +1228,35 @@ int psdims__accept_request(struct soap *soap,psdims__login_info *login, char *re
 int psdims__decline_request(struct soap *soap, psdims__login_info *login, char *request_name, int *timestamp){
 	DEBUG_TRACE_PRINT();
 	int id_user,id_request_name;
+	persistence *persistence;
+	
+	persistence = clone_persistence(server.persistence);
+	if (persistence == NULL) {
+		DEBUG_FAILURE_PRINTF("Could not create the persistence struct");
+		return SOAP_USER_ERROR;
+	}
 
 	if ( (request_name == NULL) || (timestamp == NULL) ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_user = check_login(login);
+	id_user = check_login(persistence, login);
 	if ( id_user < 0 ) {
 		return SOAP_USER_ERROR;
 	}
 
-	id_request_name = get_user_id(server.persistence, request_name);
+	id_request_name = get_user_id(persistence, request_name);
 	*timestamp = time(NULL);
 
-	if(exist_request(server.persistence, id_request_name, id_user) == 0){
+	if(exist_request(persistence, id_request_name, id_user) == 0){
 		DEBUG_FAILURE_PRINTF("The friends request does not exist\n");
 		return SOAP_USER_ERROR;
 	}
 
-	if(decline_friend_request(server.persistence, id_request_name, id_user) != 0)
+	if(decline_friend_request(persistence, id_request_name, id_user) != 0)
 		return SOAP_USER_ERROR;
+
+	free_persistence(persistence);
 
 	return SOAP_OK; 
 }

@@ -192,10 +192,22 @@ void list_delete_node(list *list, list_node *node) {
 }
 
 
+void list_delete_first(list *list, int num_elems) {
+	DEBUG_TRACE_PRINT();
+	for( num_elems ; num_elems > 0 ; num_elems-- ) {
+		if(list->ghost_item->next == list->ghost_item) {
+			return;	// if the list is empty
+		}
+		_node_delete(list->ghost_item->next, list->item_free);
+		list->n_elems--;
+	}
+}
+
+
 void list_delete_last(list *list, int num_elems) {
 	DEBUG_TRACE_PRINT();
 	for( num_elems ; num_elems > 0 ; num_elems-- ) {
-		if(list->ghost_item->prev = list->ghost_item) {
+		if(list->ghost_item->prev == list->ghost_item) {
 			return;	// if the list is empty
 		}
 		_node_delete(list->ghost_item->prev, list->item_free);

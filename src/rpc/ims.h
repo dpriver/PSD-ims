@@ -31,12 +31,10 @@
 //gsoap psdims service encoding: literal
 //gsoap psdims service namespace: urn:psdims
 
-typedef enum psdims__notification_type { FRIEND_REQ, PENDING_MESS } psdims__notification_type;
-
 
 typedef struct psdims__file {
-	_xop__Include xop__Include;
-	@char *xmime5__contentType;
+	unsigned char *__ptr;
+	int __size;
 } psdims__file;
 
 typedef struct psdims__string {
@@ -111,7 +109,7 @@ typedef struct psdims__user_list {
 typedef struct psdims__message_info {
 	char *user;
 	char *text;
-	int have_attach;
+	char *file_name;
 	int send_date;
 } psdims__message_info;
 

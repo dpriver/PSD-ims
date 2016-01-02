@@ -36,6 +36,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "debug_def.h"
 
@@ -82,7 +85,7 @@ int _recv_messages(psd_ims_client *client, chat_info *chat) {
 	for( i = 0; i < list->__sizenelems; i++) {
 		sender[i] = (strcmp(list->messages[i].user, client->user_name) == 0)? NULL : list->messages[i].user;
 		text[i] = list->messages[i].text;
-		attach_path[i] = NULL;	
+		attach_path[i] = list->messages[i].file_name;	
 		send_date[i] = list->messages[i].send_date;
 		DEBUG_INFO_PRINTF("Adding message <%d, %s, %s, %d>", chat_id, sender[i], text[i], send_date[i]);
 	}
@@ -291,6 +294,25 @@ int psd_user_register(psd_ims_client *client, char *name, char *password, char *
 	if( net_user_register(client->network, name, password, information) != 0 ) {
 		pthread_mutex_unlock(&client->network_mutex);
 		DEBUG_FAILURE_PRINTF("Could not register the user");
+		return -1;
+	}
+	pthread_mutex_unlock(&client->network_mutex);
+
+	return 0;
+}
+
+
+/*
+ * Unregister the user from the system
+ * Returns 0 or -1 if fails
+ */
+int psd_user_unregister(psd_ims_client *client, char *name, char *password) {
+	DEBUG_TRACE_PRINT();
+
+	pthread_mutex_lock(&client->network_mutex);
+	if( net_user_unregister(client->network, name, password) != 0 ) {
+		pthread_mutex_unlock(&client->network_mutex);
+		DEBUG_FAILURE_PRINTF("Could not unregister the user");
 		return -1;
 	}
 	pthread_mutex_unlock(&client->network_mutex);
@@ -526,7 +548,6 @@ int psd_recv_notifications(psd_ims_client *client) {
 		cha_set_pending(chat, 1);
 	}
 	for( i = 0 ; i < notifications->chats_read_times.__sizenelems ; i++ ) {
-		DEBUG_INFO_PRINTF("chat double checks <%d>",notifications->chats_read_times.chat[i].chat_id);
 		if ( (chat = cha_find_chat(client->chats, notifications->chats_read_times.chat[i].chat_id)) == NULL ) {
 			pthread_mutex_unlock(&client->chats_mutex);
 			psd_recv_chats(client);
@@ -658,9 +679,12 @@ int psd_recv_all_pending_messages(psd_ims_client *client) {
  *
  */
 int psd_recv_message_attachment(psd_ims_client *client, int chat_id, int msg_timestamp) {
+	DEBUG_TRACE_PRINT();
+	
 	psdims__file *file;
 	char file_path[MAX_FILE_PATH_CHARS];
 	FILE *fd;
+	struct stat st;
 
 	pthread_mutex_lock(&client->network_mutex);
 	if( (file = net_get_attachment(client->network, chat_id, msg_timestamp)) == NULL ) {
@@ -670,12 +694,12 @@ int psd_recv_message_attachment(psd_ims_client *client, int chat_id, int msg_tim
 	}
 	pthread_mutex_unlock(&client->network_mutex);
 	
-	// Create the file path
-	if( sprintf(file_path, "%s/_%d%d", ATTACH_FILES_DIR, chat_id, msg_timestamp) < 0 ) {
-		DEBUG_FAILURE_PRINTF("Could not create the file path");
-		net_free_file(file);
-		return -1;
+	if( stat(ATTACH_FILES_DIR_RCV, &st) == -1 ) {
+		mkdir(ATTACH_FILES_DIR_RCV, 0700);
 	}
+	
+	// Create the file path
+	create_file_path_rcv(file_path, chat_id, msg_timestamp);
 
 	// Write the file in the disk
 	if( (fd = fopen(file_path, "w")) == NULL ) {
@@ -683,7 +707,7 @@ int psd_recv_message_attachment(psd_ims_client *client, int chat_id, int msg_tim
 		net_free_file(file);
 		return -1;
 	}
-	if( fwrite(file->xop__Include.__ptr, file->xop__Include.__size, 1, fd) != 1 ) {
+	if( fwrite(file->__ptr, file->__size, 1, fd) != 1 ) {
 		DEBUG_FAILURE_PRINTF("Could not save the received file");
 		fclose(fd);
 		net_free_file(file);
@@ -945,29 +969,31 @@ int psd_remove_chat(psd_ims_client *client, int chat_id) {
  * Send a message to the chat "chat_id"
  * Returns 0 or -1 if fails
  */
-int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *file_path, char *MIME_type, char *file_info) {
+int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *file_path, char *file_info) {
 	DEBUG_TRACE_PRINT();
+	
 	int send_timestamp = 0;
-	char path_buff[MAX_FILE_PATH_CHARS];
-	char file_buff[MAX_FILE_CHARS];
+	char file_path_internal[MAX_FILE_PATH_CHARS];
+	char * file_buff = NULL;
 	char * file_buff_aux;
-	char * file_attach_path = NULL;
-	int have_attach = 0;
 	FILE *fd;
+	struct stat st;
 	int written_blocks = 0;
 	int readed_blocks = 0;
 	int total_blocks = 0;
 	chat_info *chat;
-
+	
+	pthread_mutex_lock(&client->chats_mutex);
 	if( (chat = cha_find_chat(client->chats, chat_id)) == NULL ) {
 		DEBUG_FAILURE_PRINTF("The chat does not exist");
 		return -1;
 	}
+	pthread_mutex_unlock(&client->chats_mutex);
 
-	// Read the attached file
+	/* Read the attached file */
+	DEBUG_INFO_PRINTF("Reading the attached file");
 	if( file_path != NULL ) {
-		have_attach = 1;
-		file_attach_path = path_buff;
+		file_buff = malloc( sizeof(char)*MAX_FILE_CHARS);
 		if( (fd = fopen(file_path, "r")) == NULL ) {
 			DEBUG_FAILURE_PRINTF("Could not read the file");
 			return -1;
@@ -982,32 +1008,38 @@ int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *file
 		fclose(fd);
 	}
 
-	// Send the message
+	/* Send the message */
+	DEBUG_INFO_PRINTF("Sending the message");
 	pthread_mutex_lock(&client->network_mutex);
-	if( net_send_message(client->network, chat_id, text, have_attach, &send_timestamp) != 0 ) {
+	if( net_send_message(client->network, chat_id, text, file_info, &send_timestamp) != 0 ) {
 		pthread_mutex_unlock(&client->network_mutex);
 		DEBUG_FAILURE_PRINTF("Could not send the message");
 		return -1;
 	}
 	pthread_mutex_unlock(&client->network_mutex);
 
+	/* Copy the attached file to an internal directory */
+	DEBUG_INFO_PRINTF("Copying the file in the internal directory");
 	if( file_path != NULL ) {
-			// Create the file path
-		if( sprintf(path_buff, "%s/_%d%d", ATTACH_FILES_DIR, chat_id, send_timestamp) < 0 ) {
-			DEBUG_FAILURE_PRINTF("Could not create the file path");
-			return -1;
+		
+		// Create the file path
+		create_file_path_snd(file_path_internal, chat_id, send_timestamp);
+
+		if( stat(ATTACH_FILES_DIR_SND, &st) == -1 ) {
+			mkdir(ATTACH_FILES_DIR_SND, 0700);
 		}
 
 		// Copy the attached file
-		if( (fd = fopen(file_attach_path, "w")) == NULL ) {
+		if( (fd = fopen(file_path_internal, "w")) == NULL ) {
 			DEBUG_FAILURE_PRINTF("Could not open the file");
 			return -1;
 		}
 
+		written_blocks = 0;
 		file_buff_aux = file_buff;
 		do {
-			written_blocks = fwrite(file_buff_aux++, 1, 1, fd);
-		} while( written_blocks == 1);
+			written_blocks += fwrite(file_buff_aux++, 1, 1, fd);
+		} while( written_blocks < total_blocks);
 
 		fclose(fd);
 	}
@@ -1015,13 +1047,15 @@ int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *file
 	// Send the attachment
 	if( file_path != NULL ) {
 		pthread_mutex_lock(&client->network_mutex);
-		if( net_send_attachment(client->network, chat_id, send_timestamp, MIME_type, file_buff, sizeof(char)*total_blocks, file_info) != 0 ) {
+		if( net_send_attachment(client->network, chat_id, send_timestamp, file_buff, sizeof(char)*total_blocks) != 0 ) {
 			pthread_mutex_unlock(&client->network_mutex);
 			DEBUG_FAILURE_PRINTF("Could not send the message");
 			return -1;
 		}
 		pthread_mutex_unlock(&client->network_mutex);
 	}
+
+	free(file_buff);
 
 	return 0;
 }
@@ -1074,25 +1108,6 @@ int psd_send_request_accept(psd_ims_client *client, char *user) {
 		return -1;
 	}
 	pthread_mutex_unlock(&client->requests_mutex);	
-
-/*
-	// get and add the friend locally
-	pthread_mutex_lock(&client->network_mutex);
-	if ( (user_info = net_recv_user_info(client->network, user)) == NULL ) {
-		pthread_mutex_unlock(&client->network_mutex);
-		DEBUG_FAILURE_PRINTF("Could not get the user info");	
-		return -1;
-	}
-	pthread_mutex_unlock(&client->network_mutex);
-
-	pthread_mutex_lock(&client->friends_mutex);
-	if ( fri_add_friend(client->friends, user_info->name, user_info->information) != 0 ) {
-		pthread_mutex_unlock(&client->friends_mutex);
-		DEBUG_FAILURE_PRINTF("Could not add the friend locally, but it is accepted");
-		return -1;
-	}
-	pthread_mutex_unlock(&client->friends_mutex);
-*/
 
 	return 0;
 }

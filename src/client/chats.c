@@ -175,6 +175,10 @@ int cha_add_chat(chats *chats, int chat_id, const char *description, char *admin
 int cha_add_message(chat_info *chat, const char *sender, const char *text, int send_timestamp, const char *attach_path) {
 	DEBUG_TRACE_PRINT();
 
+	if( mes_list_full(chat->messages) ) {
+		mes_del_first_messages(chat->messages, 1);
+	}
+
 	if( mes_add_message(chat->messages, sender, text, send_timestamp, attach_path) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not add the message");
 		return -1;
@@ -195,9 +199,19 @@ int cha_add_message(chat_info *chat, const char *sender, const char *text, int s
 int cha_add_messages(chat_info *chat, char *sender[], char *text[], int send_timestamp[], char *attach_path[], int n_messages) {
 	DEBUG_TRACE_PRINT();
 	
-	int i;
+	int i = 0;
+	int gaps_needed;
 
-	for( i=0; i< n_messages; i++ ) {
+	if (n_messages > mes_max_elems(chat->messages)) {
+		i = n_messages - mes_max_elems(chat->messages);
+	}
+
+	gaps_needed =  n_messages - i - mes_list_gaps(chat->messages);
+	if (gaps_needed > 0) {
+		mes_del_first_messages(chat->messages, gaps_needed);
+	}
+
+	for( i ; i< n_messages; i++ ) {
 		if( mes_add_message(chat->messages, sender[i], text[i], send_timestamp[i], attach_path[i]) != 0 ) {
 			DEBUG_FAILURE_PRINTF("Could not add the message");
 			mes_del_last_messages(chat->messages, i); // (i+1) messages (-1) the last failed

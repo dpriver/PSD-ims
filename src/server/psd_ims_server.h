@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_FILE_CHARS (10485760)
 
 
 int init_server(int bind_port, char persistence_user[], char persistence_pass[]);

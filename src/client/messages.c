@@ -167,6 +167,13 @@ int mes_add_message(messages *messages, const char *sender, const char *text, in
 }
 
 
+void mes_del_first_messages(messages *messages, int n_messages) {
+	DEBUG_TRACE_PRINT();
+	
+	list_delete_first(messages, n_messages);
+}
+
+
 /*
  * Removes the last "n_messages" messages
  * Returns 0 or -1 if fails

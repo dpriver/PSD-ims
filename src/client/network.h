@@ -159,13 +159,13 @@ int net_quit_from_chat(network *network, int chat_id);
  *
  *
  */
-int net_send_message(network *network, int chat_id, char *text, int have_attach, int *timestamp);
+int net_send_message(network *network, int chat_id, char *text, char *attach_name, int *timestamp);
 
 /*
  *
  *
  */
-int net_send_attachment(network *network, int chat_id, int msg_timestamp, char *MIME_type, unsigned char *ptr, int size, char *info);
+int net_send_attachment(network *network, int chat_id, int msg_timestamp, unsigned char *ptr, int size);
 
 /*
  *

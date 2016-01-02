@@ -56,6 +56,8 @@ typedef list_node list_iterator;
 #define list_item(list_node_ptr)		(list_node_ptr->item)
 #define list_num_elems(list_ptr) 		(list_ptr->n_elems)
 #define list_max_elems(list_ptr) 		(list_ptr->max_elems)
+#define list_full(list_ptr)				(list_ptr->n_elems >= list_ptr->max_elems)
+#define list_gaps(list_ptr)				(list_ptr->max_elems - list_ptr->n_elems)
 #define list_info(list_ptr) 			(list_ptr->list_info)
 #define list_iterator(list_ptr)			((list_ptr->ghost_item->next != list_ptr->ghost_item) ? (list_iterator*)list_ptr->ghost_item->next : NULL)
 #define list_iterator_info(list_iterator_ptr)			(list_iterator_ptr->item)
@@ -77,6 +79,8 @@ void *list_find_item(list *list, const void *comp_val);
 int list_add_item(list *list, void *item);
 
 void list_delete_node(list *list, list_node *node);
+
+void list_delete_first(list *list, int num_elems);
 
 void list_delete_last(list *list, int num_elems);
 

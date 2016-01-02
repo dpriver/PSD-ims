@@ -42,6 +42,9 @@ struct persistence {
 #define persistence_thread_safe(persistence) \
 		(persistence->thread_safe)
 
+#define clone_persistence(persistence) \
+		init_persistence(persistence->user_name, persistence->user_pass)
+
 persistence * init_persistence(char user[],char pass[]);
 
 void free_persistence(persistence *persistence);
@@ -74,7 +77,9 @@ int get_list_friends(persistence* persistence,int user_id, int timestamp, struct
 
 int get_member_list_chats(persistence* persistence,int chat_id, int timestamp, struct soap *soap, psdims__member_list *members);
 
-int get_list_messages(persistence* persistence,int chat_id,int timestamp, struct soap *soap, psdims__message_list *messages);
+int get_list_messages(persistence* persistence, int chat_id, int user_id, int timestamp, struct soap *soap, psdims__message_list *messages);
+
+int del_user_all_chats(persistence* persistence, int user_id, int timestamp);
 
 int get_list_chats(persistence* persistence,int user_id, int timestamp, struct soap *soap, psdims__chat_list *chats);
 
@@ -115,6 +120,10 @@ int get_all_chat_info(persistence* persistence,int chat_id, struct soap *soap, p
 int set_file(persistence* persistence, int user_id, int chat_id,char* path, int timestamp);
 
 int get_file(persistence* persistence, int user_id, int chat_id,char* path, int timestamp);
+
+int message_have_attach(persistence *persistence, int user_id, int chat_id, int msg_timestamp);
+
+int message_can_attach(persistence *persistence, int user_id, int chat_id, int msg_timestamp);
 
 int update_sync(persistence *persistence, int user_id, int chat_id, int read_timestamp);
 

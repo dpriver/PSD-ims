@@ -52,6 +52,15 @@ typedef list_iterator mes_iterator;
  *  Structs access macros
  * =========================================================================*/
 
+#define mes_list_full(messages) \
+		list_full(messages)
+
+#define mes_list_gaps(messages) \
+		list_gaps(messages)
+	
+#define mes_max_elems(messages) \
+		list_max_elems(messages)
+
 #define mes_sender(message_info) \
 		(message_info->sender)
 
@@ -122,6 +131,12 @@ void mes_print_message_list(messages *messages);
  * Returns 0 or -1 if fails
  */
 int mes_add_message(messages *messages, const char *sender, const char *text, int send_timestamp, const char *attach_path);
+
+/*
+ * Removes the first "n_messages" messages
+ * Returns 0 or -1 if "id" does not exist in the list
+ */
+void mes_del_first_messages(messages *messages, int n_messages);
 
 /*
  * Removes the last "n_messages" messages

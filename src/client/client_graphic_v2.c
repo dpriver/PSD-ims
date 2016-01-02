@@ -424,14 +424,50 @@ int attach_file(char *file_path, char *file_info, int max_info_chars) {
 }
 
 
-int send_message(psd_ims_client *client, char *text, int chat_id, char *file_path, char *MIME_type, char *file_info) {
+int download_attach(psd_ims_client *client, int chat_id) {
+	char msg_timestamp[MAX_INPUT_CHARS];
+	int timestamp;
+	chat_mes_iterator *iterator;
+	char *sender = NULL, *text = NULL, *attach_path = NULL;
+	int time;
+	
+	psd_begin_mes_iteration(client, chat_id, iterator);
+	while(psd_mes_iterator_valid(iterator)) {
+		psd_mes_iterator_attach_path(iterator, attach_path);
+		if (attach_path == NULL) {
+			psd_mes_iterator_next(iterator);
+			continue;
+		}	
+		psd_mes_iterator_sender(iterator, sender);
+		psd_mes_iterator_text(iterator, text);
+		psd_mes_iterator_time(iterator, time);
+		printf(" (%d) [%s]: %s\n", time , ((sender)? sender:"I"), text);
+		psd_mes_iterator_next(iterator);
+	}
+	psd_end_mes_iteration(client, iterator);
+	
+	printf("Attach timestamp: ");
+	scan_input_string(msg_timestamp, MAX_USER_NAME_CHARS);
+	timestamp = atoi(msg_timestamp);
+	if (psd_recv_message_attachment(client, chat_id, timestamp) < 0 ) {
+		printf(" failed to get the message attachment\n");
+		wait_user();
+		return -1;
+	}
+	return 0;
+}
 
-	if( psd_send_message(client, chat_id, text, file_path, MIME_type, file_info) != 0 ) {
+int send_message(psd_ims_client *client, char *text, int chat_id, char *file_path, char *file_info) {
+
+	DEBUG_INFO_PRINTF("Sending_message");
+	DEBUG_INFO_PRINTF("%s, %s, %s", text, file_path, file_info); 
+	if( psd_send_message(client, chat_id, text, file_path, file_info) != 0 ) {
 		printf(" Failed to send the message\n");
 		wait_user();
 		return -1;
 	}
-
+	DEBUG_INFO_PRINTF("Sended");
+	
 	return 0;
 }
 
@@ -451,7 +487,7 @@ void screen_chat_show(psd_ims_client *client, void *data_raw) {
 
 	menu_header_show("PSD IMS - Chats");
 	printf(" (/e)exit, (/s)show members,  (/a)add member, (/d)delete member, (/l)leave\n");
-	printf(" (/t)<file> attach <file> to message, (/r)remove attach\n");
+	printf(" (/t)<file> attach <file> to message, (/r)remove attach (/f)download attach\n");
 	printf(" (/u)update screen\n");
 	printf(" --------------------------------------------\n");
 
@@ -467,8 +503,13 @@ void screen_chat_show(psd_ims_client *client, void *data_raw) {
 		psd_mes_iterator_attach_path(iterator, attach_path);
 		t = (time_t)time;
 		tm = *localtime(&t);
-		printf(" %c[0;%dm(%02d:%02d:%02d) %s[%s]:%c[0m",  0x1b, 36, tm.tm_hour, tm.tm_min, tm.tm_sec, ((time > double_check_time)? " ": "\u2714") , ((sender)? sender:"I"), 0x1b);
-		printf("\t%s %s\n", text, ((attach_path)?"[ATTACH]":""));
+		printf(" %c[0;%dm(%02d:%02d:%02d) %s[%s]:%c[0m\t%s",  0x1b, 36, tm.tm_hour, tm.tm_min, tm.tm_sec, ((time > double_check_time)? " ": "\u2714") , ((sender)? sender:"I"), 0x1b, text);
+		if (attach_path != NULL) {
+			printf(" [FILE: %s]\n", attach_path);
+		}
+		else {
+			printf("\n");
+		}
 		psd_mes_iterator_next(iterator);
 	}
 	psd_end_mes_iteration(client, iterator);
@@ -483,7 +524,6 @@ void menu_chat(client_graphic *graphic, int chat_id) {
 	int ret = -1;
 	boolean exit = FALSE;
 	boolean cont = TRUE;
-	char file_type[] = "";
 	char file_info[MAX_DESCRIPTION_CHARS];
 
 
@@ -526,6 +566,8 @@ void menu_chat(client_graphic *graphic, int chat_id) {
 						strcpy(chat_data->attach_path, &graphic->input_buffer[2]);
 					}
 					break;
+				case 'f':
+					download_attach(graphic->client, chat_id);
 				case 'u':
 					screen_update(graphic);
 					break;
@@ -536,9 +578,9 @@ void menu_chat(client_graphic *graphic, int chat_id) {
 		} 
 		else {
 			if (chat_data->has_attach) 
-				send_message(graphic->client, graphic->input_buffer, chat_id, chat_data->attach_path, file_type, file_info);
+				send_message(graphic->client, graphic->input_buffer, chat_id, chat_data->attach_path, file_info);
 			else 
-				send_message(graphic->client, graphic->input_buffer, chat_id, NULL, NULL, NULL);
+				send_message(graphic->client, graphic->input_buffer, chat_id, NULL, NULL);
 			chat_data->has_attach = FALSE;
 		}
 		
@@ -765,6 +807,32 @@ int user_register(psd_ims_client *client) {
 }
 
 
+int user_unregister(psd_ims_client *client) {
+	char name[MAX_USER_NAME_CHARS];
+	char pass[MAX_USER_PASS_CHARS];
+	char info[MAX_USER_INFO_CHARS];
+	int ret;
+
+	printf("\n User name: ");
+	ret = scan_input_string(name, MAX_USER_NAME_CHARS);
+	if (ret < 0) return -1;
+	printf(" User password: ");
+	ret = scan_input_string(pass, MAX_USER_PASS_CHARS);
+	if (ret < 0) return -1;
+
+	if ( psd_user_unregister(client, name, pass) != 0 ) {
+		printf(" Unregister failed, maybe the user is not registered or the conection is failing\n");
+		wait_user();
+		return -1;
+	}
+
+	printf(" User '%s' correctly unregistered\n", name);
+	wait_user();
+
+	return 0;
+}
+
+
 int login(psd_ims_client *client) {
 	char name[MAX_USER_NAME_CHARS];
 	char pass[MAX_USER_PASS_CHARS];
@@ -798,8 +866,9 @@ int login(psd_ims_client *client) {
 
 void screen_login_show(psd_ims_client *client, void *data) {
 	menu_header_show("PSD IMS - Login");
-	printf(" 1. Register\n");
-	printf(" 2. Login\n");
+	printf(" 1. Login\n");
+	printf(" 2. Register\n");
+	printf(" 3. Unregister\n");
 	printf("\n 0. Exit\n");
 	menu_footer_show();
 }
@@ -817,13 +886,7 @@ void menu_login(client_graphic *graphic) {
 		get_user_input(graphic->input_buffer, MAX_INPUT_CHARS);
 		set_screen_updateable(graphic, FALSE);
 		switch(graphic->input_buffer[0]) {
-			case '0': 
-				exit = TRUE;
-				break;   // salir
-			case '1':	
-				user_register(graphic->client);
-				break;
-			case '2': 
+			case '1': 
 				if( login(graphic->client) == 0) {
 					configure_signal_handling();
 					run_notifications_thread(graphic);
@@ -831,6 +894,15 @@ void menu_login(client_graphic *graphic) {
 					set_screen_update(graphic, screen_login_show, NULL);
 				}
 				break;
+			case '2':	
+				user_register(graphic->client);
+				break;
+			case '3':
+				user_unregister(graphic->client);
+				break;
+			case '0': 
+				exit = TRUE;
+				break;   // salir
 		}
 		
 		get_continue_graphic(graphic, cont);

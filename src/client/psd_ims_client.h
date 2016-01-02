@@ -33,8 +33,10 @@
 #define MAX_MEMBERS (50)
 
 #define MAX_FILE_PATH_CHARS (100)
-#define MAX_FILE_CHARS (10000)
-#define ATTACH_FILES_DIR "attached_files"
+	// max file size = 10MB
+#define MAX_FILE_CHARS (10485760)
+#define ATTACH_FILES_DIR_RCV "attached_files_rcv"
+#define ATTACH_FILES_DIR_SND "attached_files_snd"
 
 #include "friends.h"
 #include "chats.h"
@@ -106,6 +108,13 @@ typedef struct chat_member_iterator chat_member_iterator;
 #define psd_chats_timestamp(client, timestamp) \
 		cha_get_timestamp(client->chats, timestamp)
 
+
+#define create_file_path_snd(buff, chat_id, timestamp) \
+		sprintf(buff, "%s/_%d%d", ATTACH_FILES_DIR_SND, chat_id, timestamp)
+		
+#define create_file_path_rcv(buff, chat_id, timestamp) \
+		sprintf(buff, "%s/_%d%d", ATTACH_FILES_DIR_RCV, chat_id, timestamp)
+		
 /* =========================================================================
  *  Iterators
  * =========================================================================*/
@@ -494,6 +503,12 @@ void psd_logout(psd_ims_client *client);
 int psd_user_register(psd_ims_client *client, char *name, char *password, char *information);
 
 /*
+ * Unregister the user from the system
+ * Returns 0 or -1 if fails
+ */
+int psd_user_unregister(psd_ims_client *client, char *name, char *password);
+
+/*
  * Receive the pending notifications
  * Returns the number of received notifications or -1 if fails
  */
@@ -523,6 +538,10 @@ int psd_recv_all_messages(psd_ims_client *client);
  */
 int psd_recv_all_pending_messages(psd_ims_client *client);
 
+/*
+ * Receive the message's attachment
+ * Returns 0 or -1 if fails
+ */
 int psd_recv_message_attachment(psd_ims_client *client, int chat_id, int msg_timestamp);
 
 /*
@@ -571,7 +590,7 @@ int psd_remove_chat(psd_ims_client *client, int chat_id);
  * Send a message to the chat "chat_id"
  * Returns 0 or -1 if fails
  */
-int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *file_path, char *MIME_type, char *file_info);
+int psd_send_message(psd_ims_client *client, int chat_id, char *text, char *file_path, char *file_info);
 
 /*
  * Send a friend request to "user"
