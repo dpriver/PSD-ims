@@ -14,7 +14,3 @@
 >
 > 5. To get a chat's messages, the client send to the server the chat id and the timestamp
 > of the last message it has
->
-> 6. If the client has to syncronize its friend list, or chat list, as that is a non-common operation
-> it has to ask the server for the full list, and then update its own.
-

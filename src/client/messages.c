@@ -41,10 +41,14 @@
 	(strlen(string) + sizeof(char))
 
 void message_list_info_free(void *info) {
-
+	free(info);
 }
 
 void message_free(void *message) {
+	free(((message_info*)message)->sender);
+	free(((message_info*)message)->text);
+	free(((message_info*)message)->attach_path);
+	free(message);
 
 }
 

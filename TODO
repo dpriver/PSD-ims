@@ -1,9 +1,7 @@
 TODO
 ==========================
-
-
-- File support
 - SSL support
+
 
 Client
 ----------
@@ -13,6 +11,3 @@ Client
 
 Server
 ----------
-- Implement timestamps in persistence
-- Catch CTRL-C signal
-- Threaded server

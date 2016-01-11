@@ -20,6 +20,9 @@ temp/
 # Binaries
 bin/
 
+server_files
+attached_files_snd
+attached_files_rcv
 
 # Vim
 *.swp

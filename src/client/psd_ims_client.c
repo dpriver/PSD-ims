@@ -93,8 +93,17 @@ int _recv_messages(psd_ims_client *client, chat_info *chat) {
 	n_messages = list->__sizenelems;
 	if ( cha_add_messages(chat, sender, text, send_date, attach_path, n_messages) != 0 ) {
 		DEBUG_FAILURE_PRINTF("Could not add messages");
+		free(sender);
+		free(text);
+		free(attach_path);
+		free(send_date);
 		return -1;
 	}
+
+	free(sender);
+	free(text);
+	free(attach_path);
+	free(send_date);
 	
 	cha_set_pending(chat, 0);
 	cha_set_messages_timestamp(chat, list->last_timestamp);

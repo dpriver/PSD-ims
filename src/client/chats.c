@@ -48,8 +48,12 @@ void list_info_free(void *info) {
 	free(info);
 }
 
-void chat_free(void *member) {
-
+void chat_free(void *chat) {
+	free(((chat_info*)chat)->description);
+	free(((chat_info*)chat)->admin);
+	mes_free(((chat_info*)chat)->messages);
+	member_free(((chat_info*)chat)->members);
+	free(chat);
 }
 
 int chat_id_comp(const void *chat, const void *id) {

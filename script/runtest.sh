@@ -1,16 +1,8 @@
 #!/bin/bash
 
-echo "Compiling"
-#cd ../
-#make clean
-#make all
-echo "Finished the compiling"
-
 echo "Creating database"
 cd script/sql
-mysql -u "root" -p < "bd-test.sql"
-
-echo "Populating database"
+mysql -u "psd-server" -p < "bd-test.sql"
 
 echo "Finished"
 

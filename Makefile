@@ -1,6 +1,8 @@
 # main Makefile
 
 
+all: clean rpc_regenerate rpc common client server
+
 help:
 	@echo "================================= RULES ================================================"
 	@echo " - help			-> prints this help"
@@ -10,13 +12,9 @@ help:
 
 force_all: force_debug
 
-force_release: clean rpc_regenerate all tests
-
 force_debug: clean rpc_regenerate all_debug tests
 
 force_trace: clean rpc_regenerate common_debug rpc client_debug server_debug_trace tests
-
-all: common rpc client server
 
 all_debug: common_debug rpc client_debug server_debug
 
