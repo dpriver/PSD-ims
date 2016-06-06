@@ -7,7 +7,7 @@ programming" from the "Computer Engineering program" of the Complutense
 University of Madrid.
 
 The objective is to design and carry out an Instant Message Service based on 
-[](http://www.cs.fsu.edu/~engelen/soap.html "gsoap") framework.
+[gsoap](http://www.cs.fsu.edu/~engelen/soap.html "gsoap") framework.
 
 
 ### Dependencies
@@ -17,7 +17,7 @@ PSD-ims, please open an issue so I can recheck them.
 
 
 ### Compile
-A set of handmade makefiles are used to compile this proyect. Please, be patient 
+A set of handmade makefiles are used to compile this project. Please, be patient 
 if the proyect does not compile for you, and report here the errors you get.
 
 The following bash commands are normally used.
@@ -49,4 +49,4 @@ and the client
 ./client <url>:<port>
 ```
 
-If you are working locally, "localhost" can be used as <url>
+If you are working locally, "localhost" can be used as url
